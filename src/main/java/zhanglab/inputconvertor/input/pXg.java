@@ -36,11 +36,12 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
         String mgfFileBase = cmd.getOptionValue("f");
         String ms2pipOutputFile = cmd.getOptionValue("M");
         String autortOutputFile = cmd.getOptionValue("A");
-        double tol = Double.parseDouble(cmd.getOptionValue("e"));
+        double tol = Double.parseDouble(cmd.getOptionValue("T"));
         int scoreIdx			= Integer.parseInt(cmd.getOptionValue("S"));
-        int icPeptideIdx 		= Integer.parseInt(cmd.getOptionValue("P"));
-        int infPeptideIdx		= Integer.parseInt(cmd.getOptionValue("I"));
         int chargeIdx	 		= Integer.parseInt(cmd.getOptionValue("C"));
+        
+        int icPeptideIdx 		= -1;
+        int infPeptideIdx		= -1;
         int ppmErrorIdx			= -1;
         
         if( cmd.getOptionValue("E") != null) {
@@ -90,6 +91,8 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
         for(File file : files) {
         	if(file.getName().startsWith(".")) continue;
         	if(file.getName().endsWith(".pXg") && file.getName().contains(inputPattern)) {
+        		int skipRecords = 0;
+        		
         		String outputName = inputFile+"/"+file.getName().replace(".pXg", ".pXg.feat");
         		BufferedWriter BW = new BufferedWriter(new FileWriter(outputName));
         		
@@ -100,10 +103,17 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
         		// building header ///////////////////////////////////////////
                 if(header == null) {
                 	header = line;
+                	
+                	// get index
+            		String[] pXgHeaderSplit = header.split("\t");
+            		icPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
+            		infPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_INFERREND_PEPTIDE_FIELD_NAME);
+                	
+                	
                 	BW.append(header).append("\t")
-                	.append(InputConvertorConstants.PPM_FIELD_NAME).append("\t")
-    				.append(InputConvertorConstants.SA_FIELD_NAME).append("\t")
-    				.append(InputConvertorConstants.DELTA_RT_FIELD_NAME);
+                	.append(InputConvertorConstants.IC_PPM_FIELD_NAME).append("\t")
+    				.append(InputConvertorConstants.IC_SA_FIELD_NAME).append("\t")
+    				.append(InputConvertorConstants.IC_DELTA_RT_FIELD_NAME);
     				BW.newLine();
                 }
                 ////////////////////////////////// End of building header ////////////////
@@ -130,8 +140,9 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
     				}
     				
     				if(!spectra.isComplete) {
-    					System.out.println("NULL ^^");
-    					continue;
+    					System.out.println(mgfFile);
+    					System.out.println("Sever error was occurred when reading spectrum!");
+    					System.exit(1);
     				}
     				
     				String infPeptide = fields[infPeptideIdx];
@@ -148,6 +159,11 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
     				
     				Spectrum expSpectrum = spectra.scanIndexer.get(title);
     				Spectrum ms2pipSpectrum = ms2pipSpectra.scanIndexer.get(ms2pipKey);
+    				
+    				if(ms2pipSpectrum == null) {
+    					skipRecords++;
+    					continue;
+    				}
     				
     				// set peptide
     				expSpectrum.peptide = peptide;
@@ -186,6 +202,8 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
         		BR.close();
         		BW.close();
         		
+        		System.out.println("Unspported spectra: "+skipRecords);
+        		
         		// Build PIN File
         		BW = new BufferedWriter(new FileWriter(inputFile+"/"+file.getName().replace(".pXg", ".pXg.feat.pin")));
         		BR = new BufferedReader(new FileReader(outputName));
@@ -213,47 +231,47 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
         		String[] pXgHeaders = BR.readLine().split("\t");
         		
         		int specIdIdx, labelIdx, mainScoreIdx, deltaScoreIdx = -1,
-        		log2ReadsIdx = -1, log2MQIdx = -1, ppmIdx = -1, saIdx = -1, deltaRTIdx = -1, peptideIdx = -1, genomicIDIdx;
+        		log2ReadsIdx = -1, log2MQIdx = -1, ppmIdx = -1, saIdx = -1, deltaRTIdx = -1, genomicIDIdx = -1;
         		
-        		specIdIdx = 0;
-        		genomicIDIdx = 1;
-        		labelIdx = 2;
+        		
+        		icPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
+        		infPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_INFERREND_PEPTIDE_FIELD_NAME);
+        		
+        		specIdIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_SPEC_ID_FEILD_NAME);
+        		genomicIDIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_GENOMIC_ID_FEILD_NAME);
+        		labelIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_LABEL_FEILD_NAME);
         		mainScoreIdx = scoreIdx;
+        		log2ReadsIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_READ_FIELD_NAME);
+        		log2MQIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_MQ_FIELD_NAME);
+        		ppmIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_PPM_FIELD_NAME);
+        		saIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_SA_FIELD_NAME);
+        		deltaRTIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_DELTA_RT_FIELD_NAME);
+        		deltaScoreIdx = InputConvertorConstants.getFieldIndex(pXgHeaders, InputConvertorConstants.IC_DELTA_SCORE_FIELD_NAME);
         		//chargeIdx ##
         		
-        		
-        		for(int i=0; i<pXgHeaders.length; i++) {
-        			if(pXgHeaders[i].equalsIgnoreCase("Reads")) {
-        				log2ReadsIdx = i;
-        			} else if(pXgHeaders[i].equalsIgnoreCase("MeanQScore")) {
-        				log2MQIdx = i;
-        			} else if(pXgHeaders[i].equalsIgnoreCase("ic_ppm")) {
-        				ppmIdx = i;
-        			} else if(pXgHeaders[i].equalsIgnoreCase("ic_SA")) {
-        				saIdx = i;
-        			} else if(pXgHeaders[i].equalsIgnoreCase("ic_abs(deltaRT)")) {
-        				deltaRTIdx = i;
-        			} else if(pXgHeaders[i].equalsIgnoreCase("ic_peptide")) {
-        				peptideIdx = i;
-        			} else if(pXgHeaders[i].equalsIgnoreCase("DeltaScore")) {
-        				deltaScoreIdx = i;
-        			}
-        		}
-        		
+        		Hashtable<String, Integer> scanNums = new Hashtable<String, Integer>();
         		while((line = BR.readLine()) != null) {
         			String[] fields = line.split("\t");
         			String specId = fields[specIdIdx];
-        			String scanNum = specId.split("\\|")[1];
-        			Peptide peptide = new Peptide(fields[peptideIdx], InputConvertorConstants.IC_CONVERTOR);
+        			
+        			Integer scanNum = scanNums.get(specId);
+        			if(scanNum == null) {
+        				scanNum = scanNums.size()+1;
+        				scanNums.put(specId, scanNum);
+        			}
+        			
+        			
+        			
+        			Peptide peptide = new Peptide(fields[icPeptideIdx], InputConvertorConstants.IC_CONVERTOR);
         			peptide.icPeptideToILDetermination(fields[infPeptideIdx]);
         			double log2Reads = Math.log(Double.parseDouble(fields[log2ReadsIdx]) +1) / Math.log(2);
         			double log2MQ = Math.log(Double.parseDouble(fields[log2MQIdx])) / Math.log(2);
-        			int charge = Integer.parseInt(fields[chargeIdx]);
+        			int charge = (int) (Double.parseDouble(fields[chargeIdx]));
         			String genomicID = fields[labelIdx].equalsIgnoreCase("-1") ? "XXX_"+fields[genomicIDIdx] : fields[genomicIDIdx];
         			
         			BW.append(fields[specIdIdx]).append("\t")
         			.append(fields[labelIdx]).append("\t")
-        			.append(scanNum).append("\t")
+        			.append(scanNum+"").append("\t")
         			
         			.append(fields[mainScoreIdx]).append("\t")
         			.append(fields[deltaScoreIdx]).append("\t")
@@ -317,9 +335,10 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
 		
         String inputFile	= cmd.getOptionValue("i");
         String filePattern	= cmd.getOptionValue("p");
-        int icPeptideIdx 	= Integer.parseInt(cmd.getOptionValue("P"));
-        int infPeptideIdx	= Integer.parseInt(cmd.getOptionValue("I"));
         int chargeIdx		= Integer.parseInt(cmd.getOptionValue("C"));
+        int icPeptideIdx 	= -1;
+        int infPeptideIdx	= -1;
+        
         
         File[] files = new File(inputFile).listFiles();
         if(files == null) {
@@ -335,6 +354,12 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
         		System.out.println("Read "+file.getName());
         		String line = null;
         		String pXgHeader = BR.readLine(); // skip header
+        		
+        		// get index
+        		String[] pXgHeaderSplit = pXgHeader.split("\t");
+        		icPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
+        		infPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_INFERREND_PEPTIDE_FIELD_NAME);
+        		
         		
         		String outputPath = file.getAbsolutePath().replace(".pXg", ".ms2pip.input");
         		BufferedWriter BW = new BufferedWriter(new FileWriter(outputPath));
@@ -482,9 +507,9 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
         String inputFile	= cmd.getOptionValue("i");
         String filePattern	= cmd.getOptionValue("p");
         int scoreIdx		= Integer.parseInt(cmd.getOptionValue("S"));
-        int icRTIdx			= Integer.parseInt(cmd.getOptionValue("R"));
-        int icPeptideIdx 	= Integer.parseInt(cmd.getOptionValue("P"));
-        int infPeptideIdx	= Integer.parseInt(cmd.getOptionValue("I"));
+        int icRTIdx			= -1;
+        int icPeptideIdx 	= -1;
+        int infPeptideIdx	= -1;
         
         File[] files = new File(inputFile).listFiles();
         if(files == null) {
@@ -500,6 +525,12 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures {
         		System.out.println("Read "+file.getName());
         		String line = null;
         		String pXgHeader = BR.readLine(); // skip header
+        		
+        		// get index
+        		String[] pXgHeaderSplit = pXgHeader.split("\t");
+        		icRTIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_RT_FIELD_NAME);
+        		icPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
+        		infPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_INFERREND_PEPTIDE_FIELD_NAME);
         		
         		String outputPath = file.getAbsolutePath().replace(".pXg", ".autort.input");
         		BufferedWriter BW = new BufferedWriter(new FileWriter(outputPath));

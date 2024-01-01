@@ -15,6 +15,7 @@ import zhanglab.inputconvertor.input.PEAKS;
 import zhanglab.inputconvertor.input.pNovo3;
 import zhanglab.inputconvertor.input.pXg;
 import zhanglab.inputconvertor.module.SpectrumCount;
+import zhanglab.inputconvertor.module.TargetDecoyAnalysis;
 import zhanglab.inputconvertor.module.ToAutoRTInput;
 import zhanglab.inputconvertor.module.ToFeatures;
 import zhanglab.inputconvertor.module.ToMS2PIPInput;
@@ -37,17 +38,15 @@ public class Run {
 		options.addOption("p", "pattern", true, "Batch pattern. It assumes that PSMs with a title containing the batch pattern will be recognized as the same batch");
 		options.addOption("o", "output_prefix", true, "Output prefix");
 		
-		options.addOption("P", "ic_peptide", true, "ic_peptide or modified peptide index.");
 		options.addOption("C", "charge", true, "ic_charge or tool-reported charge index. Use ic_charge for pNovo3, otherwise use tool-reported charge.");
-		options.addOption("R", "ic_observed_rt", true, "ic_observed_rt index");
 		options.addOption("S", "score", true, "score index");
-		options.addOption("I", "inferred_peptide", true, "Inferred peptide index in pXg.");
 		
 		options.addOption("M", "ms2pip", true, "MS2PIP output mgf.");
 		options.addOption("A", "autort", true, "AutoRT output file.");
-		options.addOption("T", "spec_id", true, "SpecID index.");
-		options.addOption("e", "frag_err", true, "Fragment error/tolerance (Da).");
+		options.addOption("T", "frag_tol", true, "Fragment tolerance (Da).");
 		options.addOption("E", "ppm_err", true, "PPM error index. If not specified, then automatically calculates the PPM error.");
+		
+		options.addOption("d", "fdr", true, "FDR ratio. ex> 0.01, 0.05...");
 		
 		CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -72,8 +71,10 @@ public class Run {
         }
         
         else if(mode.equalsIgnoreCase("ms2pip_input")) {
-        	// args: -i -p -P -I -C for pXg
-        	// args: -i -p -P -C for comet
+        	// args: -i -p -C
+        	// -i ./
+        	// -p C3N-01488.T.csnv
+        	// --charge 14
         	ToMS2PIPInput toMS2PIPInput = null;
         	if(inputTool.equalsIgnoreCase(InputConvertorConstants.PXG)) {
         		toMS2PIPInput = new pXg();
@@ -86,8 +87,10 @@ public class Run {
         }
         
         else if(mode.equalsIgnoreCase("autort_input")) {
-        	// args: -i -p -P -I -R -S for pXg
-        	// args: -i -p -P -R -S for comet
+        	// args: -i -p -S
+        	// -i ./
+        	// -p C3N-01488.T.csnv
+        	// --score 11
         	ToAutoRTInput toAutoRTInput = null;
         	if(inputTool.equalsIgnoreCase(InputConvertorConstants.PXG)) {
         		toAutoRTInput = new pXg();
@@ -100,10 +103,15 @@ public class Run {
         }
         else if(mode.equalsIgnoreCase("feature_gen")) {
         	ToFeatures toFeatures = null;
-        	// -i -p -f -M -A -e -E -T -P -C -I -G -L -S -F
+        	// -i -p -f -M -A -E -T -C -S
         	toFeatures = new pXg();
         	
         	toFeatures.toFeatures(cmd);
+        }
+        
+        else if(mode.equalsIgnoreCase("fdr")) {
+        	// -i -p -d
+        	new TargetDecoyAnalysis().doFDR(cmd);
         }
         // this is hidden function for me
         // Do not use general purpose!!!

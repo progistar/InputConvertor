@@ -53,8 +53,8 @@ public class Comet implements ToAutoRTInput, ToMS2PIPInput{
 		
         String inputFile	= cmd.getOptionValue("i");
         String filePattern	= cmd.getOptionValue("p");
-        int modPeptideIdx 	= Integer.parseInt(cmd.getOptionValue("P"));
         int chargeIdx		= Integer.parseInt(cmd.getOptionValue("C"));
+        int modPeptideIdx 	= -1;
         
         File[] files = new File(inputFile).listFiles();
         if(files == null) {
@@ -70,6 +70,10 @@ public class Comet implements ToAutoRTInput, ToMS2PIPInput{
         		System.out.println("Read "+file.getName());
         		String line = null;
         		String cometHeader = BR.readLine(); // skip header
+        		
+        		String[] cometHeaderSplit = cometHeader.split("\t");
+        		modPeptideIdx = InputConvertorConstants.getFieldIndex(cometHeaderSplit, InputConvertorConstants.COMET_PEPTIDE_FIELD_NAME);
+        		
         		
         		String outputPath = file.getAbsolutePath().replace(".txt", ".ms2pip.input");
         		BufferedWriter BW = new BufferedWriter(new FileWriter(outputPath));
@@ -214,8 +218,8 @@ public class Comet implements ToAutoRTInput, ToMS2PIPInput{
         String inputFile	= cmd.getOptionValue("i");
         String filePattern	= cmd.getOptionValue("p");
         int scoreIdx		= Integer.parseInt(cmd.getOptionValue("S"));
-        int icRTIdx			= Integer.parseInt(cmd.getOptionValue("R"));
-        int modPeptideIdx 	= Integer.parseInt(cmd.getOptionValue("P"));
+        int icRTIdx			= -1;
+        int modPeptideIdx 	= -1;
         
         File[] files = new File(inputFile).listFiles();
         if(files == null) {
@@ -231,6 +235,12 @@ public class Comet implements ToAutoRTInput, ToMS2PIPInput{
         		System.out.println("Read "+file.getName());
         		String line = null;
         		String cometHeader = BR.readLine(); // skip header
+        		
+        		// index
+        		String[] cometHeaderSplit = cometHeader.split("\t");
+        		icRTIdx = InputConvertorConstants.getFieldIndex(cometHeaderSplit, InputConvertorConstants.COMET_RT_FIELD_NAME);
+        		modPeptideIdx = InputConvertorConstants.getFieldIndex(cometHeaderSplit, InputConvertorConstants.COMET_PEPTIDE_FIELD_NAME);
+        		
         		
         		String outputPath = file.getAbsolutePath().replace(".txt", ".autort.input");
         		BufferedWriter BW = new BufferedWriter(new FileWriter(outputPath));

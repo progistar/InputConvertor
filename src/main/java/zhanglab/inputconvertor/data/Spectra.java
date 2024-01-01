@@ -54,7 +54,10 @@ public class Spectra {
 						precursorInt = -1;
 					}
 				}else if(line.startsWith("CHARGE")){
-					charge = Integer.parseInt(line.split("\\=")[1].replace("+", ""));
+					charge = (int) Double.parseDouble(line.split("\\=")[1].replace("+", ""));
+					if(charge == 0) {
+						System.out.println(Double.parseDouble(line.split("\\=")[1].replace("+", "")));
+					}
 				}else if(peakPattern.matcher(line).find()) {
 					double[] peak = new double[2];
 					String[] peakStr = line.split("\\s");

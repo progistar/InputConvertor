@@ -3,15 +3,24 @@ package zhanglab.inputconvertor.env;
 public class InputConvertorConstants {
 
 	// ## Generated features from Input Convertor
-	public static final String RT_FIELD_NAME = "ic_observed_rt";
-	public static final String TITLE_FIELD_NAME = "ic_title";
-	public static final String SCAN_NUM_NAME = "ic_scan_num";
-	public static final String CHARGE_NAME = "ic_charge";
-	public static final String PEPTIDE_NAME = "ic_peptide";
+	public static final String IC_RT_FIELD_NAME = "ic_observed_rt";
+	public static final String IC_TITLE_FIELD_NAME = "ic_title";
+	public static final String IC_SCAN_NUM_FIELD_NAME = "ic_scan_num";
+	public static final String IC_CHARGE_FIELD_NAME = "ic_charge";
+	public static final String IC_PEPTIDE_FIELD_NAME = "ic_peptide";
+	public static final String IC_INFERREND_PEPTIDE_FIELD_NAME = "InferredPeptide";
 	
-	public static final String SA_FIELD_NAME = "ic_SA";
-	public static final String DELTA_RT_FIELD_NAME = "ic_abs(deltaRT)";
-	public static final String PPM_FIELD_NAME = "ic_ppm";
+	public static final String IC_SA_FIELD_NAME = "ic_SA";
+	public static final String IC_DELTA_RT_FIELD_NAME = "ic_abs(deltaRT)";
+	public static final String IC_PPM_FIELD_NAME = "ic_ppm";
+	
+	public static final String IC_READ_FIELD_NAME = "Reads";
+	public static final String IC_MQ_FIELD_NAME = "MeanQScore";
+	public static final String IC_DELTA_SCORE_FIELD_NAME = "DeltaScore";
+	public static final String IC_SPEC_ID_FEILD_NAME = "SpecID";
+	public static final String IC_GENOMIC_ID_FEILD_NAME = "GenomicID";
+	public static final String IC_LABEL_FEILD_NAME = "Label";
+	public static final String IC_IS_CANONICAL_FEILD_NAME = "isCanonical";
 	
 	
 	// ## Tool sets
@@ -37,4 +46,21 @@ public class InputConvertorConstants {
 	public static final String MS2PIP_HEADER_PEPTIDE	=	"peptide";
 	public static final String MS2PIP_HEADER_CHARGE	=	"charge";
 	
+	// ##Comet
+	public static final String COMET_PEPTIDE_FIELD_NAME	=	"modified_peptide";
+	public static final String COMET_RT_FIELD_NAME	=	"retention_time_sec";
+	
+	
+	public static int getFieldIndex (String[] fields, String tag) {
+		int index = -1;
+		
+		for(int i=0; i<fields.length; i++) {
+			if(fields[i].equalsIgnoreCase(tag)) {
+				index = i;
+				break;
+			}
+		}
+		
+		return index;
+	}
 }

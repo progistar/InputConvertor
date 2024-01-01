@@ -95,11 +95,11 @@ public class pNovo3 implements TopXgInput{
         for(String header : FIELDS) {
         	batchHeader += header+"\t";
         }
-        batchHeader+=InputConvertorConstants.SCAN_NUM_NAME+"\t"
-        		+InputConvertorConstants.TITLE_FIELD_NAME+"\t"
-        		+InputConvertorConstants.RT_FIELD_NAME+"\t"
-        		+InputConvertorConstants.CHARGE_NAME+"\t"
-        		+InputConvertorConstants.PEPTIDE_NAME;
+        batchHeader+=InputConvertorConstants.IC_SCAN_NUM_FIELD_NAME+"\t"
+        		+InputConvertorConstants.IC_TITLE_FIELD_NAME+"\t"
+        		+InputConvertorConstants.IC_RT_FIELD_NAME+"\t"
+        		+InputConvertorConstants.IC_CHARGE_FIELD_NAME+"\t"
+        		+InputConvertorConstants.IC_PEPTIDE_FIELD_NAME;
         BW.append(batchHeader);
         BW.newLine();
         ////////////////////////////////// End of building header ////////////////

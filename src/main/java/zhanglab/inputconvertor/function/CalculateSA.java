@@ -21,6 +21,11 @@ public class CalculateSA {
 		int s2Idx = 0;
 		double ip = 0;
 		boolean doMatchFurther = true;
+		
+		if(s1Peaks.length == 0 || s2Peaks.length == 0) {
+			return 0;
+		}
+		
 		while(doMatchFurther) {
 			double delta = s1Peaks[s1Idx][0] - s2Peaks[s2Idx][0];
 			if(Math.abs(delta) <= tol) {

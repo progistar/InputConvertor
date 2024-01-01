@@ -105,11 +105,11 @@ public class Casanovo implements TopXgInput{
         					batchHeader = line;
             				// append header
             				BW.append(batchHeader).append("\t")
-            				.append(InputConvertorConstants.SCAN_NUM_NAME).append("\t")
-            				.append(InputConvertorConstants.TITLE_FIELD_NAME).append("\t")
-            				.append(InputConvertorConstants.RT_FIELD_NAME).append("\t")
-            				.append(InputConvertorConstants.CHARGE_NAME).append("\t")
-            				.append(InputConvertorConstants.PEPTIDE_NAME);
+            				.append(InputConvertorConstants.IC_SCAN_NUM_FIELD_NAME).append("\t")
+            				.append(InputConvertorConstants.IC_TITLE_FIELD_NAME).append("\t")
+            				.append(InputConvertorConstants.IC_RT_FIELD_NAME).append("\t")
+            				.append(InputConvertorConstants.IC_CHARGE_FIELD_NAME).append("\t")
+            				.append(InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
             				BW.newLine();
         				}
         		        ////////////////////////////////// End of building header ////////////////
