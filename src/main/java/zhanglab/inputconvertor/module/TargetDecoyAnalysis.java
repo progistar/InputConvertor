@@ -37,7 +37,7 @@ class TDRecord implements Comparable<TDRecord>{
 	}
 	
 	public String toString() {
-		return record +"\t" + score +"\t"+fdr;
+		return record +"\t" + score;
 	}
 }
 
@@ -82,8 +82,7 @@ public class TargetDecoyAnalysis {
         
         // build header ////////////////////////////////////////////////
         BW.append(header).append("\t")
-        .append("percoaltor_score").append("\t")
-        .append("FDR");
+        .append("percoaltor_score");
         BW.newLine();
         ////////////////////////////////////// End of building header /
         
@@ -132,15 +131,12 @@ public class TargetDecoyAnalysis {
         		}
         	}
         }
+        ArrayList<TDRecord> passTargetList = new ArrayList<TDRecord>();
+        passTargetList.addAll(getFDR(cRecords, fdr));
+        passTargetList.addAll(getFDR(ncRecords, fdr));
         
-        calFDR(cRecords, fdr);
-        calFDR(ncRecords, fdr);
-        
-        cRecords.addAll(ncRecords);
-        
-        
-        for(int i=0; i<cRecords.size(); i++) {
-        	TDRecord record = cRecords.get(i);
+        for(int i=0; i<passTargetList.size(); i++) {
+        	TDRecord record = passTargetList.get(i);
         	
         	String specId = record.record.split("\t")[specIdIdx];
         	if(duplications.get(specId) == null) {
@@ -159,11 +155,12 @@ public class TargetDecoyAnalysis {
         
 	}
 	
-	private void calFDR (ArrayList<TDRecord> records, double fdr) {
+	private ArrayList<TDRecord> getFDR (ArrayList<TDRecord> records, double fdr) {
 		Collections.sort(records);
 		
 		double tCount = 0;
 		double dCount = 0;
+		int lastIdx   = 0;
 		for(int i=0; i<records.size(); i++) {
 			TDRecord record = records.get(i);
 			
@@ -174,11 +171,25 @@ public class TargetDecoyAnalysis {
 			}
 			
 			if(tCount == 0) {
-				record.fdr = 0;
+				record.fdr = 1;
 			} else {
 				record.fdr = dCount/tCount;
+				
+				if(record.fdr < fdr) {
+					lastIdx = i;
+				}
 			}
 		}
+		
+		ArrayList<TDRecord> passTargetList = new ArrayList<TDRecord>();
+		for(int i=0; i<=lastIdx; i++) {
+			TDRecord record = records.get(i);
+			if(record.label > 0) {
+				passTargetList.add(record);
+			}
+		}
+		
+		return passTargetList;
 	}
 	
 	

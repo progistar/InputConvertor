@@ -19,6 +19,7 @@ import zhanglab.inputconvertor.module.TargetDecoyAnalysis;
 import zhanglab.inputconvertor.module.ToAutoRTInput;
 import zhanglab.inputconvertor.module.ToFeatures;
 import zhanglab.inputconvertor.module.ToMS2PIPInput;
+import zhanglab.inputconvertor.module.NetMHCpan;
 import zhanglab.inputconvertor.module.TopXgInput;
 
 public class Run {
@@ -43,6 +44,7 @@ public class Run {
 		
 		options.addOption("M", "ms2pip", true, "MS2PIP output mgf.");
 		options.addOption("A", "autort", true, "AutoRT output file.");
+		options.addOption("N", "netmhcpan", true, "NetMHCpan4.1 output file.");
 		options.addOption("T", "frag_tol", true, "Fragment tolerance (Da).");
 		options.addOption("E", "ppm_err", true, "PPM error index. If not specified, then automatically calculates the PPM error.");
 		
@@ -112,6 +114,22 @@ public class Run {
         else if(mode.equalsIgnoreCase("fdr")) {
         	// -i -p -d
         	new TargetDecoyAnalysis().doFDR(cmd);
+        }
+        
+        else if(mode.equalsIgnoreCase("netmhcpan_input")) {
+        	NetMHCpan toNetMHCpanInput = null;
+        	
+        	toNetMHCpanInput = new pXg();
+        	
+        	toNetMHCpanInput.toNetMHCpanInputFormat(cmd);
+        }
+        
+        else if(mode.equalsIgnoreCase("add_netmhcpan")) {
+        	NetMHCpan toNetMHCpanInput = null;
+        	
+        	toNetMHCpanInput = new pXg();
+        	
+        	toNetMHCpanInput.addNetMHCpanOutput(cmd);
         }
         // this is hidden function for me
         // Do not use general purpose!!!
