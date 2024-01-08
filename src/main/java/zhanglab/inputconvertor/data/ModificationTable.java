@@ -7,12 +7,15 @@ public class ModificationTable {
 	public static String PNOVO3_M_OXI	= "a";
 	
 	public static String MS2PIP_M_OXI = "Oxidation";
-	public static String MS2PIP_C_CAM = "Carbamidomethyl";
+	public static String MS2PIP_C_CARBAM = "Carbamidomethyl";
 	
 	public static String IC_M_OXI	  = "M+15.995";
+	public static String IC_C_CARBAM  = "C+57.021";
 
 	public static String AUTORT_M_OXI = "1";
+	public static String AUTORT_C_CARBAM = "C";
 	
 	
 	public static final double OXIDATION_MASS = new ChemicalForm(0, 0, 1, 0, 0).getMass();
+	public static final double CARBAM_MASS	  = new ChemicalForm(2, 3, 1, 1, 0).getMass();
 }

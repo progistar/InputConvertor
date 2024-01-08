@@ -52,9 +52,8 @@ public class Peptide {
 		}
 		
 		else if(peptideFrom.equalsIgnoreCase(InputConvertorConstants.AUTORT)) {
-			String M = ModificationTable.AUTORT_M_OXI;
-			this.modPeptide = peptide.replace(M, ModificationTable.IC_M_OXI);
-			
+			this.modPeptide = peptide.replace(ModificationTable.AUTORT_M_OXI, ModificationTable.IC_M_OXI);
+			this.modPeptide = this.modPeptide.replace(ModificationTable.AUTORT_C_CARBAM, ModificationTable.IC_C_CARBAM);
 		}
 		
 		getStripFromModPeptide();
@@ -62,23 +61,46 @@ public class Peptide {
 	}
 	
 	private void setModifications () {
-		String tempModPeptide = this.modPeptide.replace(ModificationTable.IC_M_OXI, "m");
-		
+		String tempModPeptide = getLowerCaseMod(this.modPeptide);
 		for(int i=0; i<tempModPeptide.length(); i++) {
 			char aa = tempModPeptide.charAt(i);
-			if(aa == 'm') {
-				ArrayList<Double> mods = modifications.get(i+1);
-				if(mods == null) {
-					mods = new ArrayList<Double>();
-					modifications.put(i+1, mods);
-				}
-				mods.add(ModificationTable.OXIDATION_MASS);
+			putMod(aa, i);
+		}
+	}
+	
+	public String getLowerCaseMod (String peptide) {
+		String tempModPeptide = peptide.replace(ModificationTable.IC_M_OXI, "m");
+		tempModPeptide = tempModPeptide.replace(ModificationTable.IC_C_CARBAM, "c");
+		return tempModPeptide;
+	}
+	
+	public String getUpperCaseMod (String peptide) {
+		String tempModPeptide = peptide.replace("m", ModificationTable.IC_M_OXI);
+		tempModPeptide = tempModPeptide.replace("c", ModificationTable.IC_C_CARBAM);
+		return tempModPeptide;
+	}
+	
+	private void putMod (char aa, int idx) {
+		double modMass = 0;
+		if(aa == 'm') {
+			modMass = ModificationTable.OXIDATION_MASS;
+		} else if(aa == 'c') {
+			modMass = ModificationTable.CARBAM_MASS;
+		}
+		
+		if(modMass != 0) {
+			ArrayList<Double> mods = modifications.get(idx+1);
+			if(mods == null) {
+				mods = new ArrayList<Double>();
+				modifications.put(idx+1, mods);
 			}
+			mods.add(modMass);
 		}
 	}
 	
 	private void getStripFromModPeptide () {
 		this.stripPeptide = this.modPeptide.replace(ModificationTable.IC_M_OXI, "M");
+		this.stripPeptide = this.stripPeptide.replace(ModificationTable.IC_C_CARBAM, "C");
 	}
 	
 	public double getMass (boolean withMods) {
@@ -100,7 +122,8 @@ public class Peptide {
 	}
 
 	public void icPeptideToILDetermination (String inferredPeptide) {
-		StringBuilder tempModPeptide = new StringBuilder(this.modPeptide.replace(ModificationTable.IC_M_OXI, "m"));
+		StringBuilder tempModPeptide = new StringBuilder(getLowerCaseMod(this.modPeptide));
+		
 		
 		// I/L change
 		// assume that the InferredPeptide has the same length to record.modifiedPeptide.
@@ -112,12 +135,13 @@ public class Peptide {
 		}
 		
 		// restore both modPeptide and stripPeptide.
-		this.modPeptide = tempModPeptide.toString().replace("m", ModificationTable.IC_M_OXI);
+		this.modPeptide = getUpperCaseMod(tempModPeptide.toString());
 		getStripFromModPeptide();
 	}
 	
 	public void toAutoRTModPeptide () {
 		this.modPeptide = this.modPeptide.replace(ModificationTable.IC_M_OXI, ModificationTable.AUTORT_M_OXI);
+		this.modPeptide = this.modPeptide.replace(ModificationTable.IC_C_CARBAM, ModificationTable.AUTORT_C_CARBAM);
 	}
 	
 	public double[] getTheoreticalLadder (double ion, double charge, boolean withMods) {

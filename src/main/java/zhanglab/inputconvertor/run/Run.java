@@ -9,6 +9,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import zhanglab.inputconvertor.env.InputConvertorConstants;
+import zhanglab.inputconvertor.input.Arriba;
 import zhanglab.inputconvertor.input.Casanovo;
 import zhanglab.inputconvertor.input.Comet;
 import zhanglab.inputconvertor.input.PEAKS;
@@ -19,6 +20,7 @@ import zhanglab.inputconvertor.module.TargetDecoyAnalysis;
 import zhanglab.inputconvertor.module.ToAutoRTInput;
 import zhanglab.inputconvertor.module.ToFeatures;
 import zhanglab.inputconvertor.module.ToMS2PIPInput;
+import zhanglab.inputconvertor.module.ToTranslator;
 import zhanglab.inputconvertor.module.NetMHCpan;
 import zhanglab.inputconvertor.module.TopXgInput;
 
@@ -136,6 +138,17 @@ public class Run {
         else if(mode.equalsIgnoreCase("spectrum_count")) {
         	// args: -f
         	new SpectrumCount(cmd);
+        }
+        
+        else if(mode.equalsIgnoreCase("translate")) {
+        	ToTranslator toTranslator = null;
+        	
+        	// -m -t -i -p -o
+        	if(inputTool.equalsIgnoreCase(InputConvertorConstants.ARRIBA)) {
+        		toTranslator = new Arriba();
+        	}
+        	
+        	toTranslator.doTranslate(cmd);
         }
         
         long endTime = System.currentTimeMillis();

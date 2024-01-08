@@ -31,6 +31,7 @@ public class InputConvertorConstants {
 	public static final String COMET	= "Comet";
 	public static final String AUTORT	= "AutoRT";
 	public static final String IC_CONVERTOR		= "ic_convertor";
+	public static final String ARRIBA	= "Arriba";
 	
 	
 	// ## AutoRT header
@@ -50,6 +51,9 @@ public class InputConvertorConstants {
 	public static final String COMET_PEPTIDE_FIELD_NAME	=	"modified_peptide";
 	public static final String COMET_RT_FIELD_NAME	=	"retention_time_sec";
 	
+	// ## Arriba
+	public static final String ARRIBA_PEPTIDE_FIELD_NAME	=	"peptide_sequence";
+	public static final String ARRIBA_HEADER_ID				=	"FG";
 	
 	public static int getFieldIndex (String[] fields, String tag) {
 		int index = -1;

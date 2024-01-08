@@ -28,7 +28,7 @@ public class RunPercentScore {
 
 
 	public static void main(String[] args) throws IOException {
-		File[] files = new File("/Users/gistar/Documents/ZhangLab/2023_Immunopeptidomics_LUAD/Test/4sample_test_pin").listFiles();
+		File[] files = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/0_input/order").listFiles();
 		
 		for(File file : files) {
 			if(file.getName().startsWith(".")) continue;

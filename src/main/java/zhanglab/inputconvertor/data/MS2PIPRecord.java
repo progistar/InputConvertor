@@ -27,7 +27,7 @@ public class MS2PIPRecord implements Comparable<MS2PIPRecord>{
 		 *********************************************************/
 		
 		
-		String modPeptide = icPeptide.modPeptide.replace(ModificationTable.IC_M_OXI, "m");
+		String modPeptide = icPeptide.getLowerCaseMod(icPeptide.modPeptide);
 		String modifications = "";
 		// I/L change
 		// assume that the InferredPeptide has the same length to record.modifiedPeptide.
@@ -39,7 +39,14 @@ public class MS2PIPRecord implements Comparable<MS2PIPRecord>{
 				if( modifications.length()!=0 ) {
 					modifications += "|";
 				}
-				modifications += (i+1)+"|Oxidation";
+				modifications += (i+1)+"|"+ModificationTable.MS2PIP_M_OXI;
+			} 
+			// CARBAM
+			else if(aa == 'c') {
+				if( modifications.length()!=0 ) {
+					modifications += "|";
+				}
+				modifications += (i+1)+"|"+ModificationTable.MS2PIP_C_CARBAM;
 			}
 		}
 		

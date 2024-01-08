@@ -50,7 +50,7 @@ public class TargetDecoyAnalysis {
         
         File[] files = new File(inputFile).listFiles();
         if(files == null) {
-        	System.out.println("-i option should be a path of folder including .pXg files");
+        	System.out.println("-i option should be a path of folder including .pXg.feat files");
         	System.exit(1);
         }
         
@@ -59,7 +59,7 @@ public class TargetDecoyAnalysis {
         File featFile = null;
         for(File file : files) {
         	if(file.getName().startsWith(".")) continue;
-        	if(file.getName().endsWith(".feat") && file.getName().contains(inputPattern)) {
+        	if(file.getName().endsWith(".pXg.feat") && file.getName().contains(inputPattern)) {
         		featFile = file;
         		System.out.println(featFile.getName());
         	} else if(file.getName().endsWith(".target.psm") && file.getName().contains(inputPattern)) {
