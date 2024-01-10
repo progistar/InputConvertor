@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -16,31 +17,61 @@ import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Transcript;
 import zhanglab.inputconvertor.function.Translator;
+import zhanglab.inputconvertor.input.CIRIquant;
 
 public class RunTranslation {
+	
+	public static void test () throws IOException {
+		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
+		File testFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/CIRIquant/C3L-00973.T/CIRIquant_total_rnaseq.gtf");
+		File referenceFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v34.basic.annotation.gtf");
+		
+		GenomeLoader gmL = new GenomeLoader(genomeFile);
+		GTFLoader gtfRef = new GTFLoader(referenceFile);
+        
+        BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
+        
+        CIRIquant ciriQuant = new CIRIquant(testFile);
+        ciriQuant.enrollGenomeSequence(gmL);
+        ciriQuant.enrollReferenceGTF(gtfRef);
+        ciriQuant.writeEntry(BW, null);
+        BW.close();
+	}
 	
 	public static void main(String[] args) throws IOException, ParseException {
 		long startTime = System.currentTimeMillis();
 		System.out.println("Translator v0.0.0");
 		
+		test();
+		System.exit(1);
 		Options options = new Options();
 		
 		// Options
-		options.addOption("i", "in", true, "input file");
-		options.addOption("t", "tool", true, "input tool (ex> stringtie, ciriquant, arriba, irfinder)");
-		options.addOption("g", "gtf", true, "reference GTF file");
-		options.addOption("f", "fasta", true, "genome fasta file");
+		options.addOption("s", "stringtie", true, "GTF file path from StringTie");
+		options.addOption("a", "arriba", true, "TSV file path from Arriba");
+		options.addOption("c", "ciriquant", true, "GTF file path from CIRIQuant");
+		options.addOption("i", "irfinder", true, "tsv file path from IRFinder");
+		options.addOption("r", "gtf", true, "Reference GTF file");
+		options.addOption("g", "fasta", true, "Genome fasta file");
+		options.addOption("p", "pattern", true, "batch pattern");
 		
 		CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
         
+        
+        
         // parse input
         //String mode = cmd.getOptionValue("m");
-        //String inputTool = cmd.getOptionValue("t");
-        //String genomeFastaFile = cmd.getOptionValue("f");
+        String stringTieFilePath = cmd.getOptionValue("s");
+        String genomeFastaFile = cmd.getOptionValue("g");
 		
-        GenomeLoader gmL = new GenomeLoader(new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa"));
-        GTFLoader gtfL = new GTFLoader(new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v42.basic.annotation.gtf"));
+        File genomeFile = new File(genomeFastaFile);
+        File stringTieFile = new File(stringTieFilePath);
+        
+        GenomeLoader gmL = new GenomeLoader(genomeFile);
+        
+        
+        GTFLoader gtfL = new GTFLoader(stringTieFile);
         
         BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
         

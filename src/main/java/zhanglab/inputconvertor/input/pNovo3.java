@@ -113,9 +113,9 @@ public class pNovo3 implements TopXgInput{
         		String line = null;
         		
         		while((line = BR.readLine()) != null) {
-        			String[] fields = line.split("\t");
         			if(line.startsWith("S") && line.contains(batchPattern)) {
-        				String title = fields[1];
+        				String[] fields = line.split("\t");
+        				String title = fields[1].split("\\s")[0];
         				String mgfFile = mgfFileBase+"/"+title.split("\\.")[0]+".mgf";
         				
         				SimpleMGFSelector mgf = mgfFiles.get(mgfFile);

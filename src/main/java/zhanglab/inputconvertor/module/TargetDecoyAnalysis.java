@@ -109,6 +109,7 @@ public class TargetDecoyAnalysis {
         	
         	// key: specId + peptide.modPeptide
         	// this is because same genomic id and spec id can be occurred when there are modified peptides (site-localization problem).
+        	// Casanovo sometimes distinguishes I/L... 
         	String key = specId+"_"+peptide.modPeptide;
         	
         	String[] psm = targetPSMs.get(key) != null ? targetPSMs.get(key) : decoyPSMs.get(key);

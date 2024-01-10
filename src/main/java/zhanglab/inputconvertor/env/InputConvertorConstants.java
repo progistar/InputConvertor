@@ -55,6 +55,16 @@ public class InputConvertorConstants {
 	public static final String ARRIBA_PEPTIDE_FIELD_NAME	=	"peptide_sequence";
 	public static final String ARRIBA_HEADER_ID				=	"FG";
 	
+	// ## StringTie
+	public static final String STRINGTIE_HEADER_ID			=	"ST";
+	
+	// ## IRFinder
+	public static final String IRFINDER_HEADER_ID			=	"IR";
+	
+	// ## CIRIQuant
+	public static final String CIRIQUANT_HEADER_ID			=	"CR";
+	
+	
 	public static int getFieldIndex (String[] fields, String tag) {
 		int index = -1;
 		

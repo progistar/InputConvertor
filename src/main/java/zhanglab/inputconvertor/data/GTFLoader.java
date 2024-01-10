@@ -25,7 +25,9 @@ public class GTFLoader {
 				String[] fields = line.split("\t");
 				String feature = fields[2];
 				
-				if(feature.equalsIgnoreCase("exon")) {
+				// #FORMAT
+				//// StringTie and Reference
+				if(feature.equalsIgnoreCase("exon") || feature.equalsIgnoreCase("transcript")) {
 					String chr = fields[0];
 					int start = Integer.parseInt(fields[3]);
 					int end = Integer.parseInt(fields[4]);
@@ -35,10 +37,47 @@ public class GTFLoader {
 					String enstId = getTag(attrs, "transcript_id");
 					
 					Transcript transcript = getTranscript(geneId, enstId);
-					transcript.strand = strand;
-					transcript.chr = chr;
-					transcript.exons.add(new Exon(start, end));
 					
+					if(feature.equalsIgnoreCase("transcript")) {
+						transcript.strand = strand;
+						transcript.chr = chr;
+						transcript.start = start+"";
+						transcript.end = end+"";
+						transcript.attrs = fields[8];
+					} else {
+						transcript.exons.add(new Exon(start, end));
+					}
+				}
+				// #FORMAT
+				//// CIRIquant
+				else if(feature.equalsIgnoreCase("circRNA")) {
+					String chr = fields[0];
+					int start = Integer.parseInt(fields[3]);
+					int end = Integer.parseInt(fields[4]);
+					String strand = fields[6];
+					String[] attrs = fields[8].split("\\;");
+					String geneId = getTag(attrs, "gene_id");
+					String enstId = getTag(attrs, "circ_id");
+					
+					ArrayList<String> geneIds = new ArrayList<String>();
+					if(geneId == null) {
+						geneIds.add("intergenic");
+					} else {
+						String[] ids = geneId.split("\\,");
+						for(String id : ids) {
+							geneIds.add(id);
+						}
+					}
+					
+					for(String id : geneIds) {
+						Transcript transcript = getTranscript(id, enstId);
+						transcript.strand = strand;
+						transcript.chr = chr;
+						transcript.start = start+"";
+						transcript.end = end+"";
+						transcript.attrs = fields[8];
+						transcript.exons.add(new Exon(start, end));
+					}
 				}
 			}
 			
@@ -56,6 +95,7 @@ public class GTFLoader {
 	
 	private Transcript getTranscript (String geneId, String enstId) {
 		Transcript thisT = null;
+		
 		ArrayList<Transcript> transcripts = this.geneToTranscripts.get(geneId);
 		if(transcripts == null) {
 			transcripts = new ArrayList<Transcript>();
