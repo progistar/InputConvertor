@@ -4,7 +4,11 @@ public class ModificationTable {
 
 	public static String COMET_M_OXI	= "M[15.9949]";
 	public static String PEAKS_M_OXI	= "M(+15.99)";
+	public static String PEAKS_C_CARBAM	= "C(+57.02)";
+	
+	
 	public static String PNOVO3_M_OXI	= "a";
+	public static String PNOVO3_C_CARBAM	= "c";
 	
 	public static String MS2PIP_M_OXI = "Oxidation";
 	public static String MS2PIP_C_CARBAM = "Carbamidomethyl";

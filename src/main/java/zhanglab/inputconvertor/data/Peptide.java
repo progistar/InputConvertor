@@ -31,13 +31,13 @@ public class Peptide {
 		}
 		
 		else if(peptideFrom.equalsIgnoreCase(InputConvertorConstants.PNOVO3)) {
-			String M = ModificationTable.PNOVO3_M_OXI;
-			this.modPeptide = peptide.replace(M, ModificationTable.IC_M_OXI);
+			this.modPeptide = peptide.replace(ModificationTable.PNOVO3_M_OXI, ModificationTable.IC_M_OXI);
+			this.modPeptide = this.modPeptide.replace(ModificationTable.PNOVO3_C_CARBAM, ModificationTable.IC_C_CARBAM);
 		}
 		
 		else if(peptideFrom.equalsIgnoreCase(InputConvertorConstants.PEAKS)) {
-			String M = ModificationTable.PEAKS_M_OXI;
-			this.modPeptide = peptide.replace(M, ModificationTable.IC_M_OXI);
+			this.modPeptide = peptide.replace(ModificationTable.PEAKS_M_OXI, ModificationTable.IC_M_OXI);
+			this.modPeptide = this.modPeptide.replace(ModificationTable.PEAKS_C_CARBAM, ModificationTable.IC_C_CARBAM);
 		}
 		
 		else if(peptideFrom.equalsIgnoreCase(InputConvertorConstants.COMET)) {
