@@ -34,6 +34,13 @@ public class InputConvertorConstants {
 	public static final String ARRIBA	= "Arriba";
 	
 	
+	// ## PEAKS header
+	public static final String PEAKS_SOURCE_FILE_FIELD_NAME = "Source File";
+	public static final String PEAKS_SCAN_FIELD_NAME = "Scan";
+	public static final String PEAKS_PEPTIDE_FIELD_NAME = "Peptide";
+	public static final String PEAKS_CHARGE_FIELD_NAME = "z";
+	
+	
 	// ## AutoRT header
 	public static final String AUTORT_HEADER_X	=	"x";
 	public static final String AUTORT_HEADER_Y	=	"y";
@@ -47,9 +54,18 @@ public class InputConvertorConstants {
 	public static final String MS2PIP_HEADER_PEPTIDE	=	"peptide";
 	public static final String MS2PIP_HEADER_CHARGE	=	"charge";
 	
-	// ##Comet
+	// ## Comet header
 	public static final String COMET_PEPTIDE_FIELD_NAME	=	"modified_peptide";
 	public static final String COMET_RT_FIELD_NAME	=	"retention_time_sec";
+	
+	// ## VEP header
+	public static final String VEP_CHR_FIELD_NAME = "";
+	public static final String VEP_POS_FIELD_NAME = "";
+	public static final String VEP_REF_FIELD_NAME = "";
+	public static final String VEP_ALT_FIELD_NAME = "";
+	public static final byte				SNP   = 0;
+	public static final byte				INS   = 1;
+	public static final byte				DEL   = 2;
 	
 	// ## Arriba
 	public static final String ARRIBA_PEPTIDE_FIELD_NAME	=	"peptide_sequence";

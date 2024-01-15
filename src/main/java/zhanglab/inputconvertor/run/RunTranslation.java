@@ -52,6 +52,7 @@ public class RunTranslation {
 		options.addOption("c", "ciriquant", true, "GTF file path from CIRIQuant");
 		options.addOption("i", "irfinder", true, "tsv file path from IRFinder");
 		options.addOption("r", "gtf", true, "Reference GTF file");
+		options.addOption("v", "VEP", true, "VEP file path from Ensembl Variant Effeect Predictor");
 		options.addOption("g", "fasta", true, "Genome fasta file");
 		options.addOption("p", "pattern", true, "batch pattern");
 		

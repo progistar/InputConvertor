@@ -21,10 +21,10 @@ public class PEAKS implements TopXgInput{
 	public PEAKS () {}
 	
 	///////// PEAKS 11 index ////////////
-	public static int FILE_IDX = 0;
-	public static int SCAN_IDX = 1;
-	public static int PEPTIDE_IDX = 2;
-	public static int CHARGE_IDX = 7;
+	public static int FILE_IDX = -1;
+	public static int SCAN_IDX = -1;
+	public static int PEPTIDE_IDX = -1;
+	public static int CHARGE_IDX = -1;
 	////////////////////////////////////////////
 	
 	
@@ -87,6 +87,12 @@ public class PEAKS implements TopXgInput{
     				.append(InputConvertorConstants.IC_CHARGE_FIELD_NAME).append("\t")
     				.append(InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
     				BW.newLine();
+    				
+    				String[] header = batchHeader.split("\t");
+    				FILE_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_SOURCE_FILE_FIELD_NAME);
+    				PEPTIDE_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_PEPTIDE_FIELD_NAME);
+    				SCAN_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_SCAN_FIELD_NAME);
+    				CHARGE_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_CHARGE_FIELD_NAME);
                 }
                 ////////////////////////////////// End of building header ////////////////
         		
@@ -109,7 +115,7 @@ public class PEAKS implements TopXgInput{
     				// note that if PEAKS runs from .raw files, then the charge state can be altered by PEAKS.
     				String scanNum = fields[SCAN_IDX];
     				String title = mgf.scanToTitle.get(Integer.parseInt(scanNum));
-    				String charge = title.split("\\.")[title.split("\\.").length-1];
+    				String charge = fields[CHARGE_IDX];
         			
     				String rt = mgf.titleToRT.get(title);
     				Peptide peptide = new Peptide(fields[PEPTIDE_IDX], InputConvertorConstants.PEAKS);
