@@ -68,13 +68,17 @@ public class RunTranslation {
  	
  	public static void testStringTie () throws IOException {
  		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
-		File stringTieFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/stringtie/C3L-00973.T.stringtie_output.gtf");
 		GenomeLoader gmL = new GenomeLoader(genomeFile);
-		StringTie stringTie = new StringTie(stringTieFile);
-		stringTie.enrollGenomeSequence(gmL);
-		
-		ArrayList<FastaEntry> entries = stringTie.getFastaEntry(1.00);
-		
+		File stringTieFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/stringtie/C3L-00973.T.stringtie_output.gtf");
+		File[] files = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/stringtie").listFiles();
+		for(File file : files) {
+			if(file.getName().startsWith(".")) continue;
+			if(!file.getName().endsWith(".gtf")) continue;
+			StringTie stringTie = new StringTie(file);
+			stringTie.enrollGenomeSequence(gmL);
+			//ArrayList<FastaEntry> entries = stringTie.getFastaEntry(1.00);
+		}
+		/*
 		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
         
         for(FastaEntry entry : entries) {
@@ -85,6 +89,7 @@ public class RunTranslation {
         }
         
         BW.close();
+        */
  	}
 	
 	public static void main(String[] args) throws IOException, ParseException {
