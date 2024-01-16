@@ -73,7 +73,7 @@ public class RunTranslation {
 		StringTie stringTie = new StringTie(stringTieFile);
 		stringTie.enrollGenomeSequence(gmL);
 		
-		ArrayList<FastaEntry> entries = stringTie.getFastaEntry();
+		ArrayList<FastaEntry> entries = stringTie.getFastaEntry(1.00);
 		
 		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
         

@@ -35,15 +35,22 @@ public class GTFLoader {
 					String[] attrs = fields[8].split("\\;");
 					String geneId = getTag(attrs, "gene_id");
 					String enstId = getTag(attrs, "transcript_id");
-					
+
 					Transcript transcript = getTranscript(geneId, enstId);
 					
 					if(feature.equalsIgnoreCase("transcript")) {
+						String fpkm = getTag(attrs, "FPKM");
+						double expValue = Double.MAX_VALUE;
+						if(fpkm != null) {
+							expValue = Double.parseDouble(fpkm);
+						}
+						
 						transcript.strand = strand;
 						transcript.chr = chr;
 						transcript.start = start+"";
 						transcript.end = end+"";
 						transcript.attrs = fields[8];
+						transcript.FPKM = expValue;
 					} else {
 						transcript.exons.add(new Exon(start, end));
 					}

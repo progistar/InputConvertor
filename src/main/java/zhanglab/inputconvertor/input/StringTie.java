@@ -44,7 +44,6 @@ public class StringTie {
 			int eEnd = exons.get(i).end;
 			nucleotide.append(refGenome.getSequence(transcript.chr, eStart, eEnd));
 		}
-		
 
 		if(transcript.start.equalsIgnoreCase("+")) {
 			protein.append(Translator.translation(nucleotide.toString(), frame));
@@ -55,12 +54,21 @@ public class StringTie {
 		return protein.toString();
 	}
 	
-	public ArrayList<FastaEntry> getFastaEntry () throws IOException {
+	public ArrayList<FastaEntry> getFastaEntry (double FPKMthreshold) throws IOException {
 		ArrayList<FastaEntry> fastaEntries = new ArrayList<FastaEntry>();
 		
         this.gtf.geneToTranscripts.forEach((g, ts)->{
     		
     		for(Transcript t : ts) {
+    			
+    			// fpkm threshold
+    			if(t.FPKM <= FPKMthreshold) {
+    				continue;
+    			}
+    			
+    			if(t.FPKM == Double.MAX_VALUE) {
+    				System.out.println(t.tID);
+    			}
     			
     			for(int frame = 0; frame < 3; frame++) {
     				String protein = this.getTranslation(t, frame);

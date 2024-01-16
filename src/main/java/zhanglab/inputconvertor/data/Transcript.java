@@ -10,6 +10,7 @@ public class Transcript {
 	public String start;
 	public String end;
 	public String attrs;
+	public double FPKM = Double.MAX_VALUE;
 	
 	public ArrayList<Exon> exons = new ArrayList<Exon>();
 }
