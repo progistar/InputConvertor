@@ -29,6 +29,10 @@ public class Arriba {
 		BufferedReader BR = new BufferedReader(new FileReader(this.arribaFile));
         String[] header = BR.readLine().split("\t");
         int peptideIdx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_PEPTIDE_FIELD_NAME);
+        int gene1Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_GENE1_FIELD_NAME);
+        int gene2Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_GENE2_FIELD_NAME);
+        int breakPoint1Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_BREAK_POINT1_FIELD_NAME);
+        int breakPoint2Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_BREAK_POINT2_FIELD_NAME);
         String line = null;
         
         while((line = BR.readLine()) != null) {
@@ -44,6 +48,18 @@ public class Arriba {
         		String partialPeptide = matcher.group();
         		fullPeptide += partialPeptide;
         	}
+        	
+        	
+        	String gene1 = fields[gene1Idx];
+        	String gene2 = fields[gene2Idx];
+        	String bp1 = fields[breakPoint1Idx];
+        	String bp2 = fields[breakPoint2Idx];
+        	
+        	FastaEntry entry = new FastaEntry();
+			entry.tool = InputConvertorConstants.ARRIBA_HEADER_ID;
+			entry.header = gene1+"+"+gene2+"|"+bp1+"+"+bp2;
+			entry.sequence = fullPeptide;
+			fastaEntries.add(entry);
         	
         }
         

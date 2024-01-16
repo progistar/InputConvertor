@@ -13,12 +13,14 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import zhanglab.inputconvertor.data.Exon;
+import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Mutation;
 import zhanglab.inputconvertor.data.Transcript;
 import zhanglab.inputconvertor.data.VEPLoader;
 import zhanglab.inputconvertor.function.Translator;
+import zhanglab.inputconvertor.input.Arriba;
 import zhanglab.inputconvertor.input.CIRIquant;
 
 public class RunTranslation {
@@ -36,25 +38,33 @@ public class RunTranslation {
 		
 	}
 	
-	public static void testArriba () throws IOException {
-		
-	}
-	
- 	public static void testCIRIquant () throws IOException {
+ 	public static void testAll () throws IOException {
 		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
 		File testFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/CIRIquant/C3L-00973.T/CIRIquant_total_rnaseq.gtf");
 		File referenceFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v34.basic.annotation.gtf");
-		
+		File arribaFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/arriba/C3L-00973.T.arriba.fusions.tsv");
 		
 		GenomeLoader gmL = new GenomeLoader(genomeFile);
 		GTFLoader gtfRef = new GTFLoader(referenceFile);
         
-        BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
         
         CIRIquant ciriQuant = new CIRIquant(testFile);
         ciriQuant.enrollGenomeSequence(gmL);
         ciriQuant.enrollReferenceGTF(gtfRef);
-        ciriQuant.getFastaEntry();
+        ArrayList<FastaEntry> entries = ciriQuant.getFastaEntry();
+        
+        Arriba arriba = new Arriba(arribaFile);
+        entries.addAll(arriba.getFastaEntry());
+        
+        BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
+        
+        for(FastaEntry entry : entries) {
+        	BW.append(">"+entry.tool+"|"+entry.header);
+        	BW.newLine();
+        	BW.append(entry.sequence);
+        	BW.newLine();
+        }
+        
         BW.close();
 	}
 	
@@ -62,7 +72,7 @@ public class RunTranslation {
 		long startTime = System.currentTimeMillis();
 		System.out.println("Translator v0.0.0");
 		
-		testVEP();
+		testAll();
 		System.exit(1);
 		Options options = new Options();
 		

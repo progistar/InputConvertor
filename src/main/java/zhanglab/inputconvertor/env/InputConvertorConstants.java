@@ -70,6 +70,10 @@ public class InputConvertorConstants {
 	
 	// ## Arriba
 	public static final String ARRIBA_PEPTIDE_FIELD_NAME	=	"peptide_sequence";
+	public static final String ARRIBA_GENE1_FIELD_NAME		=	"#gene1";
+	public static final String ARRIBA_GENE2_FIELD_NAME		=	"gene2";
+	public static final String ARRIBA_BREAK_POINT1_FIELD_NAME		=	"breakpoint1";
+	public static final String ARRIBA_BREAK_POINT2_FIELD_NAME		=	"breakpoint2";
 	public static final String ARRIBA_HEADER_ID				=	"FG";
 	
 	// ## StringTie
