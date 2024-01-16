@@ -1,6 +1,5 @@
 package zhanglab.inputconvertor.input;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -161,13 +160,14 @@ public class CIRIquant {
     			for(ArrayList<Exon> nExons : exons) {
     				for(int frame = 0; frame < 3; frame++) {
     					protein = this.getTranslation(nExons, t.chr, tStart, tEnd, frame, t.strand);
-    					if(protein.length() != 0) {
-    						FastaEntry entry = new FastaEntry();
-    						entry.tool = InputConvertorConstants.CIRIQUANT_HEADER_ID;
-    						entry.header = t.tID+"|"+frame;
-    						entry.sequence = protein.toString();
-    						fastaEntries.add(entry);
-    					}
+    					
+    					if(protein.length() < InputConvertorConstants.MIN_PEPT_LEN) continue;
+    					
+						FastaEntry entry = new FastaEntry();
+						entry.tool = InputConvertorConstants.CIRIQUANT_HEADER_ID;
+						entry.header = t.tID+"|"+frame;
+						entry.sequence = protein.toString();
+						fastaEntries.add(entry);
     				}
     			}
         	}

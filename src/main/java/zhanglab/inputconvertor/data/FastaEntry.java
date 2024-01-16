@@ -6,4 +6,6 @@ public class FastaEntry {
 	public String sequence;
 	public String header;
 	
+	// TODO
+	public String table;
 }

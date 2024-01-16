@@ -85,6 +85,9 @@ public class InputConvertorConstants {
 	// ## CIRIQuant
 	public static final String CIRIQUANT_HEADER_ID			=	"CR";
 	
+	// ## Translation
+	public static final int MIN_PEPT_LEN					=	7;
+	
 	
 	public static int getFieldIndex (String[] fields, String tag) {
 		int index = -1;

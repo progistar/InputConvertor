@@ -49,6 +49,8 @@ public class Arriba {
         		fullPeptide += partialPeptide;
         	}
         	
+        	if(fullPeptide.length() < InputConvertorConstants.MIN_PEPT_LEN) continue;
+        	
         	
         	String gene1 = fields[gene1Idx];
         	String gene2 = fields[gene2Idx];

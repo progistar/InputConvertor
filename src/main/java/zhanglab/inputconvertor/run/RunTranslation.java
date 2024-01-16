@@ -12,16 +12,14 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import zhanglab.inputconvertor.data.Exon;
 import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Mutation;
-import zhanglab.inputconvertor.data.Transcript;
 import zhanglab.inputconvertor.data.VEPLoader;
-import zhanglab.inputconvertor.function.Translator;
 import zhanglab.inputconvertor.input.Arriba;
 import zhanglab.inputconvertor.input.CIRIquant;
+import zhanglab.inputconvertor.input.StringTie;
 
 public class RunTranslation {
 	
@@ -67,12 +65,33 @@ public class RunTranslation {
         
         BW.close();
 	}
+ 	
+ 	public static void testStringTie () throws IOException {
+ 		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
+		File stringTieFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/stringtie/C3L-00973.T.stringtie_output.gtf");
+		GenomeLoader gmL = new GenomeLoader(genomeFile);
+		StringTie stringTie = new StringTie(stringTieFile);
+		stringTie.enrollGenomeSequence(gmL);
+		
+		ArrayList<FastaEntry> entries = stringTie.getFastaEntry();
+		
+		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
+        
+        for(FastaEntry entry : entries) {
+        	BW.append(">"+entry.tool+"|"+entry.header);
+        	BW.newLine();
+        	BW.append(entry.sequence);
+        	BW.newLine();
+        }
+        
+        BW.close();
+ 	}
 	
 	public static void main(String[] args) throws IOException, ParseException {
 		long startTime = System.currentTimeMillis();
 		System.out.println("Translator v0.0.0");
 		
-		testAll();
+		testStringTie();
 		System.exit(1);
 		Options options = new Options();
 		
@@ -96,46 +115,6 @@ public class RunTranslation {
         String stringTieFilePath = cmd.getOptionValue("s");
         String genomeFastaFile = cmd.getOptionValue("g");
 		
-        File genomeFile = new File(genomeFastaFile);
-        File stringTieFile = new File(stringTieFilePath);
-        
-        GenomeLoader gmL = new GenomeLoader(genomeFile);
-        
-        
-        GTFLoader gtfL = new GTFLoader(stringTieFile);
-        
-        BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
-        
-        gtfL.geneToTranscripts.forEach((g, ts)->{
-        	StringBuilder sequence = new StringBuilder();
-        	for(Transcript t : ts) {
-        		sequence.setLength(0);
-        		String protein = null;
-        		for(Exon e : t.exons) {
-        			sequence.append(gmL.getSequence(t.chr, e.start-1, e.end));
-        		}
-        		
-        		try {
-        			
-        			for(int i=0; i<3; i++) {
-        				if(t.strand.equalsIgnoreCase("+")) {
-                			protein = Translator.translation(sequence.toString(), i);
-                		} else {
-                			protein = Translator.reverseComplementTranslation(sequence.toString(), i);
-                		}
-        				BW.append(">").append(t.tID).append("|").append("Frame_"+i);
-            			BW.newLine();
-            			BW.append(protein);
-            			BW.newLine();
-        			}
-        		}catch(IOException ioe) {
-        			
-        		}
-        	}
-        });
-        
-        BW.close();
-        
         long endTime = System.currentTimeMillis();
         
         System.out.println((endTime-startTime)/1000+" sec");
