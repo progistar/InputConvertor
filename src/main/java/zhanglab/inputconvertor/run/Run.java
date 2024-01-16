@@ -143,10 +143,6 @@ public class Run {
         else if(mode.equalsIgnoreCase("translate")) {
         	ToTranslator toTranslator = null;
         	
-        	// -m -t -i -p -o
-        	if(inputTool.equalsIgnoreCase(InputConvertorConstants.ARRIBA)) {
-        		toTranslator = new Arriba();
-        	}
         	
         	toTranslator.doTranslate(cmd);
         }

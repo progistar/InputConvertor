@@ -8,17 +8,17 @@ import java.io.IOException;
 public class FindPeptides {
 
 	public static void main(String[] args) throws IOException {
-		int geneNameIdx = 42;
-		int eventIdx = 44;
-		int mutationIdx = 36;
+		int geneNameIdx = 41;
+		int eventIdx = 43;
+		int mutationIdx = 35;
 		
-		File[] files = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/1_LUAD/LUAD_casanovo+pXg").listFiles();
+		File[] files = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Spliceosome/1.Search/0.Bruker").listFiles();
 		
 		
 		String header = null;
 		for(File file :files) {
 			if(file.getName().startsWith(".")) continue;
-			if(!file.getName().endsWith(".ba")) continue;
+			if(!file.getName().endsWith(".pXg")) continue;
 			
 			BufferedReader BR = new BufferedReader(new FileReader(file));
 			String line = null;
@@ -35,11 +35,11 @@ public class FindPeptides {
 			while((line = BR.readLine()) != null) {
 				String[] fields = line.split("\t");
 				/*
-				if(fields[geneNameIdx].equalsIgnoreCase("SMARCA5")) {
+				if(fields[geneNameIdx].equalsIgnoreCase("NADK")) {
 					System.out.println(sample+"\t"+line);
 				}*/
 				
-				if(fields[eventIdx].contains("unknown")) {
+				if(fields[eventIdx].contains("AS")) {
 					System.out.println(sample+"\t"+line);
 				}
 				/*

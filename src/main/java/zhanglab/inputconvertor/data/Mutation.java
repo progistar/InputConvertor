@@ -1,7 +1,5 @@
 package zhanglab.inputconvertor.data;
 
-import zhanglab.inputconvertor.env.InputConvertorConstants;
-
 public class Mutation {
 
 	public boolean isSomatic= false;
@@ -12,13 +10,7 @@ public class Mutation {
 	public byte type		= 0;
 	
 	
-	public void setMutationStatus () {
-		if(refSeq.length() == altSeq.length()) {
-			this.type = InputConvertorConstants.SNP;
-		} else if(refSeq.length() > altSeq.length()) {
-			this.type = InputConvertorConstants.DEL;
-		} else if(refSeq.length() < altSeq.length()) {
-			this.type = InputConvertorConstants.INS;
-		}
+	public String toString() {
+		return chr+":"+pos+"\t"+refSeq+">"+altSeq;
 	}
 }

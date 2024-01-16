@@ -15,16 +15,36 @@ import org.apache.commons.cli.ParseException;
 import zhanglab.inputconvertor.data.Exon;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
+import zhanglab.inputconvertor.data.Mutation;
 import zhanglab.inputconvertor.data.Transcript;
+import zhanglab.inputconvertor.data.VEPLoader;
 import zhanglab.inputconvertor.function.Translator;
 import zhanglab.inputconvertor.input.CIRIquant;
 
 public class RunTranslation {
 	
-	public static void test () throws IOException {
+	public static void testVEP() throws IOException {
+		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
+		VEPLoader vep = new VEPLoader(vepFile, true);
+		
+		ArrayList<Mutation> mutations = vep.getDELByRange("chr19", 9126193, 9126195);
+		
+		for(Mutation mutation : mutations) {
+			System.out.println(mutation.toString());
+		}
+		
+		
+	}
+	
+	public static void testArriba () throws IOException {
+		
+	}
+	
+ 	public static void testCIRIquant () throws IOException {
 		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
 		File testFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/CIRIquant/C3L-00973.T/CIRIquant_total_rnaseq.gtf");
 		File referenceFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v34.basic.annotation.gtf");
+		
 		
 		GenomeLoader gmL = new GenomeLoader(genomeFile);
 		GTFLoader gtfRef = new GTFLoader(referenceFile);
@@ -34,7 +54,7 @@ public class RunTranslation {
         CIRIquant ciriQuant = new CIRIquant(testFile);
         ciriQuant.enrollGenomeSequence(gmL);
         ciriQuant.enrollReferenceGTF(gtfRef);
-        ciriQuant.writeEntry(BW, null);
+        ciriQuant.getFastaEntry();
         BW.close();
 	}
 	
@@ -42,7 +62,7 @@ public class RunTranslation {
 		long startTime = System.currentTimeMillis();
 		System.out.println("Translator v0.0.0");
 		
-		test();
+		testVEP();
 		System.exit(1);
 		Options options = new Options();
 		

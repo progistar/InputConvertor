@@ -6,9 +6,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import zhanglab.inputconvertor.data.Exon;
+import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Transcript;
+import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.function.Translator;
 
 public class CIRIquant {
@@ -131,9 +133,8 @@ public class CIRIquant {
 		return protein.toString();
 	}
 	
-	public void writeEntry (BufferedWriter mainFasta, BufferedWriter mapper) throws IOException {
-		
-		
+	public ArrayList<FastaEntry> getFastaEntry () throws IOException {
+		ArrayList<FastaEntry> fastaEntries = new ArrayList<FastaEntry>();
 		
         this.gtf.geneToTranscripts.forEach((g, ts)->{
     		ArrayList<Transcript> refTs = this.refGTF.geneToTranscripts.get(g);
@@ -161,20 +162,18 @@ public class CIRIquant {
     				for(int frame = 0; frame < 3; frame++) {
     					protein = this.getTranslation(nExons, t.chr, tStart, tEnd, frame, t.strand);
     					if(protein.length() != 0) {
-    						try {
-    							mainFasta.append(">").append(t.tID).append("|").append(""+frame);
-    							mainFasta.newLine();
-    							mainFasta.append(protein.toString());
-    							mainFasta.newLine();
-    							
-    						}catch(IOException ioe) {
-    							
-    						}
+    						FastaEntry entry = new FastaEntry();
+    						entry.tool = InputConvertorConstants.CIRIQUANT_HEADER_ID;
+    						entry.header = t.tID+"|"+frame;
+    						entry.sequence = protein.toString();
+    						fastaEntries.add(entry);
     					}
     				}
     			}
         	}
         	
         });
+        
+        return fastaEntries;
 	}
 }

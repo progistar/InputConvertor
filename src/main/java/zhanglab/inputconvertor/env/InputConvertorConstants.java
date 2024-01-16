@@ -59,13 +59,14 @@ public class InputConvertorConstants {
 	public static final String COMET_RT_FIELD_NAME	=	"retention_time_sec";
 	
 	// ## VEP header
-	public static final String VEP_CHR_FIELD_NAME = "";
-	public static final String VEP_POS_FIELD_NAME = "";
-	public static final String VEP_REF_FIELD_NAME = "";
-	public static final String VEP_ALT_FIELD_NAME = "";
+	public static final String VEP_LOC_FIELD_NAME = "Location";
+	public static final String VEP_REF_FIELD_NAME = "REF_ALLELE";
+	public static final String VEP_ALT_FIELD_NAME = "Allele";
 	public static final byte				SNP   = 0;
 	public static final byte				INS   = 1;
 	public static final byte				DEL   = 2;
+	public static final byte			ALL_MUT	  = 3;
+	public static final String DELETION_MARK	  = "-";
 	
 	// ## Arriba
 	public static final String ARRIBA_PEPTIDE_FIELD_NAME	=	"peptide_sequence";
