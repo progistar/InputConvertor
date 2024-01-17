@@ -13,7 +13,8 @@ import zhanglab.inputconvertor.env.InputConvertorConstants;
 public class GenomeLoader {
 
 	private Hashtable<String, StringBuilder> genomeMap = new Hashtable<String, StringBuilder>();
-	private VEPLoader vep = null;
+	private VEPLoader somaVEP = null;
+	private VEPLoader germVEP = null;
 	
 	public GenomeLoader (File file) {
 		// load genome
@@ -41,10 +42,16 @@ public class GenomeLoader {
 		}
 	}
 	
-	public void enrollVEPLaoder (VEPLoader vep) {
+	public void enrollSomaticVEPLaoder (VEPLoader vep) {
 		System.out.println("## GenomeLoader ##");
-		System.out.println("Enroll VEP");
-		this.vep = vep;
+		System.out.println("Enroll Somatic VEP");
+		this.somaVEP = vep;
+	}
+	
+	public void enrollGermVEPLaoder (VEPLoader vep) {
+		System.out.println("## GenomeLoader ##");
+		System.out.println("Enroll Germline VEP");
+		this.germVEP = vep;
 	}
 	
 	/**
@@ -72,20 +79,37 @@ public class GenomeLoader {
 			exon.nucleotide = sequence.subSequence(start,  end).toString();
 			
 			// enroll mutations
-			if(vep != null) {
-				ArrayList<Mutation> mutations = vep.getSNPByRange(chr, exon.start, exon.end+1);
+			if(somaVEP != null) {
+				ArrayList<Mutation> mutations = somaVEP.getSNPByRange(chr, exon.start, exon.end+1);
 				if(mutations.size() != 0) {
-					exon.snps = mutations;
+					exon.snps.addAll(mutations);
 				}
 				
-				mutations = vep.getINSByRange(chr, exon.start, exon.end+1);
+				mutations = somaVEP.getINSByRange(chr, exon.start, exon.end+1);
 				if(mutations.size() != 0) {
-					exon.inss = mutations;
+					exon.inss.addAll(mutations);
 				}
 				
-				mutations = vep.getDELByRange(chr, exon.start, exon.end+1);
+				mutations = somaVEP.getDELByRange(chr, exon.start, exon.end+1);
 				if(mutations.size() != 0) {
-					exon.dels = mutations;
+					exon.dels.addAll(mutations);
+				}
+			}
+			
+			if(germVEP != null) {
+				ArrayList<Mutation> mutations = germVEP.getSNPByRange(chr, exon.start, exon.end+1);
+				if(mutations.size() != 0) {
+					exon.snps.addAll(mutations);
+				}
+				
+				mutations = germVEP.getINSByRange(chr, exon.start, exon.end+1);
+				if(mutations.size() != 0) {
+					exon.inss.addAll(mutations);
+				}
+				
+				mutations = germVEP.getDELByRange(chr, exon.start, exon.end+1);
+				if(mutations.size() != 0) {
+					exon.dels.addAll(mutations);
 				}
 			}
 		}

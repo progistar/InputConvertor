@@ -71,9 +71,9 @@ public class RunTranslation {
 		File stringTieFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/stringtie/C3L-00973.T.stringtie_output.gtf");
 		StringTie stringTie = new StringTie(stringTieFile);
 		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
-		VEPLoader vep = new VEPLoader(vepFile, true);
+		VEPLoader somaVEP = new VEPLoader(vepFile, true);
 		
-		gmL.enrollVEPLaoder(vep);
+		gmL.enrollSomaticVEPLaoder(somaVEP);
 		stringTie.enrollGenomeSequence(gmL);
 		ArrayList<FastaEntry> entries = stringTie.getFastaEntry(1.00);
 		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
@@ -93,11 +93,11 @@ public class RunTranslation {
  		File referenceFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v34.basic.annotation.gtf");
  		File irfinderFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/irfinder/C3L-00973.T/IRFinder-IR-nondir.txt");
  		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
-		VEPLoader vep = new VEPLoader(vepFile, true);
+		VEPLoader somaVEP = new VEPLoader(vepFile, true);
 		
 		
  		GenomeLoader gmL = new GenomeLoader(genomeFile);
- 		gmL.enrollVEPLaoder(vep);
+ 		gmL.enrollSomaticVEPLaoder(somaVEP);
 		IRFinder irFinder = new IRFinder(irfinderFile);
 		GTFLoader gtfRef = new GTFLoader(referenceFile);
 		
