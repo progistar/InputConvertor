@@ -81,6 +81,12 @@ public class InputConvertorConstants {
 	
 	// ## IRFinder
 	public static final String IRFINDER_HEADER_ID			=	"IR";
+	public static final String IRFINDER_CHR_FIELD_NAME		=	"Chr";
+	public static final String IRFINDER_START_FIELD_NAME	=	"Start";
+	public static final String IRFINDER_END_FIELD_NAME		=	"End";
+	public static final String IRFINDER_NAME_FIELD_NAME		=	"Name";
+	public static final String IRFINDER_STRAND_FIELD_NAME	=	"Strand";
+	public static final String IRFINDER_WARNINGS_FIELD_NAME	=	"Warnings";
 	
 	// ## CIRIQuant
 	public static final String CIRIQUANT_HEADER_ID			=	"CR";

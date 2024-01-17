@@ -26,7 +26,7 @@ public class GTFLoader {
 				String feature = fields[2];
 				
 				// #FORMAT
-				//// StringTie and Reference
+				//// StringTie or Reference
 				if(feature.equalsIgnoreCase("exon") || feature.equalsIgnoreCase("transcript")) {
 					String chr = fields[0];
 					int start = Integer.parseInt(fields[3]);

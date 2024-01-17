@@ -11,6 +11,7 @@ import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Transcript;
+import zhanglab.inputconvertor.data.VEPLoader;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.function.Translator;
 
@@ -22,6 +23,7 @@ public class StringTie {
 	public GTFLoader refGTF = null;
 	public GenomeLoader refGenome = null;
 	public String logFileName = null;
+	public VEPLoader vep = null;
 	
 	public StringTie (File file) throws IOException {
 		System.out.println("## StringTie ##");
@@ -39,6 +41,14 @@ public class StringTie {
 		System.out.println("Enroll reference genome");
 		this.refGenome = refGenome;
 	}
+	
+	public void enrollVEP (VEPLoader vep) {
+		System.out.println("## StringTie ##");
+		System.out.println("Enroll VEP");
+		this.vep = vep;
+	}
+	
+	
 	
 	private void writeLog () throws IOException {
 		BufferedWriter BW = new BufferedWriter(new FileWriter(this.logFileName));
@@ -99,23 +109,20 @@ public class StringTie {
 	}
 	
 	private String getTranslation (Transcript transcript, int frame) {
-		StringBuilder nucleotide = new StringBuilder();
 		StringBuilder protein = new StringBuilder();
 		
 		
 		ArrayList<Exon> exons = transcript.exons;
 		
-		for(int i=0; i<exons.size(); i++) {
-			int eStart = exons.get(i).start - 1;
-			int eEnd = exons.get(i).end;
-			nucleotide.append(refGenome.getSequence(transcript.chr, eStart, eEnd));
-		}
-
+		refGenome.setSequence(transcript.chr, exons);
+		
 		if(transcript.start.equalsIgnoreCase("+")) {
-			protein.append(Translator.translation(nucleotide.toString(), frame));
+			protein.append(Translator.translation(exons, frame));
 		} else {
-			protein.append(Translator.reverseComplementTranslation(nucleotide.toString(), frame));
+			protein.append(Translator.reverseComplementTranslation(exons, frame));
 		}
+		
+		
 		
 		return protein.toString();
 	}

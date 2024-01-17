@@ -59,6 +59,7 @@ public class VEPLoader {
 					String ref = refs.charAt(idx)+"";
 					mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = i; mutation.chr = chr;
 					mutation.type = InputConvertorConstants.SNP;
+					mutation.key = key;
 					this.putMutation(chr, mutation);
 					idx++;
 				}
@@ -73,6 +74,7 @@ public class VEPLoader {
 					String ref = refs.charAt(idx)+"";
 					mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = i; mutation.chr = chr;
 					mutation.type = InputConvertorConstants.DEL;
+					mutation.key = key;
 					this.putMutation(chr, mutation);
 					idx++;
 				}
@@ -85,6 +87,7 @@ public class VEPLoader {
 				String ref = InputConvertorConstants.DELETION_MARK;
 				mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = startPos; mutation.chr = chr;
 				mutation.type = InputConvertorConstants.DEL;
+				mutation.key = key;
 				this.putMutation(chr, mutation);
 				totalOfMutations[InputConvertorConstants.INS]++;
 			}
@@ -111,9 +114,6 @@ public class VEPLoader {
 			mutations = new ArrayList<Mutation>();
 			map.put(mutation.pos, mutations);
 		}
-		
-		// duplication check
-		
 		
 		mutations.add(mutation);
 	}

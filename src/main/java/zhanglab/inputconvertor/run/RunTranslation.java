@@ -19,6 +19,7 @@ import zhanglab.inputconvertor.data.Mutation;
 import zhanglab.inputconvertor.data.VEPLoader;
 import zhanglab.inputconvertor.input.Arriba;
 import zhanglab.inputconvertor.input.CIRIquant;
+import zhanglab.inputconvertor.input.IRFinder;
 import zhanglab.inputconvertor.input.StringTie;
 
 public class RunTranslation {
@@ -32,8 +33,6 @@ public class RunTranslation {
 		for(Mutation mutation : mutations) {
 			System.out.println(mutation.toString());
 		}
-		
-		
 	}
 	
  	public static void testAll () throws IOException {
@@ -70,15 +69,13 @@ public class RunTranslation {
  		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
 		GenomeLoader gmL = new GenomeLoader(genomeFile);
 		File stringTieFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/stringtie/C3L-00973.T.stringtie_output.gtf");
-		File[] files = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/stringtie").listFiles();
-		for(File file : files) {
-			if(file.getName().startsWith(".")) continue;
-			if(!file.getName().endsWith(".gtf")) continue;
-			StringTie stringTie = new StringTie(file);
-			stringTie.enrollGenomeSequence(gmL);
-			//ArrayList<FastaEntry> entries = stringTie.getFastaEntry(1.00);
-		}
-		/*
+		StringTie stringTie = new StringTie(stringTieFile);
+		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
+		VEPLoader vep = new VEPLoader(vepFile, true);
+		
+		gmL.enrollVEPLaoder(vep);
+		stringTie.enrollGenomeSequence(gmL);
+		ArrayList<FastaEntry> entries = stringTie.getFastaEntry(1.00);
 		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
         
         for(FastaEntry entry : entries) {
@@ -89,14 +86,44 @@ public class RunTranslation {
         }
         
         BW.close();
-        */
  	}
 	
+ 	public static void testIRFinder () throws IOException {
+ 		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
+ 		File referenceFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v34.basic.annotation.gtf");
+ 		File irfinderFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/irfinder/C3L-00973.T/IRFinder-IR-nondir.txt");
+ 		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
+		VEPLoader vep = new VEPLoader(vepFile, true);
+		
+		
+ 		GenomeLoader gmL = new GenomeLoader(genomeFile);
+ 		gmL.enrollVEPLaoder(vep);
+		IRFinder irFinder = new IRFinder(irfinderFile);
+		GTFLoader gtfRef = new GTFLoader(referenceFile);
+		
+		irFinder.enrollGenomeSequence(gmL);
+		irFinder.enrollReferenceGTF(gtfRef);
+		
+		ArrayList<FastaEntry> entries = irFinder.getFastaEntry();
+		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
+        
+        for(FastaEntry entry : entries) {
+        	BW.append(">"+entry.tool+"|"+entry.header);
+        	BW.newLine();
+        	BW.append(entry.sequence);
+        	BW.newLine();
+        }
+        
+        BW.close();
+ 	}
+	
+ 	
+ 	
 	public static void main(String[] args) throws IOException, ParseException {
 		long startTime = System.currentTimeMillis();
 		System.out.println("Translator v0.0.0");
 		
-		testStringTie();
+		testIRFinder();
 		System.exit(1);
 		Options options = new Options();
 		

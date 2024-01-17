@@ -4,11 +4,16 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Hashtable;
+
+import zhanglab.inputconvertor.env.InputConvertorConstants;
 
 public class GenomeLoader {
 
 	private Hashtable<String, StringBuilder> genomeMap = new Hashtable<String, StringBuilder>();
+	private VEPLoader vep = null;
 	
 	public GenomeLoader (File file) {
 		// load genome
@@ -36,6 +41,12 @@ public class GenomeLoader {
 		}
 	}
 	
+	public void enrollVEPLaoder (VEPLoader vep) {
+		System.out.println("## GenomeLoader ##");
+		System.out.println("Enroll VEP");
+		this.vep = vep;
+	}
+	
 	/**
 	 * zero-based, [start, end)
 	 * 
@@ -51,5 +62,32 @@ public class GenomeLoader {
 		}
 		
 		return sequence.substring(start, end);
+	}
+	
+	public void setSequence(String chr, Collection<Exon> exons) {
+		StringBuilder sequence = genomeMap.get(chr);
+		for(Exon exon :exons) {
+			int start = exon.start - 1;
+			int end = exon.end;
+			exon.nucleotide = sequence.subSequence(start,  end).toString();
+			
+			// enroll mutations
+			if(vep != null) {
+				ArrayList<Mutation> mutations = vep.getSNPByRange(chr, exon.start, exon.end+1);
+				if(mutations.size() != 0) {
+					exon.snps = mutations;
+				}
+				
+				mutations = vep.getINSByRange(chr, exon.start, exon.end+1);
+				if(mutations.size() != 0) {
+					exon.inss = mutations;
+				}
+				
+				mutations = vep.getDELByRange(chr, exon.start, exon.end+1);
+				if(mutations.size() != 0) {
+					exon.dels = mutations;
+				}
+			}
+		}
 	}
 }

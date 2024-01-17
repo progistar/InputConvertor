@@ -3,6 +3,7 @@ package zhanglab.inputconvertor.input;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 import zhanglab.inputconvertor.data.Exon;
 import zhanglab.inputconvertor.data.FastaEntry;
@@ -14,7 +15,7 @@ import zhanglab.inputconvertor.function.Translator;
 
 public class CIRIquant {
 
-	public static final int MAX_FLANK_SIZE = 14;
+	public static final int MAX_FLANK_AA_SIZE = 14;
 	
 	public GTFLoader gtf = null;
 	public GTFLoader refGTF = null;
@@ -39,7 +40,6 @@ public class CIRIquant {
 	}
 	
 	private String getTranslation (ArrayList<Exon> exons, String chr, int tStart, int tEnd, int frame, String strand) {
-		StringBuilder nucleotide = new StringBuilder();
 		StringBuilder protein = new StringBuilder();
 		
 		ArrayList<Exon> nExons = new ArrayList<Exon>();
@@ -51,7 +51,7 @@ public class CIRIquant {
 			}
 			
 			if(hasStart && !hasEnd) {
-				nExons.add(e);
+				nExons.add(new Exon(e.start, e.end));
 			}
 			
 			if(e.start <= tEnd && e.end >= tEnd) {
@@ -61,40 +61,35 @@ public class CIRIquant {
 		
 		if(hasStart && hasEnd) {
     		for(int i=0; i<nExons.size(); i++) {
-    			int eStart = nExons.get(i).start - 1;
-    			int eEnd = nExons.get(i).end;
+    			Exon exon = nExons.get(i);
     			if(i == 0) {
-    				eStart = tStart - 1;
-    				
+    				exon.start = tStart;
     			} 
     			if(i == nExons.size()-1) {
-    				eEnd = tEnd;
+    				exon.end = tEnd;
     			}
-    			nucleotide.append(refGenome.getSequence(chr, eStart, eEnd));
     		}
+    		refGenome.setSequence(chr, nExons);
+    		int len = getLengthOfExons(nExons);
     		
     		// 2 x linear sequences
-    		String originNucleotide = nucleotide.toString();
-    		if(originNucleotide.length() <= 30) {
-    			System.out.println(chr+":"+tStart+"|"+tEnd);
-    			System.out.println(originNucleotide);
-    		}
-			nucleotide.append(nucleotide.toString());
-			// if the sequence is less than 300 nt, then we do more concatenate the sequence.
-			if(nucleotide.length() < MAX_FLANK_SIZE * 3) {
-				nucleotide.append(originNucleotide).append(originNucleotide);
+    		nExons.addAll(nExons);
+    		
+			// if the sequence is less than 30 nt, then we do more concatenate the sequence.
+			if(len < MAX_FLANK_AA_SIZE * 3) {
+				nExons.addAll(nExons);
 			}
 			
 			if(strand.equalsIgnoreCase("+")) {
-    			protein.append(Translator.translation(nucleotide.toString(), frame));
+    			protein.append(Translator.translation(nExons, frame));
     		} else {
-    			protein.append(Translator.reverseComplementTranslation(nucleotide.toString(), frame));
+    			protein.append(Translator.reverseComplementTranslation(nExons, frame));
     		}
 			
 			// max +-50AA
 			int mid = protein.length() / 2;
-			int leftMax = mid - MAX_FLANK_SIZE;
-			int rightMax = mid + MAX_FLANK_SIZE;
+			int leftMax = mid - MAX_FLANK_AA_SIZE;
+			int rightMax = mid + MAX_FLANK_AA_SIZE;
 			
 			if(leftMax < 0) {
 				leftMax = 0;
@@ -141,6 +136,9 @@ public class CIRIquant {
     		for(Transcript t : ts) {
     			int tStart = Integer.parseInt(t.start);
     			int tEnd = Integer.parseInt(t.end);
+    			// it is possible to appear duplicated peptides because of several reference transcripts. 
+    			Hashtable<String, String> removeDuplication = new Hashtable<String, String>();
+    			
     			ArrayList<ArrayList<Exon>> exons = new ArrayList<ArrayList<Exon>>();
     			String protein = null;
     			
@@ -161,13 +159,23 @@ public class CIRIquant {
     				for(int frame = 0; frame < 3; frame++) {
     					protein = this.getTranslation(nExons, t.chr, tStart, tEnd, frame, t.strand);
     					
-    					if(protein.length() < InputConvertorConstants.MIN_PEPT_LEN) continue;
-    					
-						FastaEntry entry = new FastaEntry();
-						entry.tool = InputConvertorConstants.CIRIQUANT_HEADER_ID;
-						entry.header = t.tID+"|"+frame;
-						entry.sequence = protein.toString();
-						fastaEntries.add(entry);
+    					String[] proteins = protein.split("X");
+        				int idx = 1;
+        				for(int i=0; i<proteins.length; i++) {
+        					protein = proteins[i];
+        					
+        					// cut
+        					if(protein.length() < InputConvertorConstants.MIN_PEPT_LEN) continue;
+        					
+        					if(removeDuplication.get(protein) != null) continue;
+        					removeDuplication.put(protein, "");
+        					
+    						FastaEntry entry = new FastaEntry();
+    						entry.tool = InputConvertorConstants.CIRIQUANT_HEADER_ID;
+    						entry.header = t.tID+"|"+frame+"|"+idx++;
+    						entry.sequence = protein;
+    						fastaEntries.add(entry);
+        				}
     				}
     			}
         	}
@@ -175,5 +183,14 @@ public class CIRIquant {
         });
         
         return fastaEntries;
+	}
+	
+	public int getLengthOfExons (ArrayList<Exon> exons) {
+		int len = 0;
+		for(Exon exon : exons ) {
+			len += exon.nucleotide.length();
+		}
+		
+		return len;
 	}
 }

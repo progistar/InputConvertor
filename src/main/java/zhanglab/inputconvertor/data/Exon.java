@@ -1,9 +1,15 @@
 package zhanglab.inputconvertor.data;
 
+import java.util.ArrayList;
+
 public class Exon implements Comparable<Exon> {
 
 	public int start;
 	public int end;
+	public String nucleotide;
+	public ArrayList<Mutation> snps = null;
+	public ArrayList<Mutation> inss = null;
+	public ArrayList<Mutation> dels = null;
 	
 	public Exon (int start, int end) {
 		this.start = start;
@@ -19,4 +25,6 @@ public class Exon implements Comparable<Exon> {
 		}
 		return 0;
 	}
+	
+	
 }
