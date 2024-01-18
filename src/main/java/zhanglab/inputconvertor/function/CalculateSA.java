@@ -8,8 +8,8 @@ public class CalculateSA {
 	
 	public static double calculate (Spectrum s1, Spectrum s2, double tol, int precursorCharge, int chargeMax) {
 		
-		double[][] s1Peaks = s1.getAnnotatedPeaks(tol, precursorCharge, chargeMax);
-		double[][] s2Peaks = s2.getAnnotatedPeaks(tol, precursorCharge, chargeMax);
+		double[] s1Peaks = s1.getAnnotatedPeaks(tol, precursorCharge, chargeMax);
+		double[] s2Peaks = s2.getAnnotatedPeaks(tol, precursorCharge, chargeMax);
 		
 		// normalization
 		double s1PowerSum = getPowerSum(s1Peaks);
@@ -17,26 +17,13 @@ public class CalculateSA {
 		normalize(s1Peaks, Math.sqrt(s1PowerSum));
 		normalize(s2Peaks, Math.sqrt(s2PowerSum));
 		
-		int s1Idx = 0;
-		int s2Idx = 0;
 		double ip = 0;
-		boolean doMatchFurther = true;
-		
-		if(s1Peaks.length == 0 || s2Peaks.length == 0) {
+		if(s1PowerSum == 0 || s2PowerSum == 0) {
 			return 0;
 		}
 		
-		while(doMatchFurther) {
-			double delta = s1Peaks[s1Idx][0] - s2Peaks[s2Idx][0];
-			if(Math.abs(delta) <= tol) {
-				ip += s1Peaks[s1Idx][1] * s2Peaks[s2Idx][1];
-				s1Idx++;
-				s2Idx++;
-			}
-			else if(delta < 0) s1Idx++;
-			else if(delta > 0) s2Idx++;
-			
-			if(s1Idx >= s1Peaks.length || s2Idx >= s2Peaks.length) doMatchFurther = false;
+		for(int i=0; i<s1Peaks.length; i++) {
+			ip += s1Peaks[i] * s2Peaks[i];
 		}
 		
 		DecimalFormat decimalFormat = new DecimalFormat("#.#####");
@@ -47,19 +34,19 @@ public class CalculateSA {
 		
 	}
 	
-	private static double getPowerSum (double[][] peaks) {
+	private static double getPowerSum (double[] peaks) {
 		double powerSum = 0;
 		
 		for(int i=0; i<peaks.length; i++) {
-			powerSum += peaks[i][1] * peaks[i][1];
+			powerSum += peaks[i] * peaks[i];
 		}
 		
 		return powerSum;
 	}
 	
-	private static void normalize (double[][] peaks, double normFactor) {
+	private static void normalize (double[] peaks, double normFactor) {
 		for(int i=0; i<peaks.length; i++) {
-			peaks[i][1] /= normFactor;
+			peaks[i] /= normFactor;
 		}
 	}
 

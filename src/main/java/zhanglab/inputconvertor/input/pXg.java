@@ -138,18 +138,30 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
         String inputFile = cmd.getOptionValue("i");
         String inputPattern = cmd.getOptionValue("p");
         String mgfFileBase = cmd.getOptionValue("f");
-        String ms2pipOutputFile = cmd.getOptionValue("M");
         String autortOutputFile = cmd.getOptionValue("A");
         double tol = Double.parseDouble(cmd.getOptionValue("T"));
         int scoreIdx			= Integer.parseInt(cmd.getOptionValue("S"));
-        int chargeIdx	 		= Integer.parseInt(cmd.getOptionValue("C"));
         
+        int chargeIdx	 		= -1;
         int icPeptideIdx 		= -1;
         int infPeptideIdx		= -1;
         int ppmErrorIdx			= -1;
+        String predictSpectrumFile = null;
         
         if( cmd.getOptionValue("E") != null) {
         	ppmErrorIdx			= Integer.parseInt(cmd.getOptionValue("E"));
+        }
+        
+        String predictType = InputConvertorConstants.EXPERIMENTAL_SPECTRUM;
+        if( cmd.getOptionValue("M") != null) {
+        	predictSpectrumFile = cmd.getOptionValue("M");
+        	predictType = InputConvertorConstants.MS2PIP;
+        } else if( cmd.getOptionValue("P") != null) {
+        	predictSpectrumFile = cmd.getOptionValue("P");
+        	predictType = InputConvertorConstants.PROSIT;
+        } else {
+        	System.out.println("Must use either M or P for predicted spectrum path.");
+        	System.exit(1);
         }
         
         File[] files = new File(inputFile).listFiles();
@@ -158,10 +170,11 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
         	System.exit(1);
         }
         
-        Spectra ms2pipSpectra = new Spectra(ms2pipOutputFile);
+        Spectra ms2pipSpectra = new Spectra(predictSpectrumFile, predictType);
         
         // read AutoRT output file  //////////////////////////////////////////////////
         BufferedReader BRautoRT = new BufferedReader(new FileReader(autortOutputFile));
+        System.out.println("Read autoRT...: "+autortOutputFile);
         ArrayList<AutoRTRecord> autoRTRecords = new ArrayList<AutoRTRecord>();
         Hashtable<String, Double> icPeptideToDeltaRT = new Hashtable<String, Double>();
         String line = BRautoRT.readLine(); // skip header
@@ -183,7 +196,6 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
         	// calculate |delta RT|
         	double deltaRT = Double.parseDouble(autoRTRecord.predRT) - Double.parseDouble(autoRTRecord.rt);
         	deltaRT = Math.abs(deltaRT);
-        	
         	icPeptideToDeltaRT.put(peptide.modPeptide, deltaRT);
         }
         System.out.println("The number of AutoRT peptides: "+autoRTRecords.size());
@@ -212,6 +224,7 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
             		String[] pXgHeaderSplit = header.split("\t");
             		icPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
             		infPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_INFERREND_PEPTIDE_FIELD_NAME);
+            		chargeIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_CHARGE_FIELD_NAME);
                 	
                 	
                 	BW.append(header).append("\t")
@@ -239,7 +252,7 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
     				
     				Spectra spectra = spectraHash.get(mgfFile);
     				if(spectra == null) {
-    					spectra = new Spectra(mgfFile);
+    					spectra = new Spectra(mgfFile, InputConvertorConstants.EXPERIMENTAL_SPECTRUM);
     					spectraHash.put(mgfFile, spectra);
     				}
     				
@@ -259,32 +272,40 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
     				minCharge = Math.min(maxCharge, (int)chargeNum);
     				
     				String modifications = MS2PIPRecord.getModifications(peptide);
-    				String ms2pipKey = MS2PIPRecord.getMS2PIPKey(peptide.stripPeptide, modifications, charge);
+    				String predictKey = MS2PIPRecord.getMS2PIPKey(peptide.stripPeptide, modifications, charge);
     				
     				Spectrum expSpectrum = spectra.scanIndexer.get(title);
-    				Spectrum ms2pipSpectrum = ms2pipSpectra.scanIndexer.get(ms2pipKey);
+    				Spectrum predictedSpectrum = ms2pipSpectra.scanIndexer.get(predictKey);
     				
-    				if(ms2pipSpectrum == null) {
+    				if(predictedSpectrum == null) {
     					skipRecords++;
+    					System.out.println(title+" spectrum is skipped");
     					continue;
     				}
     				
     				// set peptide
     				expSpectrum.peptide = peptide;
-    				ms2pipSpectrum.peptide = peptide;
+    				predictedSpectrum.peptide = peptide;
     				
     				// MS2PIP dependent parameter here!! //////////////////////////////////
     				// #TODO #WARNING /////////////////////////////////////////////////////
     				// The current non-tryptic model in MS2PIP predicts only singly-charged
     				// fragment ions.
-    				double sa = CalculateSA.calculate(expSpectrum, ms2pipSpectrum, tol, (int) chargeNum,  2);
+    				int chargeLimit = 0;
+    				if(predictType.equalsIgnoreCase(InputConvertorConstants.MS2PIP)) {
+    					chargeLimit = 1;
+    				} else if(predictType.equalsIgnoreCase(InputConvertorConstants.PROSIT)) {
+    					chargeLimit = 2;
+    				}
+    				
+    				double sa = CalculateSA.calculate(expSpectrum, predictedSpectrum, tol, (int) chargeNum,  chargeLimit);
     				///////////////////////////////////////////////////////////////////////
     				
     				// Calculate delta Mz
     				double absDeltaMz = -1;
     				if(ppmErrorIdx == -1) {
     					double expMz = expSpectrum.precursorMz;
-        				double thrMz = ms2pipSpectrum.precursorMz;
+        				double thrMz = predictedSpectrum.precursorMz;
         				absDeltaMz = ((expMz - thrMz) / thrMz) * Math.pow(10, 6);
     				} else {
     					absDeltaMz = Double.parseDouble(fields[ppmErrorIdx]);
@@ -293,6 +314,9 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
     				absDeltaMz = Math.abs(absDeltaMz);
     				
     				// Calculate delta RT
+    				if(icPeptideToDeltaRT.get(peptide.modPeptide) == null) {
+    					System.out.println(peptide.modPeptide+" is null: cannot retrieve from autoRT");
+    				}
     				double absDeltaRT = icPeptideToDeltaRT.get(peptide.modPeptide);
     				
     				BW.append(line).append("\t")

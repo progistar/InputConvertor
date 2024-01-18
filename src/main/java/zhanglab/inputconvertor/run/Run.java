@@ -45,6 +45,8 @@ public class Run {
 		options.addOption("S", "score", true, "score index");
 		
 		options.addOption("M", "ms2pip", true, "MS2PIP output mgf.");
+		options.addOption("P", "prosit", true, "Prosit output mgf.");
+		
 		options.addOption("A", "autort", true, "AutoRT output file.");
 		options.addOption("N", "netmhcpan", true, "NetMHCpan4.1 output file.");
 		options.addOption("T", "frag_tol", true, "Fragment tolerance (Da).");

@@ -201,21 +201,52 @@ public class Spectrum {
 		return subPeaks;
 	}
 	
-	public double[][] getAnnotatedPeaks(double tolerance, int precursorCharge, int chargeLimit) {
-		ArrayList<double[]> annotatedPeaks = new ArrayList<double[]>();
+	private double getSUMInt (ArrayList<Double> peaks) {
+		double sum = 0;
+		for(int i=0; i<peaks.size(); i++) {
+			sum += peaks.get(i);
+		}
+		
+		return sum;
+	}
+	public double[] getAnnotatedPeaks(double tolerance, int precursorCharge, int chargeLimit) {
+		ArrayList<Double> annotatedPeaks = getPeaks(tolerance, precursorCharge, chargeLimit, true);
+		ArrayList<Double> annotatedPeaksWithoutMods = getPeaks(tolerance, precursorCharge, chargeLimit, false);
+		
+		// Of course, it is right to consider modifications.
+		// however, current version of Prosit does not reflect modification mass on each peak (I don't know why. It might be an error).
+		// to cover those errors, I selected peaks having more intensity among two version of annotated peaks.
+		
+		double sumOfWMods = getSUMInt(annotatedPeaks);
+		double sumOfWoMods = getSUMInt(annotatedPeaksWithoutMods);
+		
+		if(sumOfWMods < sumOfWoMods) {
+			annotatedPeaks = annotatedPeaksWithoutMods;
+		}
+		
+		double[] newPeaks = new double[annotatedPeaks.size()];
+		for(int i=0; i<annotatedPeaks.size(); i++) {
+			newPeaks[i] = annotatedPeaks.get(i);
+		}
+		
+		return newPeaks;
+	}
+	
+	private ArrayList<Double> getPeaks (double tolerance, int precursorCharge, int chargeLimit, boolean takingMods) {
+		Hashtable<Double, Boolean> banDuplications = new Hashtable<Double, Boolean>();
+		ArrayList<Double> annotatedPeaks = new ArrayList<Double>();
 
 		// restricted to 1/2 ions.
-		int upTo = precursorCharge;
-		if(upTo == 1) {
-			upTo = 2;
+		int upTo = precursorCharge-1;
+		if(upTo == 0) {
+			upTo = 1;
 		} else if(upTo > chargeLimit) {
 			upTo = chargeLimit;
 		}
 
-		Hashtable<Double, Boolean> banDuplications = new Hashtable<Double, Boolean>();
 		
-		for(int c=1; c<upTo; c++) {
-			double[] peaks = peptide.getTheoreticalLadder(ProteomeConstants.Y_ION, c, true);
+		for(int c=1; c<=upTo; c++) {
+			double[] peaks = peptide.getTheoreticalLadder(ProteomeConstants.Y_ION, c, takingMods);
 			for(int i=0; i<peaks.length; i++) {
 				ArrayList<double[]> subPeaks = this.getSubPeaks(peaks[i]-tolerance, peaks[i]+tolerance);
 				// select closest one
@@ -228,13 +259,18 @@ public class Spectrum {
 					}
 				}
 				
+				// if the peak is identified, then assign intensity.
 				if(bestPeak != null && banDuplications.get(bestPeak[0]) == null) {
 					banDuplications.put(bestPeak[0], true);
-					annotatedPeaks.add(bestPeak);
+					annotatedPeaks.add(bestPeak[1]);
+				} 
+				// if there is no matched peak, than assign 0.
+				else {
+					annotatedPeaks.add(0.0);
 				}
 			}
 			
-			peaks = peptide.getTheoreticalLadder(ProteomeConstants.B_ION, c, true);
+			peaks = peptide.getTheoreticalLadder(ProteomeConstants.B_ION, c, takingMods);
 			for(int i=0; i<peaks.length; i++) {
 				ArrayList<double[]> subPeaks = this.getSubPeaks(peaks[i]-tolerance, peaks[i]+tolerance);
 				// select closest one
@@ -247,34 +283,18 @@ public class Spectrum {
 					}
 				}
 				
+				// if the peak is identified, then assign intensity.
 				if(bestPeak != null && banDuplications.get(bestPeak[0]) == null) {
 					banDuplications.put(bestPeak[0], true);
-					annotatedPeaks.add(bestPeak);
+					annotatedPeaks.add(bestPeak[1]);
+				} 
+				// if there is no matched peak, than assign 0.
+				else {
+					annotatedPeaks.add(0.0);
 				}
 			}
 		}
 		
-		if(annotatedPeaks.size() != 0) {
-			Collections.sort(annotatedPeaks, new Comparator<double[]>() {
-				@Override
-				public int compare(double[] o1, double[] o2) {
-					if(o1[0] < o2[0]) {
-						return -1;
-					}else if(o1[0] > o2[0]) {
-						return 1;
-					}
-					return 0;
-				}
-				
-			});
-		}
-		
-		double[][] newPeaks = new double[annotatedPeaks.size()][2];
-		for(int i=0; i<annotatedPeaks.size(); i++) {
-			double[] peak = {annotatedPeaks.get(i)[0], annotatedPeaks.get(i)[1]};
-			newPeaks[i] = peak;
-		}
-		
-		return newPeaks;
+		return annotatedPeaks;
 	}
 }

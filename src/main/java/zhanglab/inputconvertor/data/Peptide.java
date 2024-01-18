@@ -56,6 +56,11 @@ public class Peptide {
 			this.modPeptide = this.modPeptide.replace(ModificationTable.AUTORT_C_CARBAM, ModificationTable.IC_C_CARBAM);
 		}
 		
+		else if(peptideFrom.equalsIgnoreCase(InputConvertorConstants.PROSIT)) {
+			this.modPeptide = peptide.replace(ModificationTable.UNIMOD_M_OXI, ModificationTable.IC_M_OXI);
+			this.modPeptide = this.modPeptide.replace(ModificationTable.UNIMOD_C_CARBAM, ModificationTable.IC_C_CARBAM);
+		}
+		
 		getStripFromModPeptide();
 		setModifications();
 	}

@@ -30,9 +30,11 @@ public class InputConvertorConstants {
 	public static final String PXG		= "pXg";
 	public static final String COMET	= "Comet";
 	public static final String AUTORT	= "AutoRT";
+	public static final String MS2PIP	= "ms2pip";
+	public static final String PROSIT	= "prosit";
 	public static final String IC_CONVERTOR		= "ic_convertor";
 	public static final String ARRIBA	= "Arriba";
-	
+	public static final String EXPERIMENTAL_SPECTRUM = "experimental_spectrum";
 	
 	// ## PEAKS header
 	public static final String PEAKS_SOURCE_FILE_FIELD_NAME = "Source File";

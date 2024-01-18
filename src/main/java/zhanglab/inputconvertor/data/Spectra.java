@@ -8,6 +8,8 @@ import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import zhanglab.inputconvertor.env.InputConvertorConstants;
+
 public class Spectra {
 
 	public ArrayList<Spectrum> spectra = new ArrayList<Spectrum>();
@@ -15,8 +17,18 @@ public class Spectra {
 	public Hashtable<String, Spectrum> scanIndexer = new Hashtable<String, Spectrum>();
 	//
 	public boolean isComplete = false;
+	public String predictType = InputConvertorConstants.EXPERIMENTAL_SPECTRUM;
 	
-	public Spectra (String fileName) {
+	/**
+	 * If the predicted spectra,
+	 * 
+	 * 
+	 * 
+	 * @param fileName
+	 * @param isPredicted
+	 */
+	public Spectra (String fileName, String predictType) {
+		this.predictType = predictType;
 		try {
 			BufferedReader BR = new BufferedReader(new FileReader(fileName));
 			String line = null;
@@ -40,10 +52,22 @@ public class Spectra {
 					index ++;
 				}else if(line.startsWith("TITLE")) {
 					title = line.split("\\=")[1].split("\\s")[0];
+
 					Matcher matcher = scanPattern.matcher(title);
 					if(matcher.find()) {
 						scanNum = Integer.parseInt(matcher.group().replace(".", ""));
 					}
+					
+					// for prosit, the format will be changed to MS2PIP
+					if(predictType.equalsIgnoreCase(InputConvertorConstants.PROSIT)) {
+						String prositPeptide = title.split("\\|")[0];
+						String prositCharge = title.split("\\|")[1];
+						Peptide peptide = new Peptide(prositPeptide, InputConvertorConstants.PROSIT);
+						String modifications = MS2PIPRecord.getModifications(peptide);
+	    				String predictKey = MS2PIPRecord.getMS2PIPKey(peptide.stripPeptide, modifications, prositCharge);
+	    				title = predictKey;
+					}
+					
 				}else if(line.startsWith("RTIN")) {
 					rt = Double.parseDouble(line.split("\\=")[1]);
 				}else if(line.startsWith("PEPMASS")) {
