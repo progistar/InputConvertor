@@ -409,7 +409,7 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
 	
 	
 	public void toMS2PIPInputFormat (CommandLine cmd) throws IOException, ParseException {
-		boolean isDebugMode = true;
+		boolean isDebugMode = false;
 		
 		// Options //////////
 		
@@ -439,7 +439,7 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
 		
         String inputFile	= cmd.getOptionValue("i");
         String filePattern	= cmd.getOptionValue("p");
-        int chargeIdx		= Integer.parseInt(cmd.getOptionValue("C"));
+        int chargeIdx		= -1;
         int icPeptideIdx 	= -1;
         int infPeptideIdx	= -1;
         
@@ -463,7 +463,7 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
         		String[] pXgHeaderSplit = pXgHeader.split("\t");
         		icPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
         		infPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_INFERREND_PEPTIDE_FIELD_NAME);
-        		
+        		chargeIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_CHARGE_FIELD_NAME);
         		
         		String outputPath = file.getAbsolutePath().replace(".pXg", ".ms2pip.input");
         		BufferedWriter BW = new BufferedWriter(new FileWriter(outputPath));
@@ -580,7 +580,7 @@ public class pXg implements ToAutoRTInput, ToMS2PIPInput, ToFeatures, NetMHCpan 
 	
 	public void toAutoRTInputFormat (CommandLine cmd) throws IOException, ParseException {
 		
-		boolean isDebugMode = true;
+		boolean isDebugMode = false;
 		
 		// Options //////////
 		
