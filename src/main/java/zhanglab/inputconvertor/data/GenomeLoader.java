@@ -16,6 +16,10 @@ public class GenomeLoader {
 	private VEPLoader somaVEP = null;
 	private VEPLoader germVEP = null;
 	
+	public void clear() {
+		genomeMap.clear();
+	}
+	
 	public GenomeLoader (File file) {
 		// load genome
 		try {

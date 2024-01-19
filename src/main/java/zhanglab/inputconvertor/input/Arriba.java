@@ -59,7 +59,7 @@ public class Arriba {
         	
         	FastaEntry entry = new FastaEntry();
 			entry.tool = InputConvertorConstants.ARRIBA_HEADER_ID;
-			entry.header = gene1+"+"+gene2+"|"+bp1+"+"+bp2;
+			//entry.header = gene1+"+"+gene2+"|"+bp1+"+"+bp2;
 			entry.sequence = fullPeptide;
 			fastaEntries.add(entry);
         	

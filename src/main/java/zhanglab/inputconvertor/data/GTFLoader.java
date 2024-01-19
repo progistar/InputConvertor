@@ -12,6 +12,10 @@ public class GTFLoader {
 	// gene id with version to transcripts
 	public Hashtable<String, ArrayList<Transcript>> geneToTranscripts = new Hashtable<String, ArrayList<Transcript>>();
 	
+	public void clear() {
+		geneToTranscripts.clear();
+	}
+	
 	public GTFLoader (File file) {
 		try {
 			BufferedReader BR = new BufferedReader(new FileReader(file));
@@ -52,7 +56,7 @@ public class GTFLoader {
 						transcript.attrs = fields[8];
 						transcript.FPKM = expValue;
 					} else {
-						transcript.exons.add(new Exon(start, end));
+						transcript.exons.add(new Exon(chr, start, end));
 					}
 				}
 				// #FORMAT
@@ -83,7 +87,7 @@ public class GTFLoader {
 						transcript.start = start+"";
 						transcript.end = end+"";
 						transcript.attrs = fields[8];
-						transcript.exons.add(new Exon(start, end));
+						transcript.exons.add(new Exon(chr, start, end));
 					}
 				}
 			}

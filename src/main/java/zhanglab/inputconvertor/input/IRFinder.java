@@ -14,7 +14,6 @@ import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Transcript;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
-import zhanglab.inputconvertor.function.Translator;
 
 public class IRFinder {
 	public static final int MAX_FLANK_AA_SIZE = 14;
@@ -22,6 +21,10 @@ public class IRFinder {
 	public File file = null;
 	public GTFLoader refGTF = null;
 	public GenomeLoader refGenome = null;
+	
+	public void clear() {
+		geneToTranscripts.clear();
+	}
 	
 	public IRFinder (File file) throws IOException {
 		System.out.println("## IRFinder ##");
@@ -45,8 +48,10 @@ public class IRFinder {
 			String[] fields = line.split("\t");
 			String name = fields[nameIdx];
 			String chr = fields[chrIdx];
-			String start = fields[startIdx];
-			String end = fields[endIdx];
+			// IRFinder reports [start, end) with zero-based index
+			int start = Integer.parseInt(fields[startIdx])+1;
+			int end = Integer.parseInt(fields[endIdx]);
+			//////////////////////////////////////////////////////
 			String strand = fields[strandIdx];
 			String warnings = fields[warningIdx];
 			String geneId = name.split("\\/")[1];
@@ -64,12 +69,12 @@ public class IRFinder {
 			
 			Transcript transcript = new Transcript();
 			transcript.tID = id;
-			transcript.start = start;
-			transcript.end = end;
+			transcript.start = String.valueOf(start);
+			transcript.end = String.valueOf(end);
 			transcript.chr = chr;
 			transcript.strand = strand;
 			transcript.attrs = warnings;
-			Exon exon = new Exon(Integer.parseInt(start), Integer.parseInt(end));
+			Exon exon = new Exon(transcript.chr, start, end);
 			transcript.exons.add(exon);
 			
 			ArrayList<Transcript> transcripts = geneToTranscripts.get(geneId);
@@ -102,11 +107,8 @@ public class IRFinder {
 		this.refGenome = refGenome;
 	}
 	
-	private String getTranslation (ArrayList<Exon> exons, String chr, int iStart, int iEnd, int frame, String strand) {
-		StringBuilder protein = new StringBuilder();
-		int leftCutIdx = 0;
-		int rightCutIdx = 0;
-		
+	private ArrayList<FastaEntry> getTranslation (Transcript t, ArrayList<Exon> exons, int iStart, int iEnd) {
+		ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
 		int startExon = -1;
 		int endExon = -1;
 		for(int i=0; i<exons.size(); i++) {
@@ -119,7 +121,7 @@ public class IRFinder {
 			}
 		}
 		
-		Exon intron = new Exon(iStart, iEnd);
+		Exon intron = new Exon(t.chr, iStart, iEnd);
 		
 		if(startExon != -1 && endExon != -1) {
 			int limit = MAX_FLANK_AA_SIZE * 3 + 2;
@@ -128,7 +130,7 @@ public class IRFinder {
 			int leftSize = 0;
 			for(int i=startExon; i>=0; i--) {
 				Exon exon = exons.get(i);
-				Exon nExon = new Exon(exon.start, exon.end);
+				Exon nExon = new Exon(t.chr, exon.start, exon.end);
 				nExons.addFirst(nExon);
     			if(nExon.end - nExon.start + 1 + leftSize >= limit) {
     				nExon.start = nExon.end + 1 + leftSize - limit;
@@ -142,42 +144,20 @@ public class IRFinder {
 			int rightSize = 0;
 			for(int i=endExon; i<exons.size(); i++) {
 				Exon exon = exons.get(i);
-				Exon nExon = new Exon(exon.start, exon.end);
+				Exon nExon = new Exon(t.chr, exon.start, exon.end);
 				nExons.add(nExon);
-    			if(nExon.end - nExon.start + 1 + leftSize >= limit) {
-    				nExon.end = limit + nExon.start -1 - leftSize;
+    			if(nExon.end - nExon.start + 1 + rightSize >= limit) {
+    				nExon.end = limit + nExon.start -1 - rightSize;
     				rightSize += (nExon.end - nExon.start + 1);
     				break;
     			}
     			rightSize += (nExon.end - nExon.start + 1);
 			}
 			
-			refGenome.setSequence(chr, nExons);
-			
-			if(strand.equalsIgnoreCase("+")) {
-    			protein.append(Translator.translation(nExons, frame));
-    		} else {
-    			protein.append(Translator.reverseComplementTranslation(nExons, frame));
-    		}
-			// nt size to aa size
-			leftSize /= 3;
-			rightSize /= 3;
-			
-			// we are not interested in both flank sequences not overlapping the target intron region.
-			for(int i=0; i<=leftSize; i++) {
-				if(protein.charAt(i) == 'X') {
-					leftCutIdx = i;
-				}
-			}
-			int protLen = protein.length();
-			rightCutIdx = protLen;
-			for(int i=0; i<=rightSize; i++) {
-				if(protein.charAt(protLen-i-1) == 'X') {
-					rightCutIdx = protLen-i;
-				}
-			}
+			refGenome.setSequence(t.chr, nExons);
+			entries = FastaEntry.enumerateFastaEntry(t, nExons);
 		}
-		return protein.substring(leftCutIdx, rightCutIdx);
+		return entries;
 	}
 	
 	public ArrayList<FastaEntry> getFastaEntry () throws IOException {
@@ -188,16 +168,13 @@ public class IRFinder {
     		for(Transcript t : ts) {
     			int tStart = Integer.parseInt(t.start);
     			int tEnd = Integer.parseInt(t.end);
-    			// it is possible to appear duplicated peptides because of several reference transcripts. 
-    			Hashtable<String, String> removeDuplication = new Hashtable<String, String>();
     			
     			ArrayList<ArrayList<Exon>> exons = new ArrayList<ArrayList<Exon>>();
-    			String protein = null;
     			// If there is no matched transcripts, it means that the intron is located in "intergenic" region.
     			// But! it is impossible.
     			// There is only case: the version is not matched.
     			if(refTs == null) {
-    				System.out.println("The reference transcript version is not matched to that of IRFinder");
+    				System.out.println("Severe:: The reference transcript version is not matched to that of IRFinder");
     				
     			} else {
         			// start translating
@@ -208,31 +185,34 @@ public class IRFinder {
     			}
     			
     			for(ArrayList<Exon> nExons : exons) {
-    				for(int frame = 0; frame < 3; frame++) {
-    					protein = this.getTranslation(nExons, t.chr, tStart, tEnd, frame, t.strand);
-    					
-    					String[] proteins = protein.split("X");
-        				int idx = 1;
-        				for(int i=0; i<proteins.length; i++) {
-        					protein = proteins[i];
-        					
-        					// cut
-        					if(protein.length() < InputConvertorConstants.MIN_PEPT_LEN) continue;
-        					if(removeDuplication.get(protein) != null) continue;
-        					removeDuplication.put(protein, "");
-        					
-    						FastaEntry entry = new FastaEntry();
-    						entry.tool = InputConvertorConstants.IRFINDER_HEADER_ID;
-    						entry.header = t.tID+"|"+frame+"|"+idx++;
-    						entry.sequence = protein;
-    						fastaEntries.add(entry);
-        				}
+    				ArrayList<FastaEntry> entries = this.getTranslation(t, nExons, tStart, tEnd);
+    				// put gene ID
+    				for(FastaEntry entry : entries) {
+    					entry.geneId = g;
     				}
+    				fastaEntries.addAll(entries);
     			}
         	}
         	
         });
         
-        return fastaEntries;
+        // add tool info
+		// it is possible to appear duplicated peptides because of several reference transcripts. 
+		Hashtable<String, String> removeDuplication = new Hashtable<String, String>();
+		ArrayList<FastaEntry> uniqueFastaEntries = new ArrayList<FastaEntry>();
+		int idx = 1;
+        for(FastaEntry entry : fastaEntries) {
+        	if(removeDuplication.get(entry.getKey()) != null) {
+        		continue;
+        	}
+        	removeDuplication.put(entry.getKey(), "");
+        	entry.tool = InputConvertorConstants.IRFINDER_HEADER_ID;
+        	entry.idx = idx++;
+        	uniqueFastaEntries.add(entry);
+        }
+        
+        fastaEntries.clear();
+        
+        return uniqueFastaEntries;
 	}
 }

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 import zhanglab.inputconvertor.data.Exon;
 import zhanglab.inputconvertor.data.FastaEntry;
@@ -13,7 +14,6 @@ import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Transcript;
 import zhanglab.inputconvertor.data.VEPLoader;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
-import zhanglab.inputconvertor.function.Translator;
 
 public class StringTie {
 
@@ -108,23 +108,14 @@ public class StringTie {
 		BW.close();
 	}
 	
-	private String getTranslation (Transcript transcript, int frame) {
-		StringBuilder protein = new StringBuilder();
-		
-		
+	private ArrayList<FastaEntry> getTranslation (Transcript transcript) {
 		ArrayList<Exon> exons = transcript.exons;
 		
 		refGenome.setSequence(transcript.chr, exons);
 		
-		if(transcript.start.equalsIgnoreCase("+")) {
-			protein.append(Translator.translation(exons, frame));
-		} else {
-			protein.append(Translator.reverseComplementTranslation(exons, frame));
-		}
+		ArrayList<FastaEntry> entries = FastaEntry.enumerateFastaEntry(transcript, exons);
 		
-		
-		
-		return protein.toString();
+		return entries;
 	}
 	
 	public ArrayList<FastaEntry> getFastaEntry (double FPKMthreshold) throws IOException {
@@ -143,28 +134,34 @@ public class StringTie {
     				System.out.println(t.tID);
     			}
     			
-    			for(int frame = 0; frame < 3; frame++) {
-    				String protein = this.getTranslation(t, frame);
-    				// split by X (STOP codon)
-    				String[] proteins = protein.split("X");
-    				int idx = 1;
-    				for(int i=0; i<proteins.length; i++) {
-    					protein = proteins[i];
-    					
-    					// cut
-    					if(protein.length() < InputConvertorConstants.MIN_PEPT_LEN) continue;
-    					
-						FastaEntry entry = new FastaEntry();
-						entry.tool = InputConvertorConstants.STRINGTIE_HEADER_ID;
-						entry.header = t.tID+"|"+frame+"|"+idx++;
-						entry.sequence = protein;
-						fastaEntries.add(entry);
-    				}
-    			}
+    			ArrayList<FastaEntry> entries = this.getTranslation(t);
+				// put gene ID
+				for(FastaEntry entry : entries) {
+					entry.geneId = g;
+				}
+				fastaEntries.addAll(entries);
         	}
         	
         });
         
-        return fastaEntries;
+        // add tool info
+		// it is possible to appear duplicated peptides because of several reference transcripts. 
+		Hashtable<String, String> removeDuplication = new Hashtable<String, String>();
+		ArrayList<FastaEntry> uniqueFastaEntries = new ArrayList<FastaEntry>();
+		int idx = 1;
+        for(FastaEntry entry : fastaEntries) {
+        	if(removeDuplication.get(entry.getKey()) != null) {
+        		continue;
+        	}
+        	removeDuplication.put(entry.getKey(), "");
+        	entry.tool = InputConvertorConstants.STRINGTIE_HEADER_ID;
+        	entry.idx = idx++;
+        	uniqueFastaEntries.add(entry);
+        }
+        
+        fastaEntries.clear();
+        
+        
+        return uniqueFastaEntries;
 	}
 }

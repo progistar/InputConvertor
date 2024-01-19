@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.LinkedList;
 
 import zhanglab.inputconvertor.data.Exon;
 import zhanglab.inputconvertor.data.FastaEntry;
@@ -11,7 +12,6 @@ import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Transcript;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
-import zhanglab.inputconvertor.function.Translator;
 
 public class CIRIquant {
 
@@ -39,92 +39,76 @@ public class CIRIquant {
 		this.refGenome = refGenome;
 	}
 	
-	private String getTranslation (ArrayList<Exon> exons, String chr, int tStart, int tEnd, int frame, String strand) {
-		StringBuilder protein = new StringBuilder();
-		
+	private ArrayList<FastaEntry> getTranslation (Transcript t, ArrayList<Exon> exons, int cStart, int cEnd) {
+		ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
 		ArrayList<Exon> nExons = new ArrayList<Exon>();
 		boolean hasStart = false;
 		boolean hasEnd = false;
 		for(Exon e : exons) {
-			if(e.start <= tStart && e.end >= tStart) {
+			if(e.start <= cStart && e.end >= cStart) {
 				hasStart = true;
 			}
 			
 			if(hasStart && !hasEnd) {
-				nExons.add(new Exon(e.start, e.end));
+				nExons.add(new Exon(t.chr, e.start, e.end));
 			}
 			
-			if(e.start <= tEnd && e.end >= tEnd) {
+			if(e.start <= cEnd && e.end >= cEnd) {
 				hasEnd = true;
+				break;
 			}
 		}
 		
 		if(hasStart && hasEnd) {
-    		for(int i=0; i<nExons.size(); i++) {
-    			Exon exon = nExons.get(i);
-    			if(i == 0) {
-    				exon.start = tStart;
-    			} 
-    			if(i == nExons.size()-1) {
-    				exon.end = tEnd;
-    			}
-    		}
-    		refGenome.setSequence(chr, nExons);
-    		int len = getLengthOfExons(nExons);
-    		
-    		// 2 x linear sequences
-    		nExons.addAll(nExons);
-    		
-			// if the sequence is less than 30 nt, then we do more concatenate the sequence.
-			if(len < MAX_FLANK_AA_SIZE * 3) {
+			int limit = MAX_FLANK_AA_SIZE * 3 + 2;
+			LinkedList<Exon> circExons = new LinkedList<Exon>();
+			// adjust start and end
+			nExons.get(0).start = cStart;
+			nExons.get(nExons.size()-1).end = cEnd;
+			
+			int leftExonIdx = nExons.size()-1;
+			int rightExonIdx = leftExonIdx+1;
+			
+			nExons.addAll(nExons);
+			
+			while(getLengthOfExons(nExons) < 2 * (limit)) {
+				leftExonIdx = nExons.size()-1;
+				rightExonIdx = leftExonIdx+1;
 				nExons.addAll(nExons);
 			}
 			
-			if(strand.equalsIgnoreCase("+")) {
-    			protein.append(Translator.translation(nExons, frame));
-    		} else {
-    			protein.append(Translator.reverseComplementTranslation(nExons, frame));
-    		}
-			
-			// max +-50AA
-			int mid = protein.length() / 2;
-			int leftMax = mid - MAX_FLANK_AA_SIZE;
-			int rightMax = mid + MAX_FLANK_AA_SIZE;
-			
-			if(leftMax < 0) {
-				leftMax = 0;
-			}
-			if(rightMax > protein.length()) {
-				rightMax = protein.length();
+			// left shrink
+			int leftSize = 0;
+			for(int i=leftExonIdx; i>=0; i--) {
+				Exon exon = nExons.get(i);
+				Exon nExon = new Exon(t.chr, exon.start, exon.end);
+				circExons.addFirst(nExon);
+    			if(nExon.end - nExon.start + 1 + leftSize >= limit) {
+    				nExon.start = nExon.end + 1 + leftSize - limit;
+    				leftSize += (nExon.end - nExon.start + 1);
+    				break;
+    			}
+    			leftSize += (nExon.end - nExon.start + 1);
 			}
 			
-			StringBuilder leftSeq = new StringBuilder();
-			for(int j=mid-1; j>=leftMax; j--) {
-				if(protein.charAt(j) == 'X') {
-					break;
-				} else {
-					leftSeq.append(protein.charAt(j));
-				}
-			}
-			leftSeq = leftSeq.reverse();
-			
-			StringBuilder rightSeq = new StringBuilder();
-			for(int j=mid; j<rightMax; j++) {
-				if(protein.charAt(j) == 'X') {
-					break;
-				} else {
-					rightSeq.append(protein.charAt(j));
-				}
+			// right shrink
+			int rightSize = 0;
+			for(int i=rightExonIdx; i<nExons.size(); i++) {
+				Exon exon = nExons.get(i);
+				Exon nExon = new Exon(t.chr, exon.start, exon.end);
+				circExons.add(nExon);
+    			if(nExon.end - nExon.start + 1 + rightSize >= limit) {
+    				nExon.end = limit + nExon.start -1 - rightSize;
+    				rightSize += (nExon.end - nExon.start + 1);
+    				break;
+    			}
+    			rightSize += (nExon.end - nExon.start + 1);
 			}
 			
-			protein.setLength(0);
-			
-			if(leftSeq.length() > 0 && rightSeq.length() > 0) {
-				protein.append(leftSeq.toString()).append(rightSeq.toString());
-			}
+			refGenome.setSequence(t.chr, circExons);
+			entries = FastaEntry.enumerateFastaEntry(t, circExons);
 		}
-		
-		return protein.toString();
+		return entries;
 	}
 	
 	public ArrayList<FastaEntry> getFastaEntry () throws IOException {
@@ -137,15 +121,11 @@ public class CIRIquant {
     			int tStart = Integer.parseInt(t.start);
     			int tEnd = Integer.parseInt(t.end);
     			// it is possible to appear duplicated peptides because of several reference transcripts. 
-    			Hashtable<String, String> removeDuplication = new Hashtable<String, String>();
-    			
     			ArrayList<ArrayList<Exon>> exons = new ArrayList<ArrayList<Exon>>();
-    			String protein = null;
-    			
     			// intergenic
     			if(refTs == null) {
     				ArrayList<Exon> nExons = new ArrayList<Exon>();
-    				nExons.add(new Exon(tStart, tEnd));
+    				nExons.add(new Exon(t.chr, tStart, tEnd));
     				
     			} else {
         			// start translating
@@ -156,39 +136,41 @@ public class CIRIquant {
     			}
     			
     			for(ArrayList<Exon> nExons : exons) {
-    				for(int frame = 0; frame < 3; frame++) {
-    					protein = this.getTranslation(nExons, t.chr, tStart, tEnd, frame, t.strand);
-    					
-    					String[] proteins = protein.split("X");
-        				int idx = 1;
-        				for(int i=0; i<proteins.length; i++) {
-        					protein = proteins[i];
-        					
-        					// cut
-        					if(protein.length() < InputConvertorConstants.MIN_PEPT_LEN) continue;
-        					
-        					if(removeDuplication.get(protein) != null) continue;
-        					removeDuplication.put(protein, "");
-        					
-    						FastaEntry entry = new FastaEntry();
-    						entry.tool = InputConvertorConstants.CIRIQUANT_HEADER_ID;
-    						entry.header = t.tID+"|"+frame+"|"+idx++;
-    						entry.sequence = protein;
-    						fastaEntries.add(entry);
-        				}
+    				ArrayList<FastaEntry> entries = this.getTranslation(t, nExons, tStart, tEnd);
+    				// put gene ID
+    				for(FastaEntry entry : entries) {
+    					entry.geneId = g;
     				}
+    				fastaEntries.addAll(entries);
     			}
         	}
         	
         });
         
-        return fastaEntries;
+		 // add tool info
+ 		// it is possible to appear duplicated peptides because of several reference transcripts. 
+ 		Hashtable<String, String> removeDuplication = new Hashtable<String, String>();
+ 		ArrayList<FastaEntry> uniqueFastaEntries = new ArrayList<FastaEntry>();
+ 		int idx = 1;
+         for(FastaEntry entry : fastaEntries) {
+         	if(removeDuplication.get(entry.getKey()) != null) {
+         		continue;
+         	}
+         	removeDuplication.put(entry.getKey(), "");
+         	entry.tool = InputConvertorConstants.IRFINDER_HEADER_ID;
+         	entry.idx = idx++;
+         	uniqueFastaEntries.add(entry);
+         }
+         
+         fastaEntries.clear();
+         
+         return uniqueFastaEntries;
 	}
 	
 	public int getLengthOfExons (ArrayList<Exon> exons) {
 		int len = 0;
 		for(Exon exon : exons ) {
-			len += exon.nucleotide.length();
+			len += (exon.end - exon.start + 1);
 		}
 		
 		return len;

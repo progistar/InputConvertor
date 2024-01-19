@@ -32,7 +32,10 @@ public class VEPLoader {
 		while((line = BR.readLine()) != null) {
 			String[] fields = line.split("\t");
 			String location = fields[locIdx];
-			String chr = "chr"+location.split("\\:")[0];
+			String chr = location.split("\\:")[0];
+			if(!chr.startsWith("chr")) {
+				chr = "chr"+chr;
+			}
 			String pos = location.split("\\:")[1];
 			int startPos = Integer.parseInt(pos.split("\\-")[0]);
 			int endPos = Integer.parseInt(pos.split("\\-")[1]);
@@ -41,7 +44,7 @@ public class VEPLoader {
 			int refLen = refs.length();
 			int altLen = alts.length();
 			
-			String key = location+"@"+refs+"@"+alts;
+			String key = chr+":"+pos+refs+">"+alts;
 			if(removeDuplication.get(key) != null) {
 				continue;
 			}

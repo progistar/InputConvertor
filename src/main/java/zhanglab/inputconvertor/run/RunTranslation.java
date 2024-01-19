@@ -13,6 +13,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import zhanglab.inputconvertor.data.FastaEntry;
+import zhanglab.inputconvertor.data.FastaLoader;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Mutation;
@@ -56,7 +57,7 @@ public class RunTranslation {
         BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
         
         for(FastaEntry entry : entries) {
-        	BW.append(">"+entry.tool+"|"+entry.header);
+        	BW.append(">"+entry.toHeader());
         	BW.newLine();
         	BW.append(entry.sequence);
         	BW.newLine();
@@ -65,6 +66,38 @@ public class RunTranslation {
         BW.close();
 	}
  	
+ 	public static void testCIRIquant () throws IOException {
+ 		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
+ 		File referenceFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v34.basic.annotation.gtf");
+ 		File ciriquantFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/CIRIquant/C3L-00973.T/CIRIquant_total_rnaseq.gtf");
+ 		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
+		VEPLoader somaVEP = new VEPLoader(vepFile, true);
+		File refProteinFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v42.pc_translations.fa");
+		FastaLoader refProt = new FastaLoader(refProteinFile);
+
+		
+ 		GenomeLoader gmL = new GenomeLoader(genomeFile);
+ 		gmL.enrollSomaticVEPLaoder(somaVEP);
+ 		CIRIquant ciriquant = new CIRIquant(ciriquantFile);
+		GTFLoader gtfRef = new GTFLoader(referenceFile);
+		
+		ciriquant.enrollGenomeSequence(gmL);
+		ciriquant.enrollReferenceGTF(gtfRef);
+		
+		ArrayList<FastaEntry> entries = ciriquant.getFastaEntry();
+		//refProt.removeSequenceOverlappedToThisFasta(entries);
+		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
+		
+        for(FastaEntry entry : entries) {
+        	BW.append(">"+entry.toHeader());
+        	BW.newLine();
+        	BW.append(entry.sequence);
+        	BW.newLine();
+        }
+        
+        BW.close();
+ 	}
+ 	
  	public static void testStringTie () throws IOException {
  		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
 		GenomeLoader gmL = new GenomeLoader(genomeFile);
@@ -72,14 +105,18 @@ public class RunTranslation {
 		StringTie stringTie = new StringTie(stringTieFile);
 		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
 		VEPLoader somaVEP = new VEPLoader(vepFile, true);
+		File refProteinFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v42.pc_translations.fa");
+		FastaLoader refProt = new FastaLoader(refProteinFile);
+		
 		
 		gmL.enrollSomaticVEPLaoder(somaVEP);
 		stringTie.enrollGenomeSequence(gmL);
 		ArrayList<FastaEntry> entries = stringTie.getFastaEntry(1.00);
 		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
         
+		refProt.removeSequenceOverlappedToThisFasta(entries);
         for(FastaEntry entry : entries) {
-        	BW.append(">"+entry.tool+"|"+entry.header);
+        	BW.append(">"+entry.toHeader());
         	BW.newLine();
         	BW.append(entry.sequence);
         	BW.newLine();
@@ -94,7 +131,9 @@ public class RunTranslation {
  		File irfinderFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/irfinder/C3L-00973.T/IRFinder-IR-nondir.txt");
  		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
 		VEPLoader somaVEP = new VEPLoader(vepFile, true);
-		
+		File refProteinFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v42.pc_translations.fa");
+		FastaLoader refProt = new FastaLoader(refProteinFile);
+
 		
  		GenomeLoader gmL = new GenomeLoader(genomeFile);
  		gmL.enrollSomaticVEPLaoder(somaVEP);
@@ -105,10 +144,11 @@ public class RunTranslation {
 		irFinder.enrollReferenceGTF(gtfRef);
 		
 		ArrayList<FastaEntry> entries = irFinder.getFastaEntry();
+		
 		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
-        
+		refProt.removeSequenceOverlappedToThisFasta(entries);
         for(FastaEntry entry : entries) {
-        	BW.append(">"+entry.tool+"|"+entry.header);
+        	BW.append(">"+entry.toHeader());
         	BW.newLine();
         	BW.append(entry.sequence);
         	BW.newLine();
@@ -123,7 +163,7 @@ public class RunTranslation {
 		long startTime = System.currentTimeMillis();
 		System.out.println("Translator v0.0.0");
 		
-		testIRFinder();
+		testCIRIquant();
 		System.exit(1);
 		Options options = new Options();
 		

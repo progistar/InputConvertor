@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class Exon implements Comparable<Exon> {
 
+	public String chr;
 	public int start;
 	public int end;
 	public String nucleotide;
@@ -11,7 +12,8 @@ public class Exon implements Comparable<Exon> {
 	public ArrayList<Mutation> inss = new ArrayList<Mutation>();;
 	public ArrayList<Mutation> dels = new ArrayList<Mutation>();
 	
-	public Exon (int start, int end) {
+	public Exon (String chr, int start, int end) {
+		this.chr = chr;
 		this.start = start;
 		this.end = end;
 	}
@@ -43,30 +45,32 @@ public class Exon implements Comparable<Exon> {
 		
 		for(Mutation snp : snps) {
 			if((snp.isSomatic && somaSNP) || (!snp.isSomatic && germSNP)) {
-				mutantSeq.setCharAt(snp.pos, snp.altSeq.charAt(0));
+				int relPos = snp.pos - this.start;
+				mutantSeq.setCharAt(relPos, snp.altSeq.charAt(0));
 			}
 		}
 		
 		return mutantSeq.toString();
 	}
 	
-	public String getSequenceWithINS (String key) {
+	public String getSequenceWithINS (String insID, boolean germSNP, boolean somaSNP) {
+		String sequence = getSequenceWithSNPs(germSNP, somaSNP);
 		Mutation ins = null;
 		for(Mutation mutation : inss) {
-			if(mutation.key.equalsIgnoreCase(key)) {
+			if(mutation.key.equalsIgnoreCase(insID)) {
 				ins = mutation;
 			}
 		}
 		
 		if(ins == null) {
-			return this.nucleotide;
+			return sequence;
 		}
 		
 		StringBuilder mutantSeq = new StringBuilder();
 		
 		for(int i=start; i<=end; i++) {
 			int relPos = i-start;
-			mutantSeq.append(this.nucleotide.charAt(relPos));
+			mutantSeq.append(sequence.charAt(relPos));
 			if(i == ins.pos) {
 				mutantSeq.append(ins.altSeq);
 			}
@@ -76,30 +80,79 @@ public class Exon implements Comparable<Exon> {
 		return mutantSeq.toString();
 	}
 	
-	public String getSequenceWithDEL (String key) {
-		Mutation ins = null;
-		for(Mutation mutation : inss) {
-			if(mutation.key.equalsIgnoreCase(key)) {
-				ins = mutation;
+	public String getSequenceWithDEL (String delID, boolean germSNP, boolean somaSNP) {
+		String sequence = getSequenceWithSNPs(germSNP, somaSNP);
+		Mutation del = null;
+		for(Mutation mutation : dels) {
+			if(mutation.key.equalsIgnoreCase(delID)) {
+				del = mutation;
 			}
 		}
 		
-		if(ins == null) {
-			return this.nucleotide;
+		if(del == null) {
+			return sequence;
 		}
 		
 		StringBuilder mutantSeq = new StringBuilder();
 		
 		for(int i=start; i<=end; i++) {
 			int relPos = i-start;
-			mutantSeq.append(this.nucleotide.charAt(relPos));
-			if(i == ins.pos) {
-				mutantSeq.append(ins.altSeq);
+			if(i == del.pos) {
+				mutantSeq.append(del.altSeq);
+			} else {
+				mutantSeq.append(sequence.charAt(relPos));
 			}
 		}
 		
 		
 		return mutantSeq.toString();
+	}
+	
+	public String getMutationDescription (String indelID, boolean germSNP, boolean somaSNP) {
+		StringBuilder desc = new StringBuilder(this.chr+":"+this.start+"-"+this.end);
+		
+		desc.append("(");
+		int mutationCnt = 0;
+		for(Mutation snp : snps) {
+			if((snp.isSomatic && somaSNP) || (!snp.isSomatic && germSNP)) {
+				if(mutationCnt != 0) {
+					desc.append(",");
+				}
+				desc.append(snp.key);
+				mutationCnt++;
+			}
+		}
+		
+		if(indelID != null) {
+			for(Mutation mutation : dels) {
+				if(mutation.key.equalsIgnoreCase(indelID)) {
+					if(mutationCnt != 0) {
+						desc.append(",");
+					}
+					desc.append(mutation.key);
+					mutationCnt++;
+					break;
+				}
+			}
+			
+			for(Mutation mutation : inss) {
+				if(mutation.key.equalsIgnoreCase(indelID)) {
+					if(mutationCnt != 0) {
+						desc.append(",");
+					}
+					desc.append(mutation.key);
+					mutationCnt++;
+					break;
+				}
+			}
+		}
+		
+		if(mutationCnt == 0) {
+			desc.append("-");
+		}
+		
+		desc.append(")");
+		return desc.toString();
 	}
 	
 }

@@ -68,6 +68,7 @@ public class InputConvertorConstants {
 	public static final byte				INS   = 1;
 	public static final byte				DEL   = 2;
 	public static final byte			ALL_MUT	  = 3;
+	public static final byte			NON_INDEL = 4;
 	public static final String DELETION_MARK	  = "-";
 	
 	// ## Arriba
