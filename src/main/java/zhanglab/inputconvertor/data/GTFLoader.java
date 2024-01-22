@@ -70,6 +70,7 @@ public class GTFLoader {
 					String geneId = getTag(attrs, "gene_id");
 					String enstId = getTag(attrs, "circ_id");
 					
+					// CIRIquant can have mutiple gene ids per record
 					ArrayList<String> geneIds = new ArrayList<String>();
 					if(geneId == null) {
 						geneIds.add("intergenic");

@@ -30,16 +30,6 @@ public class FastaEntry {
 	
 	public static ArrayList<FastaEntry> enumerateFastaEntry (Transcript t, Collection<Exon> exons) {
 		ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
-		//######### DEBUG FOR MUTANT ONLY ########################################################################################################
-		boolean isRun = false;
-		for(Exon exon : exons) {
-			if(exon.isMutant()) {
-				isRun = true;
-			}
-		}
-		//if(!isRun) return entries;
-		//######### DEBUG FOR MUTANT ONLY ########################################################################################################		
-		
 		Hashtable<String, Byte> indelHash = new Hashtable<String, Byte>();
 		indelHash.put("wildtype", InputConvertorConstants.NON_INDEL);
 		for(Exon exon : exons) {
@@ -105,7 +95,6 @@ public class FastaEntry {
 				} else {
 					peptide = Translator.reverseComplementTranslation(entry.sequence, frame);
 				}
-				
 				aaEntry.description = entry.description;
 				aaEntry.frame = frame;
 				aaEntry.sequence = peptide;

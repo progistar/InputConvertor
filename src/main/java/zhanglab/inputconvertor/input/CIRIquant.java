@@ -42,27 +42,20 @@ public class CIRIquant {
 	private ArrayList<FastaEntry> getTranslation (Transcript t, ArrayList<Exon> exons, int cStart, int cEnd) {
 		ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
 		ArrayList<Exon> nExons = new ArrayList<Exon>();
-		boolean hasStart = false;
-		boolean hasEnd = false;
 		for(Exon e : exons) {
-			if(e.start <= cStart && e.end >= cStart) {
-				hasStart = true;
-			}
-			
-			if(hasStart && !hasEnd) {
-				nExons.add(new Exon(t.chr, e.start, e.end));
-			}
-			
-			if(e.start <= cEnd && e.end >= cEnd) {
-				hasEnd = true;
-				break;
+			if(e.end >= cStart && e.start <= cEnd) {
+				Exon nExon = new Exon(t.chr, e.start, e.end);
+				nExons.add(nExon);
 			}
 		}
+		System.out.println(cStart+":"+cEnd+"=>"+nExons.size());
 		
-		if(hasStart && hasEnd) {
+		
+		if(nExons.size() != 0) {
 			int limit = MAX_FLANK_AA_SIZE * 3 + 2;
 			LinkedList<Exon> circExons = new LinkedList<Exon>();
 			// adjust start and end
+			// :: intron-compatibility
 			nExons.get(0).start = cStart;
 			nExons.get(nExons.size()-1).end = cEnd;
 			
@@ -104,7 +97,6 @@ public class CIRIquant {
     			}
     			rightSize += (nExon.end - nExon.start + 1);
 			}
-			
 			refGenome.setSequence(t.chr, circExons);
 			entries = FastaEntry.enumerateFastaEntry(t, circExons);
 		}
@@ -116,7 +108,6 @@ public class CIRIquant {
 		
         this.gtf.geneToTranscripts.forEach((g, ts)->{
     		ArrayList<Transcript> refTs = this.refGTF.geneToTranscripts.get(g);
-    		
     		for(Transcript t : ts) {
     			int tStart = Integer.parseInt(t.start);
     			int tEnd = Integer.parseInt(t.end);
