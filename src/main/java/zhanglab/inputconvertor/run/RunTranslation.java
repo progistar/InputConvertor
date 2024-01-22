@@ -131,8 +131,6 @@ public class RunTranslation {
  		File irfinderFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/irfinder/C3L-00973.T/IRFinder-IR-nondir.txt");
  		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
 		VEPLoader somaVEP = new VEPLoader(vepFile, true);
-		File refProteinFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v42.pc_translations.fa");
-		FastaLoader refProt = new FastaLoader(refProteinFile);
 
 		
  		GenomeLoader gmL = new GenomeLoader(genomeFile);
@@ -146,7 +144,6 @@ public class RunTranslation {
 		ArrayList<FastaEntry> entries = irFinder.getFastaEntry();
 		
 		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
-		refProt.removeSequenceOverlappedToThisFasta(entries);
         for(FastaEntry entry : entries) {
         	BW.append(">"+entry.toHeader());
         	BW.newLine();
@@ -163,7 +160,7 @@ public class RunTranslation {
 		long startTime = System.currentTimeMillis();
 		System.out.println("Translator v0.0.0");
 		
-		testCIRIquant();
+		testIRFinder();
 		System.exit(1);
 		Options options = new Options();
 		

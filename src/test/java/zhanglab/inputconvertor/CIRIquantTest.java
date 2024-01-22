@@ -112,8 +112,6 @@ public class CIRIquantTest {
 		this.expectedTranslations.add("SPGGRCWPGSEPWWTLLAWIXALVDAVGL");
 		this.expectedTranslations.add("ALVDAVGLDLSPGGRCWPGSEPWWTLLA");
 		
-		
-		
 	}
 	
 }

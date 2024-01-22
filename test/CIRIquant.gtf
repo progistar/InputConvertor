@@ -1,0 +1,16 @@
+##Sample: Test data
+##Total_Reads: 
+##Mapped_Reads: 
+##Circular_Reads: 
+##version: 1.1.2
+chr1	CIRIquant	circRNA	50	400	0.2152	+	.	circ_id "chr1:50|400_junction_exact"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG1"; gene_name "POWER"; gene_type "protein_coding";
+chr1	CIRIquant	circRNA	200	400	0.2152	+	.	circ_id "chr1:200|400_junction_exact"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG1"; gene_name "POWER"; gene_type "protein_coding";
+chr1	CIRIquant	circRNA	200	250	0.2152	+	.	circ_id "chr1:200|250_junction_exact"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG1"; gene_name "POWER"; gene_type "protein_coding";
+chr1	CIRIquant	circRNA	100	400	0.2152	+	.	circ_id "chr1:100|400_junction_shift"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG1"; gene_name "POWER"; gene_type "protein_coding";
+chr1	CIRIquant	circRNA	100	350	0.2152	+	.	circ_id "chr1:100|350_junction_shift"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG1"; gene_name "POWER"; gene_type "protein_coding";
+chr1	CIRIquant	circRNA	200	350	0.2152	+	.	circ_id "chr1:200|350_junction_shift"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG1"; gene_name "POWER"; gene_type "protein_coding";
+chr1	CIRIquant	circRNA	280	400	0.2152	+	.	circ_id "chr1:280|400_intron"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG1"; gene_name "POWER"; gene_type "protein_coding";
+chr1	CIRIquant	circRNA	500	600	0.2152	+	.	circ_id "chr1:500|600_junction_exact"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG2"; gene_name "LOWER"; gene_type "protein_coding";
+chr1	CIRIquant	circRNA	550	580	0.2152	+	.	circ_id "chr1:550|580_junction_shift"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG2"; gene_name "LOWER"; gene_type "protein_coding";
+chr1	CIRIquant	circRNA	650	800	0.2152	-	.	circ_id "chr1:650|800_junction_exact"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG3"; gene_name "TOWER"; gene_type "protein_coding";
+chr1	CIRIquant	circRNA	680	780	0.2152	-	.	circ_id "chr1:680|780_junction_shift"; circ_type "exon"; bsj 20.000; fsj 19.000; junc_ratio 0.678; gene_id "TESG3"; gene_name "TOWER"; gene_type "protein_coding";

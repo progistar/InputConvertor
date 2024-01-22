@@ -113,10 +113,10 @@ public class IRFinder {
 		int endExon = -1;
 		for(int i=0; i<exons.size(); i++) {
 			Exon e = exons.get(i);
-			if(e.start <= iStart-1 && e.end >= iStart-1) {
+			if(e.end == iStart-1) {
 				startExon = i;
 			}
-			if(e.start <= iEnd+1 && e.end >= iEnd+1) {
+			if(e.start == iEnd+1) {
 				endExon = i;
 			}
 		}
