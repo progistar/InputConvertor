@@ -30,7 +30,7 @@ public class FastaLoader {
 				}
 				
 				entry = new FastaEntry();
-				entry.description = line.substring(1);
+				entry.originHeader = line.substring(1);
 				entries.add(entry);
 			} else {
 				sequence.append(line);

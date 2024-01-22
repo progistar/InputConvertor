@@ -48,8 +48,6 @@ public class CIRIquant {
 				nExons.add(nExon);
 			}
 		}
-		System.out.println(cStart+":"+cEnd+"=>"+nExons.size());
-		
 		
 		if(nExons.size() != 0) {
 			int limit = MAX_FLANK_AA_SIZE * 3 + 2;
@@ -148,7 +146,7 @@ public class CIRIquant {
          		continue;
          	}
          	removeDuplication.put(entry.getKey(), "");
-         	entry.tool = InputConvertorConstants.IRFINDER_HEADER_ID;
+         	entry.tool = InputConvertorConstants.CIRIQUANT_HEADER_ID;
          	entry.idx = idx++;
          	uniqueFastaEntries.add(entry);
          }

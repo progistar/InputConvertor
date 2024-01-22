@@ -23,17 +23,18 @@ public class StringTie {
 	public GTFLoader refGTF = null;
 	public GenomeLoader refGenome = null;
 	public String logFileName = null;
-	public VEPLoader vep = null;
 	
 	public StringTie (File file) throws IOException {
 		System.out.println("## StringTie ##");
 		System.out.println("Load "+file.getName());
 		this.gtf = new GTFLoader(file);
 		
+		/*
 		this.logFileName = file.getAbsolutePath()+".SR.log";
 		System.out.println("## StringTie ##");
 		System.out.println("Generate log file... "+this.logFileName);
 		this.writeLog();
+		*/
 	}
 	
 	public void enrollGenomeSequence (GenomeLoader refGenome) {
@@ -41,13 +42,6 @@ public class StringTie {
 		System.out.println("Enroll reference genome");
 		this.refGenome = refGenome;
 	}
-	
-	public void enrollVEP (VEPLoader vep) {
-		System.out.println("## StringTie ##");
-		System.out.println("Enroll VEP");
-		this.vep = vep;
-	}
-	
 	
 	
 	private void writeLog () throws IOException {

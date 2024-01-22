@@ -16,9 +16,13 @@ public class FastaEntry {
 	public String geneId;
 	public int frame = -1;
 	public String description = null;
+	public String originHeader = null;
 	
 	public String toHeader() {
-		return  this.tool+this.idx+"|"+this.geneId+"|f:"+this.frame+"|s:"+transcript.strand+"|"+this.description;
+		if(originHeader != null) {
+			return this.tool+this.idx+"|"+originHeader;
+		}
+		return this.tool+this.idx+"|"+this.geneId+"|f:"+this.frame+"|s:"+transcript.strand+"|"+this.description;
 	}
 	
 	public String getKey () {

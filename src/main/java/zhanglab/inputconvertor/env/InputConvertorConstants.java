@@ -78,6 +78,9 @@ public class InputConvertorConstants {
 	public static final String ARRIBA_BREAK_POINT1_FIELD_NAME		=	"breakpoint1";
 	public static final String ARRIBA_BREAK_POINT2_FIELD_NAME		=	"breakpoint2";
 	public static final String ARRIBA_HEADER_ID				=	"FG";
+	public static final String ARRIBA_FRAME_FIELD_NAME		=	"reading_frame";
+	public static final String ARRIBA_STRAND1_FIELD_NAME	=	"strand1(gene/fusion)";
+	public static final String ARRIBA_STRAND2_FIELD_NAME	=	"strand2(gene/fusion)";
 	
 	// ## StringTie
 	public static final String STRINGTIE_HEADER_ID			=	"ST";

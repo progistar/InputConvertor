@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import zhanglab.inputconvertor.data.FastaEntry;
+import zhanglab.inputconvertor.data.Transcript;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
 public class Arriba {
@@ -33,6 +34,9 @@ public class Arriba {
         int gene2Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_GENE2_FIELD_NAME);
         int breakPoint1Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_BREAK_POINT1_FIELD_NAME);
         int breakPoint2Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_BREAK_POINT2_FIELD_NAME);
+        int frameIdx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_FRAME_FIELD_NAME);
+        int strand1Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_STRAND1_FIELD_NAME);
+        int strand2Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_STRAND2_FIELD_NAME);
         String line = null;
         
         while((line = BR.readLine()) != null) {
@@ -51,16 +55,26 @@ public class Arriba {
         	
         	if(fullPeptide.length() < InputConvertorConstants.MIN_PEPT_LEN) continue;
         	
-        	
         	String gene1 = fields[gene1Idx];
         	String gene2 = fields[gene2Idx];
         	String bp1 = fields[breakPoint1Idx];
         	String bp2 = fields[breakPoint2Idx];
+        	String frame = fields[frameIdx];
+        	String strand1 = fields[strand1Idx];
+        	String strand2 = fields[strand2Idx];
         	
         	FastaEntry entry = new FastaEntry();
 			entry.tool = InputConvertorConstants.ARRIBA_HEADER_ID;
-			//entry.header = gene1+"+"+gene2+"|"+bp1+"+"+bp2;
+			entry.idx = fastaEntries.size()+1;
+			
+			//this.tool+this.idx+"|"+this.geneId+"|f:"+this.frame+"|s:"+transcript.strand+"|"+this.description;
+			entry.originHeader = gene1+"+"+gene2+"|f:"+frame+"|s:"+strand1+","+strand2+"|"+bp1+","+bp2;
+			
 			entry.sequence = fullPeptide;
+			
+			
+			entry.frame = 0;
+			
 			fastaEntries.add(entry);
         	
         }

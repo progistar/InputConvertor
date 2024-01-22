@@ -12,7 +12,7 @@ import junit.framework.Assert;
 import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
-import zhanglab.inputconvertor.input.CIRIquant;
+import zhanglab.inputconvertor.data.VEPLoader;
 import zhanglab.inputconvertor.input.IRFinder;
 
 public class IRFinderTest {
@@ -20,6 +20,7 @@ public class IRFinderTest {
 	public File genomeFile = null;
 	public File referenceFile = null;
 	public File irfinderFile = null;
+	public File vepFile = null;
 	public ArrayList<String> expectedTranslations = null;
 	
 	public IRFinderTest() {
@@ -34,6 +35,11 @@ public class IRFinderTest {
 		IRFinder irfinder = new IRFinder(test.irfinderFile);
 		GTFLoader reference = new GTFLoader(test.referenceFile);
 		GenomeLoader gLoader = new GenomeLoader(test.genomeFile);
+		VEPLoader vepLoader = null;
+		if(vepFile != null) {
+			vepLoader = new VEPLoader(vepFile, true);
+			gLoader.enrollGermVEPLaoder(vepLoader);
+		}
 		
 		irfinder.enrollGenomeSequence(gLoader);
 		irfinder.enrollReferenceGTF(reference);
@@ -66,6 +72,7 @@ public class IRFinderTest {
 		this.genomeFile = new File("test/test.genome.fa");
 		this.referenceFile = new File("test/ref.gtf");
 		this.irfinderFile = new File("test/IRFinder.tsv");
+		this.vepFile = new File("test/vep.tsv");
 		this.expectedTranslations = new ArrayList<String>();
 		
 		// chr1:50|400_junction_exact

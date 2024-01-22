@@ -24,166 +24,169 @@ import zhanglab.inputconvertor.input.IRFinder;
 import zhanglab.inputconvertor.input.StringTie;
 
 public class RunTranslation {
-	
-	public static void testVEP() throws IOException {
-		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
-		VEPLoader vep = new VEPLoader(vepFile, true);
-		
-		ArrayList<Mutation> mutations = vep.getDELByRange("chr19", 9126193, 9126195);
-		
-		for(Mutation mutation : mutations) {
-			System.out.println(mutation.toString());
-		}
-	}
-	
- 	public static void testAll () throws IOException {
-		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
-		File testFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/CIRIquant/C3L-00973.T/CIRIquant_total_rnaseq.gtf");
-		File referenceFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v34.basic.annotation.gtf");
-		File arribaFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/arriba/C3L-00973.T.arriba.fusions.tsv");
-		
-		GenomeLoader gmL = new GenomeLoader(genomeFile);
-		GTFLoader gtfRef = new GTFLoader(referenceFile);
-        
-        
-        CIRIquant ciriQuant = new CIRIquant(testFile);
-        ciriQuant.enrollGenomeSequence(gmL);
-        ciriQuant.enrollReferenceGTF(gtfRef);
-        ArrayList<FastaEntry> entries = ciriQuant.getFastaEntry();
-        
-        Arriba arriba = new Arriba(arribaFile);
-        entries.addAll(arriba.getFastaEntry());
-        
-        BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
-        
-        for(FastaEntry entry : entries) {
-        	BW.append(">"+entry.toHeader());
-        	BW.newLine();
-        	BW.append(entry.sequence);
-        	BW.newLine();
-        }
-        
-        BW.close();
-	}
- 	
- 	public static void testCIRIquant () throws IOException {
- 		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
- 		File referenceFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v34.basic.annotation.gtf");
- 		File ciriquantFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/CIRIquant/C3L-00973.T/CIRIquant_total_rnaseq.gtf");
- 		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
-		VEPLoader somaVEP = new VEPLoader(vepFile, true);
-		File refProteinFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v42.pc_translations.fa");
-		FastaLoader refProt = new FastaLoader(refProteinFile);
-
-		
- 		GenomeLoader gmL = new GenomeLoader(genomeFile);
- 		gmL.enrollSomaticVEPLaoder(somaVEP);
- 		CIRIquant ciriquant = new CIRIquant(ciriquantFile);
-		GTFLoader gtfRef = new GTFLoader(referenceFile);
-		
-		ciriquant.enrollGenomeSequence(gmL);
-		ciriquant.enrollReferenceGTF(gtfRef);
-		
-		ArrayList<FastaEntry> entries = ciriquant.getFastaEntry();
-		//refProt.removeSequenceOverlappedToThisFasta(entries);
-		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
-		
-        for(FastaEntry entry : entries) {
-        	BW.append(">"+entry.toHeader());
-        	BW.newLine();
-        	BW.append(entry.sequence);
-        	BW.newLine();
-        }
-        
-        BW.close();
- 	}
- 	
- 	public static void testStringTie () throws IOException {
- 		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
-		GenomeLoader gmL = new GenomeLoader(genomeFile);
-		File stringTieFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/stringtie/C3L-00973.T.stringtie_output.gtf");
-		StringTie stringTie = new StringTie(stringTieFile);
-		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
-		VEPLoader somaVEP = new VEPLoader(vepFile, true);
-		File refProteinFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v42.pc_translations.fa");
-		FastaLoader refProt = new FastaLoader(refProteinFile);
-		
-		
-		gmL.enrollSomaticVEPLaoder(somaVEP);
-		stringTie.enrollGenomeSequence(gmL);
-		ArrayList<FastaEntry> entries = stringTie.getFastaEntry(1.00);
-		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
-        
-		refProt.removeSequenceOverlappedToThisFasta(entries);
-        for(FastaEntry entry : entries) {
-        	BW.append(">"+entry.toHeader());
-        	BW.newLine();
-        	BW.append(entry.sequence);
-        	BW.newLine();
-        }
-        
-        BW.close();
- 	}
-	
- 	public static void testIRFinder () throws IOException {
- 		File genomeFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/GRCh38.primary_assembly.genome.fa");
- 		File referenceFile = new File("/Users/seunghyukchoi/Documents/_resources/_databases/gencode.v34.basic.annotation.gtf");
- 		File irfinderFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/irfinder/C3L-00973.T/IRFinder-IR-nondir.txt");
- 		File vepFile = new File("/Users/seunghyukchoi/Documents/1_Projects/2023_Neoflow2/2_iRNAseq/vep/C3L-01632.txt");
-		VEPLoader somaVEP = new VEPLoader(vepFile, true);
-
-		
- 		GenomeLoader gmL = new GenomeLoader(genomeFile);
- 		gmL.enrollSomaticVEPLaoder(somaVEP);
-		IRFinder irFinder = new IRFinder(irfinderFile);
-		GTFLoader gtfRef = new GTFLoader(referenceFile);
-		
-		irFinder.enrollGenomeSequence(gmL);
-		irFinder.enrollReferenceGTF(gtfRef);
-		
-		ArrayList<FastaEntry> entries = irFinder.getFastaEntry();
-		
-		BufferedWriter BW = new BufferedWriter(new FileWriter("/Users/seunghyukchoi/Documents/_resources/_databases/test.fa"));
-        for(FastaEntry entry : entries) {
-        	BW.append(">"+entry.toHeader());
-        	BW.newLine();
-        	BW.append(entry.sequence);
-        	BW.newLine();
-        }
-        
-        BW.close();
- 	}
-	
- 	
  	
 	public static void main(String[] args) throws IOException, ParseException {
 		long startTime = System.currentTimeMillis();
-		System.out.println("Translator v0.0.0");
-		
-		testIRFinder();
-		System.exit(1);
+		System.out.println("Translator v0.0.1");
 		Options options = new Options();
 		
 		// Options
 		options.addOption("s", "stringtie", true, "GTF file path from StringTie");
+		options.addOption("f", "fpkm", true, "FPKM threshold for StringTie (filter FPKM < value). Default 1.00");
 		options.addOption("a", "arriba", true, "TSV file path from Arriba");
 		options.addOption("c", "ciriquant", true, "GTF file path from CIRIQuant");
 		options.addOption("i", "irfinder", true, "tsv file path from IRFinder");
 		options.addOption("r", "gtf", true, "Reference GTF file");
-		options.addOption("v", "VEP", true, "VEP file path from Ensembl Variant Effeect Predictor");
+		options.addOption("v", "VEP_germ", true, "Germline VEP file path from Ensembl Variant Effeect Predictor");
+		options.addOption("V", "VEP_soma", true, "Somatic VEP file path from Ensembl Variant Effeect Predictor");
 		options.addOption("g", "fasta", true, "Genome fasta file");
-		options.addOption("p", "pattern", true, "batch pattern");
+		options.addOption("p", "fasta", true, "Reference protein fasta file");
+		options.addOption("o", "output_prefix", true, "output_prefix");
 		
 		CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
         
+        File stringTieFile = null; File arribaFile = null; File ciriquantFile= null; File irfinderFile = null;
+        File refGTFFile = null; File refProteinFile = null; String outputPrefix = null;
+        File refGenomeFile = null; File vepSomaFile = null; File vepGermFile = null;  
+        double fpkmThreshold = 1.00;
+        
+        if(cmd.getOptionValue("s") != null) {
+        	stringTieFile = new File(cmd.getOptionValue("s"));
+        	if(cmd.getOptionValue("f") != null) {
+        		fpkmThreshold = Double.parseDouble(cmd.getOptionValue("f"));
+        	}
+        	System.out.println("FPKM < "+fpkmThreshold+" will be discarded in the given StringTie result");
+        }
+        if(cmd.getOptionValue("a") != null) {
+        	arribaFile = new File(cmd.getOptionValue("a"));
+        }
+        if(cmd.getOptionValue("c") != null) {
+        	ciriquantFile = new File(cmd.getOptionValue("c"));
+        }
+        if(cmd.getOptionValue("i") != null) {
+        	irfinderFile = new File(cmd.getOptionValue("i"));
+        }
+        if(cmd.getOptionValue("r") != null) {
+        	refGTFFile = new File(cmd.getOptionValue("r"));
+        }
+        if(cmd.getOptionValue("v") != null) {
+        	vepGermFile = new File(cmd.getOptionValue("v"));
+        }
+        if(cmd.getOptionValue("V") != null) {
+        	vepSomaFile = new File(cmd.getOptionValue("V"));
+        }
+        if(cmd.getOptionValue("p") != null) {
+        	refProteinFile = new File(cmd.getOptionValue("p"));
+        }
+        if(cmd.getOptionValue("g") != null) {
+        	refGenomeFile = new File(cmd.getOptionValue("g"));
+        }
+        if(cmd.getOptionValue("o") != null) {
+        	outputPrefix = cmd.getOptionValue("o");
+        }
+        
+        // requirements
+        
+        if(stringTieFile != null) {
+        	System.out.println("Novel isoforms from StringTie: " + stringTieFile.getName());
+        }
+        if(arribaFile != null) {
+        	System.out.println("Fusion genes from Arriba: " + arribaFile.getName());
+        }
+        if(ciriquantFile != null) {
+        	System.out.println("CircRNAs from CIRIquant: " + ciriquantFile.getName());
+        }
+        if(irfinderFile != null) {
+        	System.out.println("Reteined-introns from IRFinder: " + irfinderFile.getName());
+        }
+        if(vepGermFile != null) {
+        	System.out.println("Germline variant calls from: " + vepGermFile.getName());
+        }
+        if(vepSomaFile != null) {
+        	System.out.println("Somatic variant calls from: " + vepSomaFile.getName());
+        }
+        if(refGTFFile != null) {
+        	System.out.println("Reference transcriptome model: " + refGTFFile.getName());
+        } else {
+        	System.out.println("Missing reference transcriptome model...");
+        	System.exit(1);
+        }
+        if(refGenomeFile != null) {
+        	System.out.println("Reference genome sequences: " + refGenomeFile.getName());
+        } else {
+        	System.out.println("Missing reference genome sequences...");
+        	System.exit(1);
+        }
+        if(refProteinFile != null) {
+        	System.out.println("Reference protein database: " + refProteinFile.getName());
+        	System.out.println("Reference protein sequences will be appended to at the end of a customized database.");
+        }
         
         
-        // parse input
-        //String mode = cmd.getOptionValue("m");
-        String stringTieFilePath = cmd.getOptionValue("s");
-        String genomeFastaFile = cmd.getOptionValue("g");
-		
+        // load GML
+        GenomeLoader gmL = new GenomeLoader(refGenomeFile);
+        GTFLoader refGTF = new GTFLoader(refGTFFile);
+        if(vepGermFile != null) {
+        	VEPLoader vep = new VEPLoader(vepGermFile, false);
+        	gmL.enrollGermVEPLaoder(vep);
+        }
+        if(vepSomaFile != null) {
+        	VEPLoader vep = new VEPLoader(vepSomaFile, true);
+        	gmL.enrollSomaticVEPLaoder(vep);
+        }
+        
+        // Do StringTie
+        ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
+        if(stringTieFile != null) {
+        	StringTie stringTie = new StringTie(stringTieFile);
+        	stringTie.enrollGenomeSequence(gmL);
+        	entries.addAll(stringTie.getFastaEntry(fpkmThreshold));
+        }
+        
+        // Do CIRIquant
+        if(ciriquantFile != null) {
+        	CIRIquant ciriquant = new CIRIquant(ciriquantFile);
+        	ciriquant.enrollGenomeSequence(gmL);
+        	ciriquant.enrollReferenceGTF(refGTF);
+        	entries.addAll(ciriquant.getFastaEntry());
+        }
+        
+        // Do IRFinder
+        if(irfinderFile != null) {
+        	IRFinder irfinder = new IRFinder(irfinderFile);
+        	irfinder.enrollGenomeSequence(gmL);
+        	irfinder.enrollReferenceGTF(refGTF);
+        	entries.addAll(irfinder.getFastaEntry());
+        }
+        
+        // Do Arriba
+        if(arribaFile != null) {
+        	Arriba arriba = new Arriba(arribaFile);
+            entries.addAll(arriba.getFastaEntry());
+        }
+        
+        // Do reference fasta
+        if(refProteinFile != null) {
+        	FastaLoader refProteins = new FastaLoader(refProteinFile);
+        	entries.addAll(refProteins.entries);
+        }
+        
+        System.out.println("A total of entries: "+entries.size());
+        
+        String outputFile = outputPrefix +"_peptide_sequences.fasta";
+        BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile));
+        
+        for(FastaEntry entry : entries) {
+        	BW.append(">"+entry.toHeader());
+        	BW.newLine();
+        	BW.append(entry.sequence);
+        	BW.newLine();
+        }
+        
+        BW.close();
+        
+        
         long endTime = System.currentTimeMillis();
         
         System.out.println((endTime-startTime)/1000+" sec");
