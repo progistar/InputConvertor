@@ -22,7 +22,7 @@ public class FastaEntry {
 		if(originHeader != null) {
 			return this.tool+this.idx+"|"+originHeader;
 		}
-		return this.tool+this.idx+"|"+this.geneId+"|f:"+this.frame+"|s:"+transcript.strand+"|"+this.description;
+		return this.tool+this.idx+"|"+this.geneId+"|"+this.transcript.tID+"|f:"+this.frame+"|s:"+transcript.strand+"|"+this.description;
 	}
 	
 	public String getKey () {

@@ -37,6 +37,9 @@ public class Arriba {
         int frameIdx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_FRAME_FIELD_NAME);
         int strand1Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_STRAND1_FIELD_NAME);
         int strand2Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_STRAND2_FIELD_NAME);
+        int transcript1Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_TRANSCRIPT1_FIELD_NAME);
+        int transcript2Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_TRANSCRIPT2_FIELD_NAME);
+        
         String line = null;
         
         while((line = BR.readLine()) != null) {
@@ -62,13 +65,13 @@ public class Arriba {
         	String frame = fields[frameIdx];
         	String strand1 = fields[strand1Idx];
         	String strand2 = fields[strand2Idx];
+        	String transcript1 = fields[transcript1Idx];
+        	String transcript2 = fields[transcript2Idx];
         	
         	FastaEntry entry = new FastaEntry();
 			entry.tool = InputConvertorConstants.ARRIBA_HEADER_ID;
 			entry.idx = fastaEntries.size()+1;
-			
-			//this.tool+this.idx+"|"+this.geneId+"|f:"+this.frame+"|s:"+transcript.strand+"|"+this.description;
-			entry.originHeader = gene1+"+"+gene2+"|f:"+frame+"|s:"+strand1+","+strand2+"|"+bp1+","+bp2;
+			entry.originHeader = gene1+"+"+gene2+"|"+transcript1+"+"+transcript2+"|f:"+frame+"|s:"+strand1+","+strand2+"|"+bp1+","+bp2;
 			
 			entry.sequence = fullPeptide;
 			

@@ -55,7 +55,7 @@ public class IRFinder {
 			String strand = fields[strandIdx];
 			String warnings = fields[warningIdx];
 			String geneId = name.split("\\/")[1];
-			String id = chr+":"+start+"-"+end+"|"+strand+"|"+name;
+			String id = chr+":"+start+"-"+end;
 			
 			Integer cnt = summary.get(warnings);
 			if(cnt == null) {

@@ -11,6 +11,8 @@ import java.util.Hashtable;
 import org.ahocorasick.trie.Emit;
 import org.ahocorasick.trie.Trie;
 
+import zhanglab.inputconvertor.env.InputConvertorConstants;
+
 public class FastaLoader {
 
 	public ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
@@ -30,6 +32,8 @@ public class FastaLoader {
 				}
 				
 				entry = new FastaEntry();
+				entry.tool = InputConvertorConstants.REF_HEADER_ID;
+				entry.idx = entries.size()+1;
 				entry.originHeader = line.substring(1);
 				entries.add(entry);
 			} else {

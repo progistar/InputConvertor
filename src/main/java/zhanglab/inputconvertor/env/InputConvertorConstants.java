@@ -81,6 +81,8 @@ public class InputConvertorConstants {
 	public static final String ARRIBA_FRAME_FIELD_NAME		=	"reading_frame";
 	public static final String ARRIBA_STRAND1_FIELD_NAME	=	"strand1(gene/fusion)";
 	public static final String ARRIBA_STRAND2_FIELD_NAME	=	"strand2(gene/fusion)";
+	public static final String ARRIBA_TRANSCRIPT1_FIELD_NAME=	"transcript_id1";
+	public static final String ARRIBA_TRANSCRIPT2_FIELD_NAME=	"transcript_id2";
 	
 	// ## StringTie
 	public static final String STRINGTIE_HEADER_ID			=	"ST";
@@ -96,6 +98,9 @@ public class InputConvertorConstants {
 	
 	// ## CIRIQuant
 	public static final String CIRIQUANT_HEADER_ID			=	"CR";
+	
+	// ## Reference
+	public static final String REF_HEADER_ID				=	"RF";
 	
 	// ## Translation
 	public static final int MIN_PEPT_LEN					=	7;

@@ -68,7 +68,7 @@ public class GTFLoader {
 					String strand = fields[6];
 					String[] attrs = fields[8].split("\\;");
 					String geneId = getTag(attrs, "gene_id");
-					String enstId = getTag(attrs, "circ_id");
+					String enstId = getTag(attrs, "circ_id").replace("|", ",");
 					
 					// CIRIquant can have mutiple gene ids per record
 					ArrayList<String> geneIds = new ArrayList<String>();
@@ -140,7 +140,10 @@ public class GTFLoader {
 		
 		for(int i=0; i<attrs.length; i++) {
 			if(attrs[i].contains(tag)) {
-				val = attrs[i].trim().split("\\s")[1].replace("\"", "");
+				String thisTag = attrs[i].trim().split("\\s")[0];
+				if(thisTag.equalsIgnoreCase(tag)) {
+					val = attrs[i].trim().split("\\s")[1].replace("\"", "");
+				}
 			}
 		}
 		

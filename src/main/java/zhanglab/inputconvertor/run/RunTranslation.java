@@ -138,6 +138,13 @@ public class RunTranslation {
         
         // Do StringTie
         ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
+
+        // Do reference fasta
+        if(refProteinFile != null) {
+        	FastaLoader refProteins = new FastaLoader(refProteinFile);
+        	entries.addAll(refProteins.entries);
+        }
+        
         if(stringTieFile != null) {
         	StringTie stringTie = new StringTie(stringTieFile);
         	stringTie.enrollGenomeSequence(gmL);
@@ -166,15 +173,10 @@ public class RunTranslation {
             entries.addAll(arriba.getFastaEntry());
         }
         
-        // Do reference fasta
-        if(refProteinFile != null) {
-        	FastaLoader refProteins = new FastaLoader(refProteinFile);
-        	entries.addAll(refProteins.entries);
-        }
         
         System.out.println("A total of entries: "+entries.size());
         
-        String outputFile = outputPrefix +"_peptide_sequences.fasta";
+        String outputFile = outputPrefix +".combined.fasta";
         BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile));
         
         for(FastaEntry entry : entries) {
