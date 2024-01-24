@@ -11,6 +11,10 @@ public class Mutation {
 	public String key		= null;
 	
 	public String toString() {
-		return chr+":"+pos+"\t"+refSeq+">"+altSeq;
+		if(isSomatic) {
+			return chr+":"+pos+"\t"+refSeq+">>"+altSeq;
+		} else {
+			return chr+":"+pos+"\t"+refSeq+">"+altSeq;
+		}
 	}
 }

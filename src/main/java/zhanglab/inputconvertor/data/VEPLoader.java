@@ -44,7 +44,11 @@ public class VEPLoader {
 			int refLen = refs.length();
 			int altLen = alts.length();
 			
-			String key = chr+":"+pos+refs+">"+alts;
+			String mark = ">";
+			if(isSomatic) {
+				mark = ">>";
+			}
+			String key = chr+":"+pos+refs+mark+alts;
 			if(removeDuplication.get(key) != null) {
 				continue;
 			}
