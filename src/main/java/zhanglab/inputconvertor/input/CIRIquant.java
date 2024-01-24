@@ -1,5 +1,7 @@
 package zhanglab.inputconvertor.input;
 
+import static org.mockito.ArgumentMatchers.matches;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -106,29 +108,40 @@ public class CIRIquant {
 		
         this.gtf.geneToTranscripts.forEach((g, ts)->{
     		ArrayList<Transcript> refTs = this.refGTF.geneToTranscripts.get(g);
+    		
+    		
     		for(Transcript t : ts) {
     			int tStart = Integer.parseInt(t.start);
     			int tEnd = Integer.parseInt(t.end);
     			// it is possible to appear duplicated peptides because of several reference transcripts. 
     			ArrayList<ArrayList<Exon>> exons = new ArrayList<ArrayList<Exon>>();
+    			ArrayList<Transcript> matchedTranscripts = new ArrayList<Transcript>();
+    			
+    			
     			// intergenic
     			if(refTs == null) {
     				ArrayList<Exon> nExons = new ArrayList<Exon>();
     				nExons.add(new Exon(t.chr, tStart, tEnd));
-    				
+    				matchedTranscripts.add(t);
     			} else {
         			// start translating
         			for(Transcript refT : refTs) {
         				exons.add(refT.exons);
+        				matchedTranscripts.add(refT);
         			}
         			// end 
     			}
     			
-    			for(ArrayList<Exon> nExons : exons) {
-    				ArrayList<FastaEntry> entries = this.getTranslation(t, nExons, tStart, tEnd);
+    			// reflect reference transcript ID
+    			for(int i=0; i<exons.size(); i++) {
+    				ArrayList<Exon> nExons = exons.get(i);
+    				Transcript matchedTranscript = matchedTranscripts.get(i);
+    				ArrayList<FastaEntry> entries = this.getTranslation(matchedTranscript, nExons, tStart, tEnd);
     				// put gene ID
     				for(FastaEntry entry : entries) {
     					entry.geneId = g;
+    					entry.transcriptIds.add(entry.transcript.tID);
+    					entry.tool = InputConvertorConstants.CIRIQUANT_HEADER_ID;
     				}
     				fastaEntries.addAll(entries);
     			}
@@ -136,24 +149,8 @@ public class CIRIquant {
         	
         });
         
-		 // add tool info
- 		// it is possible to appear duplicated peptides because of several reference transcripts. 
- 		Hashtable<String, String> removeDuplication = new Hashtable<String, String>();
- 		ArrayList<FastaEntry> uniqueFastaEntries = new ArrayList<FastaEntry>();
- 		int idx = 1;
-         for(FastaEntry entry : fastaEntries) {
-         	if(removeDuplication.get(entry.getKey()) != null) {
-         		continue;
-         	}
-         	removeDuplication.put(entry.getKey(), "");
-         	entry.tool = InputConvertorConstants.CIRIQUANT_HEADER_ID;
-         	entry.idx = idx++;
-         	uniqueFastaEntries.add(entry);
-         }
-         
-         fastaEntries.clear();
-         
-         return uniqueFastaEntries;
+        // remove duplications
+        return FastaEntry.removeDuplications(fastaEntries);
 	}
 	
 	public int getLengthOfExons (ArrayList<Exon> exons) {

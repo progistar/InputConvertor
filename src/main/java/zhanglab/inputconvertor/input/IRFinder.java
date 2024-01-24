@@ -189,6 +189,8 @@ public class IRFinder {
     				// put gene ID
     				for(FastaEntry entry : entries) {
     					entry.geneId = g;
+    					entry.transcriptIds.add(entry.transcript.tID);
+    					entry.tool = InputConvertorConstants.IRFINDER_HEADER_ID;
     				}
     				fastaEntries.addAll(entries);
     			}
@@ -196,23 +198,7 @@ public class IRFinder {
         	
         });
         
-        // add tool info
-		// it is possible to appear duplicated peptides because of several reference transcripts. 
-		Hashtable<String, String> removeDuplication = new Hashtable<String, String>();
-		ArrayList<FastaEntry> uniqueFastaEntries = new ArrayList<FastaEntry>();
-		int idx = 1;
-        for(FastaEntry entry : fastaEntries) {
-        	if(removeDuplication.get(entry.getKey()) != null) {
-        		continue;
-        	}
-        	removeDuplication.put(entry.getKey(), "");
-        	entry.tool = InputConvertorConstants.IRFINDER_HEADER_ID;
-        	entry.idx = idx++;
-        	uniqueFastaEntries.add(entry);
-        }
-        
-        fastaEntries.clear();
-        
-        return uniqueFastaEntries;
+        // remove duplications
+        return FastaEntry.removeDuplications(fastaEntries);
 	}
 }

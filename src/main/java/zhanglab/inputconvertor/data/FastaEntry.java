@@ -14,6 +14,7 @@ public class FastaEntry {
 	public String sequence;
 	public Transcript transcript;
 	public String geneId;
+	public ArrayList<String> transcriptIds = new ArrayList<String>();
 	public int frame = -1;
 	public String description = null;
 	public String originHeader = null;
@@ -22,7 +23,15 @@ public class FastaEntry {
 		if(originHeader != null) {
 			return this.tool+this.idx+"|"+originHeader;
 		}
-		return this.tool+this.idx+"|"+this.geneId+"|"+this.transcript.tID+"|f:"+this.frame+"|s:"+transcript.strand+"|"+this.description;
+		
+		String transcriptId = "";
+		for(String id : transcriptIds) {
+			if(transcriptId.length() != 0) {
+				transcriptId += ",";
+			}
+			transcriptId += id;
+		}
+		return this.tool+this.idx+"|"+this.geneId+"|"+transcriptId+"|f:"+this.frame+"|s:"+transcript.strand+"|"+this.description;
 	}
 	
 	public String getKey () {
@@ -119,5 +128,35 @@ public class FastaEntry {
 		}
 		
 		return desc.toString();
+	}
+	
+	public static ArrayList<FastaEntry> removeDuplications (ArrayList<FastaEntry> entries) {
+ 		// it is possible to appear duplicated peptides because of several reference transcripts. 
+ 		Hashtable<String, FastaEntry> removeDuplication = new Hashtable<String, FastaEntry>();
+ 		ArrayList<FastaEntry> uniqueFastaEntries = new ArrayList<FastaEntry>();
+ 		int idx = 1;
+         for(FastaEntry entry : entries) {
+        	 FastaEntry firstEntry = removeDuplication.get(entry.getKey());
+         	if(firstEntry != null) {
+         		for(String tID1 : entry.transcriptIds) {
+         			boolean isIncluded = false;
+         			for(String tID2 : firstEntry.transcriptIds) {
+         				if(tID1.equalsIgnoreCase(tID2)) {
+         					isIncluded = true;
+         				}
+         			}
+         			if(!isIncluded) {
+         				firstEntry.transcriptIds.add(tID1);
+         			}
+         		}
+         		continue;
+         	} else {
+         		removeDuplication.put(entry.getKey(), entry);
+             	entry.idx = idx++;
+             	uniqueFastaEntries.add(entry);
+         	}
+         }
+         
+         return uniqueFastaEntries;
 	}
 }
