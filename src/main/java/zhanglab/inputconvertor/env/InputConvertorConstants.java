@@ -2,6 +2,8 @@ package zhanglab.inputconvertor.env;
 
 public class InputConvertorConstants {
 
+	public static final String VERSION = "Version: v0.0.2";
+	
 	// ## Generated features from Input Convertor
 	public static final String IC_RT_FIELD_NAME = "ic_observed_rt";
 	public static final String IC_TITLE_FIELD_NAME = "ic_title";

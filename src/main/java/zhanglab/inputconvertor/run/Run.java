@@ -28,8 +28,7 @@ public class Run {
 
 	public static void main(String[] args) throws IOException, ParseException {
 		long startTime = System.currentTimeMillis();
-		System.out.println("InputConvetor v0.0.1");
-		
+		System.out.println(InputConvertorConstants.VERSION);
 		Options options = new Options();
 		
 		// Options

@@ -18,6 +18,7 @@ import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Mutation;
 import zhanglab.inputconvertor.data.VEPLoader;
+import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.input.Arriba;
 import zhanglab.inputconvertor.input.CIRIquant;
 import zhanglab.inputconvertor.input.IRFinder;
@@ -27,7 +28,7 @@ public class RunTranslation {
  	
 	public static void main(String[] args) throws IOException, ParseException {
 		long startTime = System.currentTimeMillis();
-		System.out.println("Translator v0.0.1");
+		System.out.println(InputConvertorConstants.VERSION);
 		Options options = new Options();
 		
 		// Options
