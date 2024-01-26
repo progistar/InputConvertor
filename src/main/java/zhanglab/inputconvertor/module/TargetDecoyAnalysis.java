@@ -82,7 +82,7 @@ public class TargetDecoyAnalysis {
         
         // build header ////////////////////////////////////////////////
         BW.append(header).append("\t")
-        .append("percoaltor_score");
+        .append("percolator_score");
         BW.newLine();
         ////////////////////////////////////// End of building header /
         

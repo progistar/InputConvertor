@@ -21,6 +21,7 @@ public class InputConvertorConstants {
 	public static final String IC_DELTA_SCORE_FIELD_NAME = "DeltaScore";
 	public static final String IC_SPEC_ID_FEILD_NAME = "SpecID";
 	public static final String IC_GENOMIC_ID_FEILD_NAME = "GenomicID";
+	public static final String IC_GENE_NAME_FEILD_NAME = "GeneName";
 	public static final String IC_LABEL_FEILD_NAME = "Label";
 	public static final String IC_IS_CANONICAL_FEILD_NAME = "isCanonical";
 	
