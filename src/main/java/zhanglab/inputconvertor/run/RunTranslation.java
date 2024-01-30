@@ -16,7 +16,6 @@ import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.FastaLoader;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
-import zhanglab.inputconvertor.data.Mutation;
 import zhanglab.inputconvertor.data.VEPLoader;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.input.Arriba;
@@ -26,65 +25,127 @@ import zhanglab.inputconvertor.input.StringTie;
 
 public class RunTranslation {
  	
+	public static ArrayList<String> newArgs = new ArrayList<String>();
+	
+	public static boolean checkArg (String short_, String long_, String arg1, String arg2) {
+		boolean is = false;
+		if((arg1.equalsIgnoreCase(short_) || arg1.equalsIgnoreCase(long_)) 
+				&& arg2.length() != 0 && !arg2.startsWith("-")) {
+			is = true;
+			newArgs.add(arg1);
+			newArgs.add(arg2);
+		}
+		return is;
+	}
+	
 	public static void main(String[] args) throws IOException, ParseException {
 		long startTime = System.currentTimeMillis();
 		System.out.println(InputConvertorConstants.VERSION);
 		Options options = new Options();
 		
 		// Options
-		options.addOption("s", "stringtie", true, "GTF file path from StringTie");
-		options.addOption("f", "fpkm", true, "FPKM threshold for StringTie (filter FPKM < value). Default 1.00");
-		options.addOption("a", "arriba", true, "TSV file path from Arriba");
-		options.addOption("c", "ciriquant", true, "GTF file path from CIRIQuant");
-		options.addOption("i", "irfinder", true, "tsv file path from IRFinder");
-		options.addOption("r", "gtf", true, "Reference GTF file");
-		options.addOption("v", "VEP_germ", true, "Germline VEP file path from Ensembl Variant Effeect Predictor");
-		options.addOption("V", "VEP_soma", true, "Somatic VEP file path from Ensembl Variant Effeect Predictor");
-		options.addOption("g", "fasta", true, "Genome fasta file");
-		options.addOption("p", "fasta", true, "Reference protein fasta file");
-		options.addOption("o", "output_prefix", true, "output_prefix");
+		for(int i=0; i<args.length; i++) {
+			if(i == args.length-1) {
+				break;
+			}
+			
+			
+			if(checkArg("-g", "--genome",args[i], args[i+1])) {
+				options.addOption("g", "genome", true, "Genome fasta file");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+				
+			} else if(checkArg("-p", "--protein",args[i], args[i+1])) {
+				options.addOption("p", "protein", true, "Reference protein fasta file");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+			} else if(checkArg("-r", "--gtf",args[i], args[i+1])) {
+				options.addOption("r", "gtf", true, "Reference GTF file");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+			} else if(checkArg("-o", "--output",args[i], args[i+1])) {
+				options.addOption("o", "output", true, "Output path");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+			} else if(checkArg("-s", "--stringtie",args[i], args[i+1])) {
+				options.addOption("s", "stringtie", true, "GTF file path from StringTie");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+			}  else if(checkArg("-f", "--fpkm",args[i], args[i+1])) {
+				options.addOption("f", "fpkm", true, "FPKM threshold for StringTie (filter FPKM < value). Default 1.00");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+			}  else if(checkArg("-a", "--arriba",args[i], args[i+1])) {
+				options.addOption("a", "arriba", true, "TSV file path from Arriba");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+			}  else if(checkArg("-c", "--ciriquant",args[i], args[i+1])) {
+				options.addOption("c", "ciriquant", true, "GTF file path from CIRIQuant");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+			}  else if(checkArg("-i", "--irfinder",args[i], args[i+1])) {
+				options.addOption("i", "irfinder", true, "tsv file path from IRFinder");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+			}  else if(checkArg("-v", "--vep_germ",args[i], args[i+1])) {
+				options.addOption("v", "vep_germ", true, "Germline VEP file path from Ensembl Variant Effeect Predictor");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+			}  else if(checkArg("-V", "--vep_soma",args[i], args[i+1])) {
+				options.addOption("V", "vep_soma", true, "Somatic VEP file path from Ensembl Variant Effeect Predictor");
+				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
+				
+			}
+		}
+		
+		
+		args = new String[newArgs.size()];
+		for(int i=0; i<args.length; i++) {
+			args[i] = newArgs.get(i);
+		}
+		
 		
 		CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
         
         File stringTieFile = null; File arribaFile = null; File ciriquantFile= null; File irfinderFile = null;
-        File refGTFFile = null; File refProteinFile = null; String outputPrefix = null;
+        File refGTFFile = null; File refProteinFile = null; String outputPath = null;
         File refGenomeFile = null; File vepSomaFile = null; File vepGermFile = null;  
         double fpkmThreshold = 1.00;
         
-        if(cmd.getOptionValue("s") != null) {
+        if(cmd.hasOption("s")) {
         	stringTieFile = new File(cmd.getOptionValue("s"));
         	if(cmd.getOptionValue("f") != null) {
         		fpkmThreshold = Double.parseDouble(cmd.getOptionValue("f"));
         	}
         	System.out.println("FPKM < "+fpkmThreshold+" will be discarded in the given StringTie result");
         }
-        if(cmd.getOptionValue("a") != null) {
+        if(cmd.hasOption("a")) {
         	arribaFile = new File(cmd.getOptionValue("a"));
         }
-        if(cmd.getOptionValue("c") != null) {
+        if(cmd.hasOption("c")) {
         	ciriquantFile = new File(cmd.getOptionValue("c"));
         }
-        if(cmd.getOptionValue("i") != null) {
+        if(cmd.hasOption("i")) {
         	irfinderFile = new File(cmd.getOptionValue("i"));
         }
-        if(cmd.getOptionValue("r") != null) {
+        if(cmd.hasOption("r")) {
         	refGTFFile = new File(cmd.getOptionValue("r"));
         }
-        if(cmd.getOptionValue("v") != null) {
+        if(cmd.hasOption("v")) {
         	vepGermFile = new File(cmd.getOptionValue("v"));
         }
-        if(cmd.getOptionValue("V") != null) {
+        if(cmd.hasOption("V")) {
         	vepSomaFile = new File(cmd.getOptionValue("V"));
         }
-        if(cmd.getOptionValue("p") != null) {
+        if(cmd.hasOption("p")) {
         	refProteinFile = new File(cmd.getOptionValue("p"));
         }
-        if(cmd.getOptionValue("g") != null) {
+        if(cmd.hasOption("g")) {
         	refGenomeFile = new File(cmd.getOptionValue("g"));
         }
-        if(cmd.getOptionValue("o") != null) {
-        	outputPrefix = cmd.getOptionValue("o");
+        if(cmd.hasOption("o")) {
+        	outputPath = cmd.getOptionValue("o");
         }
         
         // requirements
@@ -119,6 +180,13 @@ public class RunTranslation {
         	System.out.println("Missing reference genome sequences...");
         	System.exit(1);
         }
+        if(outputPath != null) {
+        	System.out.println("Output sequence database: "+outputPath);
+        } else {
+        	System.out.println("Missing output path...");
+        	System.exit(1);
+        }
+        
         if(refProteinFile != null) {
         	System.out.println("Reference protein database: " + refProteinFile.getName());
         	System.out.println("Reference protein sequences will be appended to at the end of a customized database.");
@@ -177,8 +245,7 @@ public class RunTranslation {
         
         System.out.println("A total of entries: "+entries.size());
         
-        String outputFile = outputPrefix +".combined.fasta";
-        BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile));
+        BufferedWriter BW = new BufferedWriter(new FileWriter(outputPath));
         
         for(FastaEntry entry : entries) {
         	BW.append(">"+entry.toHeader());
@@ -188,7 +255,6 @@ public class RunTranslation {
         }
         
         BW.close();
-        
         
         long endTime = System.currentTimeMillis();
         
