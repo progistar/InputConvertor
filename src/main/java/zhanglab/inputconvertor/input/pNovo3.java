@@ -9,19 +9,26 @@ import java.io.IOException;
 import java.util.Hashtable;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import zhanglab.inputconvertor.data.SimpleMGFSelector;
 import zhanglab.inputconvertor.data.Peptide;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.module.TopXgInput;
+import zhanglab.inputconvertor.module.TopXgInputGeneric;
 
-public class pNovo3 implements TopXgInput{
+public class pNovo3 extends TopXgInputGeneric {
 	public pNovo3 () {}
 	
 	///////// pNovo3 v3.1.5 index ////////////
 	public static int CHARGE_IDX = 13;
 	public static int PEPTIDE_IDX = 1;
+	public static int SCORE_IDX = 2;
 	public static String[] FIELDS = {
 			"Rank",
 			"Peptide",
@@ -55,113 +62,95 @@ public class pNovo3 implements TopXgInput{
 	 * @throws IOException
 	 * @throws ParseException 
 	 */
-	public void topXgInputFormat (CommandLine cmd) throws IOException, ParseException {
-		/**
-		 * -i pNovo3/
-		 * -m mgf/
-		 * -p Set01
-		 * -o TMT2023_LUAD_Set01
-		 * 
-		 * For example>
-		 * 
-		 * target files:
-		 * pNovo3/pNovo.res (** the file contains PSMs from TMT_Global_Set01 or TMT_Global_Set02)
-		 * mgf/TMT_Global_Set01_Fx01.mgf
-		 * mgf/TMT_Global_Set01_Fx02.mgf
-		 * mgf/TMT_Global_Set01_Fx03.mgf
-		 * mgf/TMT_Global_Set01_Fx04.mgf
-		 * 
-		 * Only PSMs with "Set01" will be retrived.
-		 * 
-		 * result files (merging the Fx01~04 files):
-		 * pNovo3/TMT2023_LUAD_Set01.pNovo3.ic.tsv
-		 */
-		/////////////////////
-        String inputFile = cmd.getOptionValue("i");
-        String mgfFileBase = cmd.getOptionValue("f");
-        String batchPattern = cmd.getOptionValue("p");
-        String batchId = cmd.getOptionValue("o");
+	public void topXgInputFormat (String[] args) throws IOException, ParseException {
+		parseOptions(args);
         
-        File[] files = new File(inputFile).listFiles();
-        if(files == null) {
-        	System.out.println("-i option should be a path of folder including .res files");
+        File iFile = new File(inputFilePath);
+        File sFile = new File(spectrumFilePath);
+        File oFile = new File(outputFilePath);
+        
+        boolean isExsited = oFile.exists();
+        
+        if(!isAppend && isExsited) {
+        	System.out.println(oFile.getName()+" is already existed. Remove and create new file...");
         	System.exit(1);
         }
-        
-        BufferedWriter BW = new BufferedWriter(new FileWriter(inputFile+"/"+batchId+".pNovo3.ic.tsv"));
+		
+        BufferedWriter BW = new BufferedWriter(new FileWriter(oFile, isAppend));
         
         // building header ///////////////////////////////////////////
-        String batchHeader = "";
-        for(String header : FIELDS) {
-        	batchHeader += header+"\t";
+        if(!isExsited || !isAppend) {
+	        String batchHeader = "";
+	        
+	        batchHeader = batchHeader
+	        		+InputConvertorConstants.IC_TITLE_FIELD_NAME+"\t"
+	        		+InputConvertorConstants.IC_SCAN_NUM_FIELD_NAME+"\t"
+	        		+InputConvertorConstants.IC_RT_FIELD_NAME+"\t"
+	        		+InputConvertorConstants.IC_CHARGE_FIELD_NAME+"\t"
+	        		+InputConvertorConstants.IC_SEARCH_SCORE_FIELD_NAME+"\t"
+	        		+InputConvertorConstants.IC_PEPTIDE_FIELD_NAME;
+	        
+	        for(String header : FIELDS) {
+	        	batchHeader += "\t"+header;
+	        }
+	        
+        	BW.append(batchHeader);
+            BW.newLine();
         }
-        batchHeader+=InputConvertorConstants.IC_SCAN_NUM_FIELD_NAME+"\t"
-        		+InputConvertorConstants.IC_TITLE_FIELD_NAME+"\t"
-        		+InputConvertorConstants.IC_RT_FIELD_NAME+"\t"
-        		+InputConvertorConstants.IC_CHARGE_FIELD_NAME+"\t"
-        		+InputConvertorConstants.IC_PEPTIDE_FIELD_NAME;
-        BW.append(batchHeader);
-        BW.newLine();
         ////////////////////////////////// End of building header ////////////////
         
-        Hashtable<String, SimpleMGFSelector> mgfFiles = new Hashtable<String, SimpleMGFSelector>();
-        for(File file : files) {
-        	if(file.getName().startsWith(".")) continue;
-        	if(file.getName().endsWith(".res")) {
-        		System.out.println("read: "+file.getName());
-        		BufferedReader BR = new BufferedReader(new FileReader(file));
-        		String line = null;
-        		
-        		while((line = BR.readLine()) != null) {
-        			if(line.startsWith("S") && line.contains(batchPattern)) {
-        				String[] fields = line.split("\t");
-        				String title = fields[1].split("\\s")[0];
-        				String mgfFile = mgfFileBase+"/"+title.split("\\.")[0]+".mgf";
-        				
-        				SimpleMGFSelector mgf = mgfFiles.get(mgfFile);
-        				if(mgf == null) {
-        					mgf = new SimpleMGFSelector(new File(mgfFile));
-        					mgfFiles.put(mgfFile, mgf);
-        				}
-        				
-        				
-        				while((line = BR.readLine()) != null) {
-        					// each record starts with P[N] (for example, P1, P2, ... P10).
-        					if(line.startsWith("P")) {
-        						
-        						// Building record ////////////////////////////////////////
-        						fields = line.split("\t");
-        						// a is M+oxidation, M+15.995
-        						Peptide peptide = new Peptide(fields[PEPTIDE_IDX], InputConvertorConstants.PNOVO3);
-        						// charge feature is different from original MGF. It is supposed to be an error.
-        						
-        						int len = title.split("\\.").length;
-        						String scanNum = title.split("\\.")[len-2];
-        						String charge = title.split("\\.")[len-1];
-        						
-        						for(int i=0; i<fields.length; i++) {
-        							BW.append(fields[i]).append("\t");
-        						}
-        						BW.append(scanNum).append("\t").
-        						append(title).append("\t").
-        						append(mgf.titleToRT.get(title)).append("\t").
-        						append(charge).append("\t").
-        						append(peptide.modPeptide);
-        						BW.newLine();
-        				        /////////////////////////////////// End of building record ///////////////////
-        						
-        					} else {
-        						break;
-        					}
-        				}
-        			}
-        		}
-        		
-        		BR.close();
-        	}
-        }
+        System.out.println("read: "+iFile.getName());
+		BufferedReader BR = new BufferedReader(new FileReader(iFile));
+		SimpleMGFSelector mgf = new SimpleMGFSelector(sFile);
+		String line = null;
+		
+		while((line = BR.readLine()) != null) {
+			if(line.startsWith("S")) {
+				String[] fields = line.split("\t");
+				String title = fields[1].split("\\s")[0];
+				
+				while((line = BR.readLine()) != null) {
+					// each record starts with P[N] (for example, P1, P2, ... P10).
+					if(line.startsWith("P")) {
+						if(mgf.titleToRT.get(title) == null) {
+							continue;
+						}
+						// Building record ////////////////////////////////////////
+						fields = line.split("\t");
+						// a is M+oxidation, M+15.995
+						Peptide peptide = new Peptide(fields[PEPTIDE_IDX], InputConvertorConstants.PNOVO3);
+						// charge feature is different from original MGF. It is supposed to be an error.
+						
+						int len = title.split("\\.").length;
+						String searchScore = fields[SCORE_IDX];
+						String scanNum = title.split("\\.")[len-2];
+						String charge = title.split("\\.")[len-1];
+						
+						BW.
+						append(title).append("\t").
+						append(scanNum).append("\t").
+						append(mgf.titleToRT.get(title)).append("\t").
+						append(charge).append("\t").
+						append(searchScore).append("\t").
+						append(peptide.modPeptide);
+						
+						for(int i=0; i<fields.length; i++) {
+							BW.append("\t").append(fields[i]);
+						}
+						
+						BW.newLine();
+				        /////////////////////////////////// End of building record ///////////////////
+						
+					} else {
+						break;
+					}
+				}
+			}
+		}
+		
+		BR.close();
         
         BW.close();
-		
 	}
+	
 }

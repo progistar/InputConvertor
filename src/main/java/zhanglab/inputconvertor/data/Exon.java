@@ -76,7 +76,6 @@ public class Exon implements Comparable<Exon> {
 			}
 		}
 		
-		
 		return mutantSeq.toString();
 	}
 	

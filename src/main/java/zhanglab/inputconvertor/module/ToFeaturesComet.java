@@ -27,26 +27,7 @@ import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.env.ProteomeConstants;
 import zhanglab.inputconvertor.function.CalculateSA;
 
-class FeatureRecord implements Comparable <FeatureRecord> {
-	public String[] record;
-	public double searchScore;
-	public String specId;
-	public String label;
-	public double deltaRT = Double.MAX_VALUE;
-	public double ppmError = Double.MAX_VALUE;
-	
-	@Override
-	public int compareTo(FeatureRecord o) {
-		if(this.searchScore < o.searchScore) {
-			return 1;
-		} else if(this.searchScore > o.searchScore) {
-			return -1;
-		}
-		return 0;
-	}
-}
-
-public class ToFeatures {
+public class ToFeaturesComet {
 	public static String inputFilePath = null;
 	public static String outputFilePath = null;
 	public static String spectrumFilePath = null;
@@ -55,15 +36,13 @@ public class ToFeatures {
 	public static String predictedFilePath = null;
 	
 	
-	private ToFeatures() {};
+	private ToFeaturesComet() {};
 	
 	public static void toFeatureFormat (String[] args) throws IOException, ParseException {
 		parseOptions(args);
 		
-		
         int scoreIdx		= -1;
         int icPeptideIdx 	= -1;
-        int infPeptideIdx	= -1;
         int chargeIdx	 		= -1;
         int specIdIdx		= -1;
         int labelIdx		= -1;
@@ -109,19 +88,17 @@ public class ToFeatures {
 		header += "\tDeltaRT(original)\tDeltaRT(shifted)\tppmError(original)\tppmError(shifted)";
 		// building header ///////////////////////////////////////////
     	// get index
-		String[] pXgHeaderSplit = header.split("\t");
-		pXgHeaderSplit = header.split("\t");
+		String[] cometHeader = header.split("\t");
 		
-		scoreIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_SEARCH_SCORE_FIELD_NAME);
-		icPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
-		infPeptideIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_INFERRED_PEPTIDE_FIELD_NAME);
-		chargeIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_CHARGE_FIELD_NAME);
-		specIdIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_SPEC_ID_FEILD_NAME);
-		labelIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_LABEL_FEILD_NAME);
+		scoreIdx = InputConvertorConstants.getFieldIndex(cometHeader, InputConvertorConstants.COMET_XCORR_FIELD_NAME);
+		icPeptideIdx = InputConvertorConstants.getFieldIndex(cometHeader, InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
+		chargeIdx = InputConvertorConstants.getFieldIndex(cometHeader, InputConvertorConstants.IC_CHARGE_FIELD_NAME);
+		specIdIdx = InputConvertorConstants.getFieldIndex(cometHeader, InputConvertorConstants.IC_SPEC_ID_FEILD_NAME);
+		labelIdx = InputConvertorConstants.getFieldIndex(cometHeader, InputConvertorConstants.IC_LABEL_FEILD_NAME);
 		
-		int ppmIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_PPM_FIELD_NAME);
-		int saIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_SA_FIELD_NAME);
-		int deltaRTIdx = InputConvertorConstants.getFieldIndex(pXgHeaderSplit, InputConvertorConstants.IC_DELTA_RT_FIELD_NAME);
+		int ppmIdx = InputConvertorConstants.getFieldIndex(cometHeader, InputConvertorConstants.IC_PPM_FIELD_NAME);
+		int saIdx = InputConvertorConstants.getFieldIndex(cometHeader, InputConvertorConstants.IC_SA_FIELD_NAME);
+		int deltaRTIdx = InputConvertorConstants.getFieldIndex(cometHeader, InputConvertorConstants.IC_DELTA_RT_FIELD_NAME);
         ////////////////////////////////// End of building header ////////////////
 		
         String predictType = InputConvertorConstants.PROSIT;
@@ -132,7 +109,7 @@ public class ToFeatures {
         
 		while((line = BR.readLine()) != null) {
 			String[] fields = line.split("\t");
-			String[] newFields = new String[pXgHeaderSplit.length];
+			String[] newFields = new String[cometHeader.length];
 			
 			for(int i=0; i<newFields.length; i++) {
 				if(fields.length <= i) {
@@ -159,9 +136,7 @@ public class ToFeatures {
 				System.exit(1);
 			}
 			
-			String infPeptide = fields[infPeptideIdx];
 			Peptide peptide = new Peptide(fields[icPeptideIdx], InputConvertorConstants.IC_CONVERTOR);
-			peptide.icPeptideToILDetermination(infPeptide);
 			String charge	= fields[chargeIdx];
 			double chargeNum = Double.parseDouble(charge);
 			
@@ -208,7 +183,6 @@ public class ToFeatures {
 				newFields[saIdx] = "" + sa;
 				
 				newRecord.ppmError = deltaMz;
-				
 
 				// Calculate delta RT
 				if(icPeptideToDeltaRT.get(peptide.modPeptide) != null) {
@@ -225,18 +199,17 @@ public class ToFeatures {
 		}
 		BR.close();
 		
-		///////////// Top 100 median shift per spectrum file /////////
+		///////////// Top 1000 normal distribution per spectrum file /////////
 		topMedianShift(newRecords, deltaRTIdx, ppmIdx);
 		
 		File outputFile = new File(outputFilePath);
 		boolean isAppended = outputFile.exists();
 		BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile, isAppended));
-		
 		if(!isAppended) {
 			BW.append(header);
 			BW.newLine();
 		}
-		for(FeatureRecord record :newRecords) {
+		for(FeatureRecord record : newRecords) {
 			String[] fields = record.record;
 			for(int i=0; i<fields.length; i++) {
 				if(i != 0) {
@@ -278,7 +251,12 @@ public class ToFeatures {
 				break;
 			}
 		}
+		
 		int size = deltaRTs.size();
+		
+		// if there is no ids!
+		if(size == 0) return;
+		
 		double medianRT = deltaRTs.get(size/2) + deltaRTs.get((size-1)/2);
 		double medianPPM = ppmErrors.get(size/2) + ppmErrors.get((size-1)/2);
 		medianRT /= 2;
@@ -306,7 +284,6 @@ public class ToFeatures {
 		
 		for(int i=0; i<records.size(); i++) {
 			FeatureRecord record = records.get(i);
-			
 			record.record[deltaRTIdx+1] = record.deltaRT+"";
 			record.record[deltaRTIdx+2] = (record.deltaRT - meanRT)/stdRT+"";
 			
@@ -317,6 +294,7 @@ public class ToFeatures {
 			record.ppmError = Math.abs((record.ppmError - meanPPM)/stdPPM);
 			record.record[deltaRTIdx] = record.deltaRT+"";
 			record.record[ppmErrorIdx] = record.ppmError+"";
+			
 		}
 	}
 	
@@ -333,10 +311,10 @@ public class ToFeatures {
 				.build();
 		
 		Option optionOutput = Option.builder("o")
-				.longOpt("output").argName("pin")
+				.longOpt("output").argName("feat")
 				.hasArg()
 				.required(true)
-				.desc("pin file")
+				.desc("feat file")
 				.build();
 		
 		Option optionSpectrumFile = Option.builder("s")

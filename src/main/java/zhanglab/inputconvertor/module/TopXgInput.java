@@ -7,5 +7,5 @@ import org.apache.commons.cli.ParseException;
 
 public interface TopXgInput {
 
-	public void topXgInputFormat (CommandLine cmd) throws IOException, ParseException;
+	public void topXgInputFormat (String[] args) throws IOException, ParseException;
 }

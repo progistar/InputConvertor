@@ -31,7 +31,7 @@ public class GTFLoader {
 				
 				// #FORMAT
 				//// StringTie or Reference
-				if(feature.equalsIgnoreCase("exon") || feature.equalsIgnoreCase("transcript")) {
+				if(feature.equalsIgnoreCase("exon") || feature.equalsIgnoreCase("cds") || feature.equalsIgnoreCase("transcript")) {
 					String chr = fields[0];
 					int start = Integer.parseInt(fields[3]);
 					int end = Integer.parseInt(fields[4]);
@@ -48,7 +48,6 @@ public class GTFLoader {
 						if(fpkm != null) {
 							expValue = Double.parseDouble(fpkm);
 						}
-						
 						transcript.strand = strand;
 						transcript.chr = chr;
 						transcript.start = start+"";
@@ -56,7 +55,13 @@ public class GTFLoader {
 						transcript.attrs = fields[8];
 						transcript.FPKM = expValue;
 					} else {
-						transcript.exons.add(new Exon(chr, start, end));
+						if(feature.equalsIgnoreCase("exon")) {
+							transcript.exons.add(new Exon(chr, start, end));
+						} else if(feature.equalsIgnoreCase("cds")) {
+							// CDS included
+							transcript.isProteinCoding = true;
+							transcript.cdss.add(new Exon(chr, start, end));
+						}
 					}
 				}
 				// #FORMAT
@@ -98,6 +103,7 @@ public class GTFLoader {
 			geneToTranscripts.forEach((g, ts)->{
 				for(Transcript t : ts) {
 					Collections.sort(t.exons);
+					Collections.sort(t.cdss);
 				}
 			});
 		}catch(IOException ioe) {

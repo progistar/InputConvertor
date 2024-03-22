@@ -67,7 +67,7 @@ public class NetMHCpanParser {
 			
 		}
 		
-		System.out.println("a total of "+result.records.size()+" was inserted..");
+		System.out.println("a total of "+result.records.size()+" were inserted..");
 		
 		return result;
 	}

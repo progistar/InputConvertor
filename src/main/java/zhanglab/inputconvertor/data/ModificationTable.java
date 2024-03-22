@@ -2,7 +2,9 @@ package zhanglab.inputconvertor.data;
 
 public class ModificationTable {
 
-	public static String COMET_M_OXI	= "M[15.9949]";
+	public static String COMET_M_OXI	= "M[15.994900]";
+	public static String COMET_C_CARBAM	= "C[57.021464]";
+	
 	public static String PEAKS_M_OXI	= "M(+15.99)";
 	public static String PEAKS_C_CARBAM	= "C(+57.02)";
 	

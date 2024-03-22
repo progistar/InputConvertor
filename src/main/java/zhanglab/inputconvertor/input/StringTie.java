@@ -107,7 +107,7 @@ public class StringTie {
 		
 		refGenome.setSequence(transcript.chr, exons);
 		
-		ArrayList<FastaEntry> entries = FastaEntry.enumerateFastaEntry(transcript, exons);
+		ArrayList<FastaEntry> entries = FastaEntry.enumerateFastaEntry(transcript, exons, false);
 		
 		return entries;
 	}

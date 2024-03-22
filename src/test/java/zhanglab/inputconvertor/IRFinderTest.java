@@ -50,7 +50,7 @@ public class IRFinderTest {
 		BufferedWriter BW = new BufferedWriter(new FileWriter("test/test.out"));
 		
         for(FastaEntry entry : entries) {
-        	BW.append(">"+entry.toHeader());
+        	BW.append(">"+entry.toHeader("UNIQUE"));
         	BW.newLine();
         	BW.append(entry.sequence);
         	BW.newLine();

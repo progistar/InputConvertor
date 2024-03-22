@@ -98,7 +98,7 @@ public class CIRIquant {
     			rightSize += (nExon.end - nExon.start + 1);
 			}
 			refGenome.setSequence(t.chr, circExons);
-			entries = FastaEntry.enumerateFastaEntry(t, circExons);
+			entries = FastaEntry.enumerateFastaEntry(t, circExons, false);
 		}
 		return entries;
 	}

@@ -155,7 +155,7 @@ public class IRFinder {
 			}
 			
 			refGenome.setSequence(t.chr, nExons);
-			entries = FastaEntry.enumerateFastaEntry(t, nExons);
+			entries = FastaEntry.enumerateFastaEntry(t, nExons, false);
 		}
 		return entries;
 	}

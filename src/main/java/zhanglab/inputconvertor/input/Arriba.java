@@ -71,7 +71,7 @@ public class Arriba {
         	FastaEntry entry = new FastaEntry();
 			entry.tool = InputConvertorConstants.ARRIBA_HEADER_ID;
 			entry.idx = fastaEntries.size()+1;
-			entry.originHeader = gene1+"+"+gene2+"|"+transcript1+"+"+transcript2+"|f:"+frame+"|s:"+strand1+","+strand2+"|"+bp1+","+bp2;
+			entry.originHeader = gene1+"+"+gene2+"|"+transcript1+"+"+transcript2+"|"+frame+"|"+strand1+","+strand2+"|"+bp1+","+bp2;
 			
 			entry.sequence = fullPeptide;
 			

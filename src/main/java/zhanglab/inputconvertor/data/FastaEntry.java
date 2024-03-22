@@ -19,9 +19,17 @@ public class FastaEntry {
 	public String description = null;
 	public String originHeader = null;
 	
-	public String toHeader() {
+	public String toHeader(String uniqueId) {
 		if(originHeader != null) {
-			return this.tool+this.idx+"|"+originHeader;
+			return this.tool+this.idx+"_"+uniqueId;
+		}
+		
+		return this.tool+this.idx+"_"+uniqueId;
+	}
+	
+	public String toMeta (String uniqueId) {
+		if(originHeader != null) {
+			return toHeader(uniqueId)+"\t"+originHeader.replace("|", "\t");
 		}
 		
 		String transcriptId = "";
@@ -31,17 +39,15 @@ public class FastaEntry {
 			}
 			transcriptId += id;
 		}
-		return this.tool+this.idx+"|"+this.geneId+"|"+transcriptId+"|f:"+this.frame+"|s:"+transcript.strand+"|"+this.description;
+		return toHeader(uniqueId) +"\t" + this.geneId+"\t"+transcriptId+"\t"+this.frame+"\t"+transcript.strand+"\t"+this.description;
 	}
 	
 	public String getKey () {
 		return geneId+"_"+description+"_"+sequence;
 	}
 	
-	// TODO
-	public String table;
-	
-	public static ArrayList<FastaEntry> enumerateFastaEntry (Transcript t, Collection<Exon> exons) {
+	// TODO: Combination of mutations
+	public static ArrayList<FastaEntry> enumerateFastaEntry (Transcript t, Collection<Exon> exons, boolean inFrameOnly) {
 		ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
 		Hashtable<String, Byte> indelHash = new Hashtable<String, Byte>();
 		indelHash.put("wildtype", InputConvertorConstants.NON_INDEL);
@@ -64,7 +70,7 @@ public class FastaEntry {
 					wildSeqWithINDEL.append(exon.getSequenceWithINS(indelID, false, false));
 					germWithINDEL.append(exon.getSequenceWithINS(indelID, true, false));
 					germsomaWithINDEL.append(exon.getSequenceWithINS(indelID, true, true));
-				} else if(type == InputConvertorConstants.NON_INDEL ||type == InputConvertorConstants.DEL) {
+				} else if(type == InputConvertorConstants.NON_INDEL || type == InputConvertorConstants.DEL) {
 					wildSeqWithINDEL.append(exon.getSequenceWithDEL(indelID, false, false));
 					germWithINDEL.append(exon.getSequenceWithDEL(indelID, true, false));
 					germsomaWithINDEL.append(exon.getSequenceWithDEL(indelID, true, true));
@@ -100,7 +106,29 @@ public class FastaEntry {
 		
 		// translation
 		uniqueEntries.forEach((desc, entry)->{
-			for(int frame=0; frame<3; frame++) {
+			int longestFrameIdx = 0;
+			int longestLength = 0;
+			if(inFrameOnly) {
+				// determine longest frame (to deal with some fragile RNAs)
+				for(int frame=0; frame<3; frame++) {
+					String peptide = null;
+					if(t.strand.equalsIgnoreCase("+")) {
+						peptide = Translator.translation(entry.sequence, frame);
+					} else {
+						peptide = Translator.reverseComplementTranslation(entry.sequence, frame);
+					}
+					
+					String[] xPeptides = peptide.split("X");
+					for(int i=0; i<xPeptides.length; i++) {
+						if(longestLength < xPeptides[i].length()) {
+							longestLength = xPeptides[i].length();
+							longestFrameIdx = frame;
+						}
+					}
+				}
+			}
+			
+			for(int frame=longestFrameIdx; frame<3; frame++) {
 				FastaEntry aaEntry = new FastaEntry();
 				String peptide = null;
 				if(t.strand.equalsIgnoreCase("+")) {
@@ -114,6 +142,11 @@ public class FastaEntry {
 				aaEntry.transcript = t;
 				
 				entries.add(aaEntry);
+				
+				// only frame 0 will be translated
+				if(inFrameOnly) {
+					break;
+				}
 			}
 		});
 		

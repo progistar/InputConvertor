@@ -41,14 +41,8 @@ public class Peptide {
 		}
 		
 		else if(peptideFrom.equalsIgnoreCase(InputConvertorConstants.COMET)) {
-			String M = ModificationTable.COMET_M_OXI;
-			this.modPeptide = peptide.replace(M, ModificationTable.IC_M_OXI);
-			
-			// select peptide part only
-			// K.ACM+15.995GG.A => ACM+15.995GG
-			int firstIdx = this.modPeptide.indexOf(".");
-			int lastIdx = this.modPeptide.lastIndexOf(".");
-			this.modPeptide = this.modPeptide.substring(firstIdx+1, lastIdx);
+			this.modPeptide = peptide.replace(ModificationTable.COMET_M_OXI, ModificationTable.IC_M_OXI);
+			this.modPeptide = this.modPeptide.replace(ModificationTable.COMET_C_CARBAM, ModificationTable.IC_C_CARBAM);
 		}
 		
 		else if(peptideFrom.equalsIgnoreCase(InputConvertorConstants.AUTORT)) {

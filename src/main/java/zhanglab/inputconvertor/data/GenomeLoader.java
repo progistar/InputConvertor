@@ -31,7 +31,7 @@ public class GenomeLoader {
 			while((line = BR.readLine()) != null) {
 				if(line.startsWith(">")) {
 					String chr = line.split("\\s")[0].substring(1);
-					System.out.println("Read "+chr);
+					System.out.print("Read "+chr+"... ");
 					sequence = new StringBuilder();
 					genomeMap.put(chr, sequence);
 				} else {
@@ -40,7 +40,7 @@ public class GenomeLoader {
 			}
 			
 			BR.close();
-			
+			System.out.println();
 		}catch(IOException ioe) {
 			
 		}

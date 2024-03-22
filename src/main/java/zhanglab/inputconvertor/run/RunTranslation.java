@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -21,132 +23,32 @@ import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.input.Arriba;
 import zhanglab.inputconvertor.input.CIRIquant;
 import zhanglab.inputconvertor.input.IRFinder;
+import zhanglab.inputconvertor.input.Reference;
 import zhanglab.inputconvertor.input.StringTie;
 
 public class RunTranslation {
  	
-	public static ArrayList<String> newArgs = new ArrayList<String>();
+	public static File stringTieFile = null; 
+	public static File arribaFile = null; 
+	public static File ciriquantFile= null; 
+	public static File irfinderFile = null;
+	public static File refGTFFile = null; 
+	public static File refProteinFile = null; 
+	public static File outputFile = null;
+	public static File tableFile = null;
+	public static File refGenomeFile = null; 
+	public static File vepSomaFile = null; 
+	public static File vepGermFile = null;
+	public static String uniqueId = null;
+    public static double fpkmThreshold = 1.00;
 	
-	public static boolean checkArg (String short_, String long_, String arg1, String arg2) {
-		boolean is = false;
-		if((arg1.equalsIgnoreCase(short_) || arg1.equalsIgnoreCase(long_)) 
-				&& arg2.length() != 0 && !arg2.startsWith("-")) {
-			is = true;
-			newArgs.add(arg1);
-			newArgs.add(arg2);
-		}
-		return is;
-	}
 	
 	public static void main(String[] args) throws IOException, ParseException {
+		parseOptions(args);
+		
 		long startTime = System.currentTimeMillis();
 		System.out.println(InputConvertorConstants.VERSION);
-		Options options = new Options();
 		
-		// Options
-		for(int i=0; i<args.length; i++) {
-			if(i == args.length-1) {
-				break;
-			}
-			
-			
-			if(checkArg("-g", "--genome",args[i], args[i+1])) {
-				options.addOption("g", "genome", true, "Genome fasta file");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-				
-			} else if(checkArg("-p", "--protein",args[i], args[i+1])) {
-				options.addOption("p", "protein", true, "Reference protein fasta file");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-			} else if(checkArg("-r", "--gtf",args[i], args[i+1])) {
-				options.addOption("r", "gtf", true, "Reference GTF file");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-			} else if(checkArg("-o", "--output",args[i], args[i+1])) {
-				options.addOption("o", "output", true, "Output path");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-			} else if(checkArg("-s", "--stringtie",args[i], args[i+1])) {
-				options.addOption("s", "stringtie", true, "GTF file path from StringTie");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-			}  else if(checkArg("-f", "--fpkm",args[i], args[i+1])) {
-				options.addOption("f", "fpkm", true, "FPKM threshold for StringTie (filter FPKM < value). Default 1.00");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-			}  else if(checkArg("-a", "--arriba",args[i], args[i+1])) {
-				options.addOption("a", "arriba", true, "TSV file path from Arriba");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-			}  else if(checkArg("-c", "--ciriquant",args[i], args[i+1])) {
-				options.addOption("c", "ciriquant", true, "GTF file path from CIRIQuant");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-			}  else if(checkArg("-i", "--irfinder",args[i], args[i+1])) {
-				options.addOption("i", "irfinder", true, "tsv file path from IRFinder");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-			}  else if(checkArg("-v", "--vep_germ",args[i], args[i+1])) {
-				options.addOption("v", "vep_germ", true, "Germline VEP file path from Ensembl Variant Effeect Predictor");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-			}  else if(checkArg("-V", "--vep_soma",args[i], args[i+1])) {
-				options.addOption("V", "vep_soma", true, "Somatic VEP file path from Ensembl Variant Effeect Predictor");
-				System.out.println(i+"\t"+args[i]+"\t"+args[i+1]);
-				
-			}
-		}
-		
-		
-		args = new String[newArgs.size()];
-		for(int i=0; i<args.length; i++) {
-			args[i] = newArgs.get(i);
-		}
-		
-		
-		CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-        
-        File stringTieFile = null; File arribaFile = null; File ciriquantFile= null; File irfinderFile = null;
-        File refGTFFile = null; File refProteinFile = null; String outputPath = null;
-        File refGenomeFile = null; File vepSomaFile = null; File vepGermFile = null;  
-        double fpkmThreshold = 1.00;
-        
-        if(cmd.hasOption("s")) {
-        	stringTieFile = new File(cmd.getOptionValue("s"));
-        	if(cmd.getOptionValue("f") != null) {
-        		fpkmThreshold = Double.parseDouble(cmd.getOptionValue("f"));
-        	}
-        	System.out.println("FPKM < "+fpkmThreshold+" will be discarded in the given StringTie result");
-        }
-        if(cmd.hasOption("a")) {
-        	arribaFile = new File(cmd.getOptionValue("a"));
-        }
-        if(cmd.hasOption("c")) {
-        	ciriquantFile = new File(cmd.getOptionValue("c"));
-        }
-        if(cmd.hasOption("i")) {
-        	irfinderFile = new File(cmd.getOptionValue("i"));
-        }
-        if(cmd.hasOption("r")) {
-        	refGTFFile = new File(cmd.getOptionValue("r"));
-        }
-        if(cmd.hasOption("v")) {
-        	vepGermFile = new File(cmd.getOptionValue("v"));
-        }
-        if(cmd.hasOption("V")) {
-        	vepSomaFile = new File(cmd.getOptionValue("V"));
-        }
-        if(cmd.hasOption("p")) {
-        	refProteinFile = new File(cmd.getOptionValue("p"));
-        }
-        if(cmd.hasOption("g")) {
-        	refGenomeFile = new File(cmd.getOptionValue("g"));
-        }
-        if(cmd.hasOption("o")) {
-        	outputPath = cmd.getOptionValue("o");
-        }
         
         // requirements
         
@@ -170,23 +72,10 @@ public class RunTranslation {
         }
         if(refGTFFile != null) {
         	System.out.println("Reference transcriptome model: " + refGTFFile.getName());
-        } else {
-        	System.out.println("Missing reference transcriptome model...");
-        	System.exit(1);
         }
         if(refGenomeFile != null) {
         	System.out.println("Reference genome sequences: " + refGenomeFile.getName());
-        } else {
-        	System.out.println("Missing reference genome sequences...");
-        	System.exit(1);
         }
-        if(outputPath != null) {
-        	System.out.println("Output sequence database: "+outputPath);
-        } else {
-        	System.out.println("Missing output path...");
-        	System.exit(1);
-        }
-        
         if(refProteinFile != null) {
         	System.out.println("Reference protein database: " + refProteinFile.getName());
         	System.out.println("Reference protein sequences will be appended to at the end of a customized database.");
@@ -209,6 +98,10 @@ public class RunTranslation {
         ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
 
         // Do reference fasta
+        Reference reference = new Reference(refGTF);
+        reference.enrollGenomeSequence(gmL);
+        entries.addAll(reference.getFastaEntry());
+        
         if(refProteinFile != null) {
         	FastaLoader refProteins = new FastaLoader(refProteinFile);
         	entries.addAll(refProteins.entries);
@@ -245,19 +138,236 @@ public class RunTranslation {
         
         System.out.println("A total of entries: "+entries.size());
         
-        BufferedWriter BW = new BufferedWriter(new FileWriter(outputPath));
+        BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile));
+        BufferedWriter table = new BufferedWriter(new FileWriter(tableFile));
         
+        table.append("EntryId\tGeneId\tTranscriptId\tFrame\tStrand\tExons");
+        table.newLine();
         for(FastaEntry entry : entries) {
-        	BW.append(">"+entry.toHeader());
+        	BW.append(">"+entry.toHeader(uniqueId));
         	BW.newLine();
         	BW.append(entry.sequence);
         	BW.newLine();
+        	
+        	table.append(entry.toMeta(uniqueId));
+        	table.newLine();
         }
         
         BW.close();
+        table.close();
         
         long endTime = System.currentTimeMillis();
         
         System.out.println((endTime-startTime)/1000+" sec");
+	}
+	
+	
+	public static void parseOptions (String[] args) {
+		CommandLine cmd = null;
+		Options options = new Options();
+		
+		// Mandatory
+		Option optionGenome = Option.builder("g")
+				.longOpt("genome").argName("fasta")
+				.hasArg()
+				.required(true)
+				.desc("reference genome sequence file")
+				.build();
+		
+		Option optionProtein = Option.builder("p")
+				.longOpt("protein").argName("fasta")
+				.hasArg()
+				.required(false)
+				.desc("reference protein sequence file")
+				.build();
+		
+		Option optionGTF = Option.builder("r")
+				.longOpt("gene_model").argName("gtf")
+				.hasArg()
+				.required(true)
+				.desc("reference gtf file")
+				.build();
+		
+		Option optionOutput = Option.builder("o")
+				.longOpt("output").argName("fasta")
+				.hasArg()
+				.required(true)
+				.desc("output file")
+				.build();
+		
+		Option optionTable = Option.builder("t")
+				.longOpt("table").argName("tsv")
+				.hasArg()
+				.required(true)
+				.desc("output table file")
+				.build();
+		
+		Option optionUniqueId = Option.builder("u")
+				.longOpt("uid").argName("string")
+				.hasArg()
+				.required(true)
+				.desc("unique id for the file")
+				.build();
+		
+		Option optionStringTie = Option.builder("s")
+				.longOpt("stringtie").argName("gtf")
+				.hasArg()
+				.required(false)
+				.desc("StringTie GTF file")
+				.build();
+		
+		Option optionFPKM = Option.builder("f")
+				.longOpt("fpkm").argName("float")
+				.hasArg()
+				.required(false)
+				.desc("FPKM cutoff value in StringTie")
+				.build();
+		
+		Option optionArriba = Option.builder("a")
+				.longOpt("arriba").argName("tsv")
+				.hasArg()
+				.required(false)
+				.desc("Arriba TSV file")
+				.build();
+		
+		Option optionCIRIquant = Option.builder("c")
+				.longOpt("ciriquant").argName("gtf")
+				.hasArg()
+				.required(false)
+				.desc("CIRIquant GTF file")
+				.build();
+		
+		Option optionIRFinder = Option.builder("i")
+				.longOpt("irfinder").argName("tsv")
+				.hasArg()
+				.required(false)
+				.desc("IRFinder TSV file")
+				.build();
+		
+		Option optionVEPGerm = Option.builder("v")
+				.longOpt("germ").argName("tsv")
+				.hasArg()
+				.required(false)
+				.desc("VEP TSV file")
+				.build();
+		
+		Option optionVEPSoma = Option.builder("V")
+				.longOpt("soma").argName("tsv")
+				.hasArg()
+				.required(false)
+				.desc("VEP TSV file")
+				.build();
+		
+		
+		options.addOption(optionGenome)
+		.addOption(optionProtein)
+		.addOption(optionGTF)
+		.addOption(optionStringTie)
+		.addOption(optionFPKM)
+		.addOption(optionArriba)
+		.addOption(optionCIRIquant)
+		.addOption(optionIRFinder)
+		.addOption(optionVEPGerm)
+		.addOption(optionVEPSoma)
+		.addOption(optionOutput)
+		.addOption(optionTable)
+		.addOption(optionUniqueId);
+		
+		CommandLineParser parser = new DefaultParser();
+	    HelpFormatter helper = new HelpFormatter();
+	    boolean isFail = false;
+	    
+	    ArrayList<String> tmpArgs = new ArrayList<String>();
+	    for(int i=0; i<args.length; i++) {
+	    	if(args[i].equalsIgnoreCase("-g") || args[i].equalsIgnoreCase("--genome") ||
+			args[i].equalsIgnoreCase("-p") || args[i].equalsIgnoreCase("--protein") ||
+			args[i].equalsIgnoreCase("-r") || args[i].equalsIgnoreCase("--gene_model") ||
+			args[i].equalsIgnoreCase("-s") || args[i].equalsIgnoreCase("--stringtie") ||
+			args[i].equalsIgnoreCase("-f") || args[i].equalsIgnoreCase("--fpkm") ||
+			args[i].equalsIgnoreCase("-a") || args[i].equalsIgnoreCase("--arriba") ||
+			args[i].equalsIgnoreCase("-c") || args[i].equalsIgnoreCase("--ciriquant") ||
+			args[i].equalsIgnoreCase("-i") || args[i].equalsIgnoreCase("--irfinder") ||
+			args[i].equalsIgnoreCase("-v") || args[i].equalsIgnoreCase("--germ") ||
+			args[i].equalsIgnoreCase("-V") || args[i].equalsIgnoreCase("--soma") ||
+			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output") ||
+			args[i].equalsIgnoreCase("-t") || args[i].equalsIgnoreCase("--table") ||
+			args[i].equalsIgnoreCase("-u") || args[i].equalsIgnoreCase("--uid")) {
+	    		tmpArgs.add(args[i++]);
+	    		tmpArgs.add(args[i]);
+	    	}
+	    }
+	    
+	    String[] nArgs = new String[tmpArgs.size()];
+	    for(int i =0; i<tmpArgs.size(); i++) {
+	    	nArgs[i] = tmpArgs.get(i);
+	    }
+	    
+	    
+		try {
+		    cmd = parser.parse(options, nArgs, true);
+		    
+		    if(cmd.hasOption("g")) {
+		    	refGenomeFile = new File(cmd.getOptionValue("g"));
+		    }
+		    
+		    if(cmd.hasOption("p")) {
+		    	refProteinFile = new File(cmd.getOptionValue("p"));
+		    }
+		    
+		    if(cmd.hasOption("r")) {
+		    	refGTFFile = new File(cmd.getOptionValue("r"));
+		    }
+		    
+		    if(cmd.hasOption("s")) {
+		    	stringTieFile = new File(cmd.getOptionValue("s"));
+		    }
+		    
+		    if(cmd.hasOption("f")) {
+		    	fpkmThreshold = Double.parseDouble(cmd.getOptionValue("f"));
+		    }
+		    
+		    if(cmd.hasOption("a")) {
+		    	arribaFile = new File(cmd.getOptionValue("a"));
+		    }
+		    
+		    if(cmd.hasOption("c")) {
+		    	ciriquantFile = new File(cmd.getOptionValue("c"));
+		    }
+		    
+		    if(cmd.hasOption("v")) {
+		    	vepGermFile = new File(cmd.getOptionValue("v"));
+		    }
+		    
+		    if(cmd.hasOption("V")) {
+		    	vepSomaFile = new File(cmd.getOptionValue("V"));
+		    }
+		    
+		    if(cmd.hasOption("p")) {
+		    	refProteinFile = new File(cmd.getOptionValue("p"));
+		    }
+		    
+		    if(cmd.hasOption("o")) {
+		    	outputFile = new File(cmd.getOptionValue("o"));
+		    }
+		    
+		    if(cmd.hasOption("t")) {
+		    	tableFile = new File(cmd.getOptionValue("t"));
+		    }
+		    
+		    if(cmd.hasOption("u")) {
+		    	uniqueId = cmd.getOptionValue("u");
+		    }
+		    
+		} catch (ParseException e) {
+			System.out.println(e.getMessage());
+			isFail = true;
+		}
+		
+		if(isFail) {
+		    helper.printHelp("Usage:", options);
+		    System.exit(0);
+		}
+		
+		System.out.println();
 	}
 }

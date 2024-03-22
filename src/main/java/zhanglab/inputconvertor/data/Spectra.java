@@ -106,6 +106,5 @@ public class Spectra {
 		}catch(IOException ioe) {
 			
 		}
-		
 	}
 }

@@ -21,7 +21,7 @@ import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.module.ToAutoRTInput;
 import zhanglab.inputconvertor.module.ToMS2PIPInput;
 
-public class Comet implements ToAutoRTInput, ToMS2PIPInput{
+public class Comet implements ToMS2PIPInput{
 	public Comet () {}
 	
 	public void toMS2PIPInputFormat (CommandLine cmd) throws IOException, ParseException {
@@ -348,4 +348,5 @@ public class Comet implements ToAutoRTInput, ToMS2PIPInput{
         }
         
 	}
+
 }
