@@ -102,8 +102,7 @@ public class GTFLoader {
 			
 			geneToTranscripts.forEach((g, ts)->{
 				for(Transcript t : ts) {
-					Collections.sort(t.exons);
-					Collections.sort(t.cdss);
+					t.setExons();
 				}
 			});
 		}catch(IOException ioe) {

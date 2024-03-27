@@ -111,6 +111,8 @@ public class IRFinder {
 		ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
 		int startExon = -1;
 		int endExon = -1;
+		
+		
 		for(int i=0; i<exons.size(); i++) {
 			Exon e = exons.get(i);
 			if(e.end == iStart-1) {
@@ -120,9 +122,7 @@ public class IRFinder {
 				endExon = i;
 			}
 		}
-		
 		Exon intron = new Exon(t.chr, iStart, iEnd);
-		
 		if(startExon != -1 && endExon != -1) {
 			int limit = MAX_FLANK_AA_SIZE * 3 + 2;
 			LinkedList<Exon> nExons = new LinkedList<Exon>();
@@ -154,8 +154,7 @@ public class IRFinder {
     			rightSize += (nExon.end - nExon.start + 1);
 			}
 			
-			refGenome.setSequence(t.chr, nExons);
-			entries = FastaEntry.enumerateFastaEntry(t, nExons, false);
+			entries = FastaEntry.enumerateFastaEntry(refGenome, t, nExons, false);
 		}
 		return entries;
 	}

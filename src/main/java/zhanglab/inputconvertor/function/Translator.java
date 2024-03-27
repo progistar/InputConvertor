@@ -1,29 +1,9 @@
 package zhanglab.inputconvertor.function;
 
-import java.util.Collection;
-
 import zhanglab.inputconvertor.data.Codon;
-import zhanglab.inputconvertor.data.Exon;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
 public class Translator {
-	
-	public static String translation (Collection<Exon> exons, int frame) {
-		StringBuilder nucleotide = new StringBuilder();
-		for(Exon exon : exons) {
-			nucleotide.append(exon.nucleotide);
-		}
-		
-		return translation(nucleotide.toString(), frame);
-	}
-	
-	public static String reverseComplementTranslation (Collection<Exon> exons, int frame) {
-		StringBuilder nucleotide = new StringBuilder();
-		for(Exon exon : exons) {
-			nucleotide.append(exon.nucleotide);
-		}
-		return reverseComplementTranslation(nucleotide.toString(), frame);
-	}
 	
 	public static String translation (String nucleotides, int frame) {
 		StringBuilder peptides = new StringBuilder();

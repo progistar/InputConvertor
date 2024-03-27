@@ -1,6 +1,9 @@
 package zhanglab.inputconvertor.data;
 
 import java.util.ArrayList;
+import java.util.Collection;
+
+import zhanglab.inputconvertor.env.InputConvertorConstants;
 
 public class Exon implements Comparable<Exon> {
 
@@ -8,9 +11,10 @@ public class Exon implements Comparable<Exon> {
 	public int start;
 	public int end;
 	public String nucleotide;
-	public ArrayList<Mutation> snps = new ArrayList<Mutation>();
-	public ArrayList<Mutation> inss = new ArrayList<Mutation>();;
-	public ArrayList<Mutation> dels = new ArrayList<Mutation>();
+	public Mutation mutation;
+	public byte type = InputConvertorConstants.WILD;
+	public ArrayList<Exon> nextExons = new ArrayList<Exon>();
+	public ArrayList<Exon> prevExons = new ArrayList<Exon>();
 	
 	public Exon (String chr, int start, int end) {
 		this.chr = chr;
@@ -28,130 +32,117 @@ public class Exon implements Comparable<Exon> {
 		return 0;
 	}
 	
-	public boolean isMutant () {
-		boolean isMutant = false;
-		
-		if(snps.size() > 0 || inss.size() > 0 || dels.size() > 0) {
-			isMutant = true;
-		}
-		
-		return isMutant;
+	public Exon copyExon () {
+		Exon exon = new Exon(chr, start, end);
+		exon.nucleotide = this.nucleotide;
+		return exon;
 	}
 	
-	public String getSequenceWithSNPs (boolean germSNP, boolean somaSNP) {
-		if(snps.size() == 0) return this.nucleotide;
-		
-		StringBuilder mutantSeq = new StringBuilder(this.nucleotide);
-		
-		for(Mutation snp : snps) {
-			if((snp.isSomatic && somaSNP) || (!snp.isSomatic && germSNP)) {
-				int relPos = snp.pos - this.start;
-				mutantSeq.setCharAt(relPos, snp.altSeq.charAt(0));
-			}
-		}
-		
-		return mutantSeq.toString();
-	}
-	
-	public String getSequenceWithINS (String insID, boolean germSNP, boolean somaSNP) {
-		String sequence = getSequenceWithSNPs(germSNP, somaSNP);
-		Mutation ins = null;
-		for(Mutation mutation : inss) {
-			if(mutation.key.equalsIgnoreCase(insID)) {
-				ins = mutation;
-			}
-		}
-		
-		if(ins == null) {
-			return sequence;
-		}
-		
-		StringBuilder mutantSeq = new StringBuilder();
-		
-		for(int i=start; i<=end; i++) {
-			int relPos = i-start;
-			mutantSeq.append(sequence.charAt(relPos));
-			if(i == ins.pos) {
-				mutantSeq.append(ins.altSeq);
-			}
-		}
-		
-		return mutantSeq.toString();
-	}
-	
-	public String getSequenceWithDEL (String delID, boolean germSNP, boolean somaSNP) {
-		String sequence = getSequenceWithSNPs(germSNP, somaSNP);
-		Mutation del = null;
-		for(Mutation mutation : dels) {
-			if(mutation.key.equalsIgnoreCase(delID)) {
-				del = mutation;
-			}
-		}
-		
-		if(del == null) {
-			return sequence;
-		}
-		
-		StringBuilder mutantSeq = new StringBuilder();
-		
-		for(int i=start; i<=end; i++) {
-			int relPos = i-start;
-			if(i == del.pos) {
-				mutantSeq.append(del.altSeq);
-			} else {
-				mutantSeq.append(sequence.charAt(relPos));
-			}
-		}
-		
-		
-		return mutantSeq.toString();
-	}
-	
-	public String getMutationDescription (String indelID, boolean germSNP, boolean somaSNP) {
+	public String getMutationDescription () {
 		StringBuilder desc = new StringBuilder(this.chr+":"+this.start+"-"+this.end);
-		
-		desc.append("(");
-		int mutationCnt = 0;
-		for(Mutation snp : snps) {
-			if((snp.isSomatic && somaSNP) || (!snp.isSomatic && germSNP)) {
-				if(mutationCnt != 0) {
-					desc.append(",");
-				}
-				desc.append(snp.key);
-				mutationCnt++;
-			}
+		if(this.mutation != null) {
+			desc.append("(").append(this.mutation.key).append(")");
 		}
-		
-		if(indelID != null) {
-			for(Mutation mutation : dels) {
-				if(mutation.key.equalsIgnoreCase(indelID)) {
-					if(mutationCnt != 0) {
-						desc.append(",");
-					}
-					desc.append(mutation.key);
-					mutationCnt++;
-					break;
-				}
-			}
-			
-			for(Mutation mutation : inss) {
-				if(mutation.key.equalsIgnoreCase(indelID)) {
-					if(mutationCnt != 0) {
-						desc.append(",");
-					}
-					desc.append(mutation.key);
-					mutationCnt++;
-					break;
-				}
-			}
-		}
-		
-		if(mutationCnt == 0) {
-			desc.append("-");
-		}
-		
-		desc.append(")");
 		return desc.toString();
 	}
 	
+	public boolean hasPosition (int pos) {
+		if(this.start <= pos && this.end >= pos) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * 
+	 * Return new exon list
+	 * 
+	 * @param exons
+	 * @return
+	 */
+	public static ArrayList<Exon> addStartEndEonxs (Collection<Exon> exons) {
+		ArrayList<Exon> newExons = new ArrayList<Exon>();
+		
+		Exon startExon = new Exon("", -1, -1);
+		Exon endExon = new Exon("", Integer.MAX_VALUE, Integer.MAX_VALUE);
+		newExons.add(startExon);
+		for(Exon exon : exons) {
+			newExons.add(exon.copyExon());
+			
+		}
+		newExons.add(endExon);
+		
+
+		for(int i=1; i<newExons.size(); i++) {
+			newExons.get(i-1).nextExons.add(newExons.get(i));
+			newExons.get(i).prevExons.add(newExons.get(i-1));
+		}
+		
+		return newExons;
+	}
+	
+	public static Exon divdeExon (Exon exon, int pos) {
+		ArrayList<Exon> prevs = exon.prevExons;
+		ArrayList<Exon> nexts = exon.nextExons;
+		
+		
+		// single size exon
+		// or out of range
+		if( (exon.end == pos) ||
+			(exon.start > pos || exon.end < pos)) {
+			return exon;
+		}
+		
+		Exon leftExon = new Exon(exon.chr, exon.start, pos);
+		leftExon.nucleotide = exon.nucleotide.substring(0, pos - exon.start + 1);
+		
+		Exon rightExon = new Exon(exon.chr, pos+1, exon.end);
+		rightExon.nucleotide = exon.nucleotide.substring(pos - exon.start + 1, exon.end - exon.start + 1);
+		
+		leftExon.nextExons.add(rightExon);
+		rightExon.prevExons.add(leftExon);
+		
+		// disconnect and reconnect
+		for(Exon pExon : prevs) {
+			// disconnect to old exon
+			disconnectTargetExon(pExon, exon);
+			
+			// connect to new exon
+			pExon.nextExons.add(leftExon);
+			leftExon.prevExons.add(pExon);
+		}
+		for(Exon nExon : nexts) {
+			disconnectTargetExon(nExon, exon);
+			
+			// connect to new exon
+			nExon.prevExons.add(rightExon);
+			rightExon.nextExons.add(nExon);
+		}
+		
+		return leftExon;
+	}
+	
+	public static void disconnectTargetExon (Exon exon, Exon tExon) {
+		int pCnt = 0;		int nCnt = 0; 
+		while(exon.prevExons.remove(tExon)) {pCnt++;}
+		while(exon.nextExons.remove(tExon)) {nCnt++;}
+		if(pCnt > 1 || nCnt > 1) {
+			System.out.println("Duplicated connection is detected");
+			System.out.println("prve dups: "+pCnt+"& next dups: "+nCnt);
+		}
+	}
+	
+	public static boolean isConnectedList(Collection<Exon> exons) {
+		boolean isConnected = false;
+		
+		for(Exon exon : exons) {
+			if(exon.start == -1) {
+				isConnected = true;
+			}
+			break;
+		}
+		
+		return isConnected;
+	}
 }

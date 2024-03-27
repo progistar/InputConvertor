@@ -37,8 +37,7 @@ public class RunTranslation {
 	public static File outputFile = null;
 	public static File tableFile = null;
 	public static File refGenomeFile = null; 
-	public static File vepSomaFile = null; 
-	public static File vepGermFile = null;
+	public static File varFile = null; 
 	public static String uniqueId = null;
     public static double fpkmThreshold = 1.00;
 	
@@ -64,11 +63,8 @@ public class RunTranslation {
         if(irfinderFile != null) {
         	System.out.println("Reteined-introns from IRFinder: " + irfinderFile.getName());
         }
-        if(vepGermFile != null) {
-        	System.out.println("Germline variant calls from: " + vepGermFile.getName());
-        }
-        if(vepSomaFile != null) {
-        	System.out.println("Somatic variant calls from: " + vepSomaFile.getName());
+        if(varFile != null) {
+        	System.out.println("Variant calls from: " + varFile.getName());
         }
         if(refGTFFile != null) {
         	System.out.println("Reference transcriptome model: " + refGTFFile.getName());
@@ -85,13 +81,9 @@ public class RunTranslation {
         // load GML
         GenomeLoader gmL = new GenomeLoader(refGenomeFile);
         GTFLoader refGTF = new GTFLoader(refGTFFile);
-        if(vepGermFile != null) {
-        	VEPLoader vep = new VEPLoader(vepGermFile, false);
-        	gmL.enrollGermVEPLaoder(vep);
-        }
-        if(vepSomaFile != null) {
-        	VEPLoader vep = new VEPLoader(vepSomaFile, true);
-        	gmL.enrollSomaticVEPLaoder(vep);
+        if(varFile != null) {
+        	VEPLoader vep = new VEPLoader(varFile);
+        	gmL.enrollVEPLaoder(vep);
         }
         
         // Do StringTie
@@ -244,15 +236,8 @@ public class RunTranslation {
 				.desc("IRFinder TSV file")
 				.build();
 		
-		Option optionVEPGerm = Option.builder("v")
-				.longOpt("germ").argName("tsv")
-				.hasArg()
-				.required(false)
-				.desc("VEP TSV file")
-				.build();
-		
-		Option optionVEPSoma = Option.builder("V")
-				.longOpt("soma").argName("tsv")
+		Option optionVEP = Option.builder("v")
+				.longOpt("var").argName("tsv")
 				.hasArg()
 				.required(false)
 				.desc("VEP TSV file")
@@ -267,8 +252,7 @@ public class RunTranslation {
 		.addOption(optionArriba)
 		.addOption(optionCIRIquant)
 		.addOption(optionIRFinder)
-		.addOption(optionVEPGerm)
-		.addOption(optionVEPSoma)
+		.addOption(optionVEP)
 		.addOption(optionOutput)
 		.addOption(optionTable)
 		.addOption(optionUniqueId);
@@ -287,8 +271,7 @@ public class RunTranslation {
 			args[i].equalsIgnoreCase("-a") || args[i].equalsIgnoreCase("--arriba") ||
 			args[i].equalsIgnoreCase("-c") || args[i].equalsIgnoreCase("--ciriquant") ||
 			args[i].equalsIgnoreCase("-i") || args[i].equalsIgnoreCase("--irfinder") ||
-			args[i].equalsIgnoreCase("-v") || args[i].equalsIgnoreCase("--germ") ||
-			args[i].equalsIgnoreCase("-V") || args[i].equalsIgnoreCase("--soma") ||
+			args[i].equalsIgnoreCase("-v") || args[i].equalsIgnoreCase("--var") ||
 			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output") ||
 			args[i].equalsIgnoreCase("-t") || args[i].equalsIgnoreCase("--table") ||
 			args[i].equalsIgnoreCase("-u") || args[i].equalsIgnoreCase("--uid")) {
@@ -335,11 +318,7 @@ public class RunTranslation {
 		    }
 		    
 		    if(cmd.hasOption("v")) {
-		    	vepGermFile = new File(cmd.getOptionValue("v"));
-		    }
-		    
-		    if(cmd.hasOption("V")) {
-		    	vepSomaFile = new File(cmd.getOptionValue("V"));
+		    	varFile = new File(cmd.getOptionValue("v"));
 		    }
 		    
 		    if(cmd.hasOption("p")) {

@@ -1,11 +1,8 @@
 package zhanglab.inputconvertor.input;
 
-import static org.mockito.ArgumentMatchers.matches;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.LinkedList;
 
 import zhanglab.inputconvertor.data.Exon;
@@ -97,8 +94,9 @@ public class CIRIquant {
     			}
     			rightSize += (nExon.end - nExon.start + 1);
 			}
-			refGenome.setSequence(t.chr, circExons);
-			entries = FastaEntry.enumerateFastaEntry(t, circExons, false);
+			
+			//
+			entries = FastaEntry.enumerateFastaEntry(refGenome, t, circExons, false);
 		}
 		return entries;
 	}

@@ -16,9 +16,7 @@ public class VEPLoader {
 	public Hashtable<String, TreeMap<Integer, ArrayList<Mutation>>> positionalMap = new Hashtable<String, TreeMap<Integer, ArrayList<Mutation>>>();
 	public boolean isSomatic = false;
 	
-	public VEPLoader (File file, boolean isSomatic) throws IOException {
-		this.isSomatic = isSomatic;
-		
+	public VEPLoader (File file) throws IOException {
 		BufferedReader BR = new BufferedReader(new FileReader(file));
 		String line = null;
 		String[] header = BR.readLine().split("\t");
@@ -27,7 +25,7 @@ public class VEPLoader {
 		int refIdx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.VEP_REF_FIELD_NAME);
 		int altIdx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.VEP_ALT_FIELD_NAME);
 		
-		int[] totalOfMutations = new int[3];
+		int[] totalOfMutations = new int[10];
 		Hashtable<String, String> removeDuplication = new Hashtable<String, String>();
 		while((line = BR.readLine()) != null) {
 			String[] fields = line.split("\t");
@@ -48,7 +46,19 @@ public class VEPLoader {
 			if(isSomatic) {
 				mark = ">>";
 			}
-			String key = chr+":"+pos+refs+mark+alts;
+			byte type = InputConvertorConstants.WILD;
+			if(refLen == altLen) {
+				
+				type = InputConvertorConstants.SNP;
+			} else if(refLen > altLen) {
+				startPos++;
+				type = InputConvertorConstants.DEL;
+				
+			} else if(refLen < altLen) {
+				type = InputConvertorConstants.INS;
+			}
+			
+			String key = chr+":"+startPos+"-"+endPos+refs+mark+alts;
 			if(removeDuplication.get(key) != null) {
 				continue;
 			}
@@ -58,7 +68,7 @@ public class VEPLoader {
 			// VEP can contain di/tri something like that
 			
 			// SNP / DNP / TNP ...
-			if(refLen == altLen) {
+			if(type == InputConvertorConstants.SNP) {
 				int idx = 0;
 				for(int i=startPos; i<=endPos; i++) {
 					Mutation mutation = new Mutation();
@@ -73,27 +83,23 @@ public class VEPLoader {
 				totalOfMutations[InputConvertorConstants.SNP]++;
 			} 
 			// Deletion
-			else if(refLen > altLen) {
-				int idx = 0;
-				for(int i=startPos+1; i<=endPos; i++) {
-					Mutation mutation = new Mutation();
-					String alt = InputConvertorConstants.DELETION_MARK;
-					String ref = refs.charAt(idx)+"";
-					mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = i; mutation.chr = chr;
-					mutation.type = InputConvertorConstants.DEL;
-					mutation.key = key;
-					this.putMutation(chr, mutation);
-					idx++;
-				}
+			else if(type == InputConvertorConstants.DEL) {
+				Mutation mutation = new Mutation();
+				String alt = "";
+				String ref = refs;
+				mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = startPos; mutation.chr = chr;
+				mutation.type = InputConvertorConstants.DEL;
+				mutation.key = key;
+				this.putMutation(chr, mutation);
 				totalOfMutations[InputConvertorConstants.DEL]++;
 			} 
 			// Insertion
-			else if(refLen < altLen) {
+			else if(type == InputConvertorConstants.INS) {
 				Mutation mutation = new Mutation();
 				String alt = alts;
-				String ref = InputConvertorConstants.DELETION_MARK;
+				String ref = "";
 				mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = startPos; mutation.chr = chr;
-				mutation.type = InputConvertorConstants.DEL;
+				mutation.type = InputConvertorConstants.INS;
 				mutation.key = key;
 				this.putMutation(chr, mutation);
 				totalOfMutations[InputConvertorConstants.INS]++;

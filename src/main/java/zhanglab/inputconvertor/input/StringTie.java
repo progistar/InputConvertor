@@ -105,9 +105,7 @@ public class StringTie {
 	private ArrayList<FastaEntry> getTranslation (Transcript transcript) {
 		ArrayList<Exon> exons = transcript.exons;
 		
-		refGenome.setSequence(transcript.chr, exons);
-		
-		ArrayList<FastaEntry> entries = FastaEntry.enumerateFastaEntry(transcript, exons, false);
+		ArrayList<FastaEntry> entries = FastaEntry.enumerateFastaEntry(refGenome, transcript, exons, false);
 		
 		return entries;
 	}

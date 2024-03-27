@@ -1,6 +1,5 @@
 package zhanglab.inputconvertor.input;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -30,9 +29,7 @@ public class Reference {
 	private ArrayList<FastaEntry> getTranslation (Transcript transcript) {
 		ArrayList<Exon> exons = transcript.cdss;
 		
-		refGenome.setSequence(transcript.chr, exons);
-		
-		ArrayList<FastaEntry> entries = FastaEntry.enumerateFastaEntry(transcript, exons, true);
+		ArrayList<FastaEntry> entries = FastaEntry.enumerateFastaEntry(refGenome, transcript, exons, true);
 		
 		return entries;
 	}

@@ -37,8 +37,8 @@ public class IRFinderTest {
 		GenomeLoader gLoader = new GenomeLoader(test.genomeFile);
 		VEPLoader vepLoader = null;
 		if(vepFile != null) {
-			vepLoader = new VEPLoader(vepFile, true);
-			gLoader.enrollGermVEPLaoder(vepLoader);
+			vepLoader = new VEPLoader(vepFile);
+			gLoader.enrollVEPLaoder(vepLoader);
 		}
 		
 		irfinder.enrollGenomeSequence(gLoader);

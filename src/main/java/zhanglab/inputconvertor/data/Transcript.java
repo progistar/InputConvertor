@@ -1,6 +1,7 @@
 package zhanglab.inputconvertor.data;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class Transcript {
 
@@ -15,4 +16,9 @@ public class Transcript {
 	
 	public ArrayList<Exon> exons = new ArrayList<Exon>();
 	public ArrayList<Exon> cdss = new ArrayList<Exon>();
+	
+	public void setExons () {
+		Collections.sort(exons);
+		Collections.sort(cdss);
+	}
 }
