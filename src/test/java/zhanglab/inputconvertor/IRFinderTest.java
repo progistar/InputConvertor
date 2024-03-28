@@ -36,9 +36,9 @@ public class IRFinderTest {
 		GTFLoader reference = new GTFLoader(test.referenceFile);
 		GenomeLoader gLoader = new GenomeLoader(test.genomeFile);
 		VEPLoader vepLoader = null;
-		if(vepFile != null) {
-			vepLoader = new VEPLoader(vepFile);
-			gLoader.enrollVEPLaoder(vepLoader);
+		if(test.vepFile != null) {
+			vepLoader = new VEPLoader(test.vepFile);
+			//gLoader.enrollVEPLaoder(vepLoader);
 		}
 		
 		irfinder.enrollGenomeSequence(gLoader);
@@ -61,6 +61,10 @@ public class IRFinderTest {
         
         for(int i=0; i<6; i++) {
         	FastaEntry entry = entries.get(i);
+        	System.out.println(entry.description);
+        	System.out.println(test.expectedTranslations.get(i));
+        	System.out.println(entry.sequence);
+        	System.out.println("-----");
         	Assert.assertTrue("Translated sequence was not equal: "+i + test.expectedTranslations.get(i) + "=>" + entry.sequence
         			,test.expectedTranslations.get(i).equalsIgnoreCase(entry.sequence));
         }

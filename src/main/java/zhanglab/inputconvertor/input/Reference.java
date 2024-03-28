@@ -26,23 +26,27 @@ public class Reference {
 		this.refGenome = refGenome;
 	}
 	
-	private ArrayList<FastaEntry> getTranslation (Transcript transcript) {
-		ArrayList<Exon> exons = transcript.cdss;
-		
-		ArrayList<FastaEntry> entries = FastaEntry.enumerateFastaEntry(refGenome, transcript, exons, true);
+	private ArrayList<FastaEntry> getTranslation (Transcript transcript, boolean isOnlyPC) {
+		ArrayList<Exon> exons = null;
+		ArrayList<FastaEntry> entries = null;
+		if(isOnlyPC) {
+			exons = transcript.cdss;
+			entries = FastaEntry.enumerateFastaEntryCDS(refGenome, transcript, exons);
+		} else {
+			exons = transcript.exons;
+			entries = FastaEntry.enumerateFastaEntry(refGenome, transcript, exons);
+		}
 		
 		return entries;
 	}
 	
-	public ArrayList<FastaEntry> getFastaEntry () throws IOException {
+	public ArrayList<FastaEntry> getFastaEntry (boolean isOnlyPC) throws IOException {
 		ArrayList<FastaEntry> fastaEntries = new ArrayList<FastaEntry>();
-		int[] proteinCodingTranscripts = new int[1];
         this.refGTF.geneToTranscripts.forEach((g, ts)->{
     		
     		for(Transcript t : ts) {
-    			if(t.isProteinCoding) {
-    				proteinCodingTranscripts[0]++;
-    				ArrayList<FastaEntry> entries = this.getTranslation(t);
+    			if(isOnlyPC && t.isProteinCoding) {
+    				ArrayList<FastaEntry> entries = this.getTranslation(t, isOnlyPC);
     				// put gene ID
     				for(FastaEntry entry : entries) {
     					entry.geneId = g;
@@ -50,13 +54,22 @@ public class Reference {
     					entry.tool = InputConvertorConstants.REF_HEADER_ID;
     				}
     				fastaEntries.addAll(entries);
+    			} else if(!isOnlyPC) {
+    				ArrayList<FastaEntry> entries = this.getTranslation(t, isOnlyPC);
+    				// put gene ID
+    				for(FastaEntry entry : entries) {
+    					entry.geneId = g;
+    					entry.transcriptIds.add(entry.transcript.tID);
+    					entry.tool = InputConvertorConstants.EXON_TRANSLATION_HEADER_ID;
+    				}
+    				fastaEntries.addAll(entries);
     			}
+    			
         	}
         	
         });
         
         // remove duplications
-        System.out.println("A total of reference protein coding transcripts: "+proteinCodingTranscripts[0]);
         return FastaEntry.removeDuplications(fastaEntries);
 	}
 }

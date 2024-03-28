@@ -131,6 +131,9 @@ public class InputConvertorConstants {
 	// ## CIRIQuant
 	public static final String CIRIQUANT_HEADER_ID			=	"@CR";
 	
+	// ## GTF Threeframe translation
+	public static final String EXON_TRANSLATION_HEADER_ID	=	"@EX";
+	
 	// ## Reference
 	public static final String REF_HEADER_ID				=	"@RF";
 	public static final String NON_REF_HEADER_ID			=	"@NF";

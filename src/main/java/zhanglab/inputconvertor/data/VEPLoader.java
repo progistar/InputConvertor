@@ -48,14 +48,15 @@ public class VEPLoader {
 			}
 			byte type = InputConvertorConstants.WILD;
 			if(refLen == altLen) {
-				
 				type = InputConvertorConstants.SNP;
+				refs = "SNP"+refs;
 			} else if(refLen > altLen) {
 				startPos++;
 				type = InputConvertorConstants.DEL;
-				
+				refs = "DEL"+refs;
 			} else if(refLen < altLen) {
 				type = InputConvertorConstants.INS;
+				refs = "INS"+refs;
 			}
 			
 			String key = chr+":"+startPos+"-"+endPos+refs+mark+alts;

@@ -39,9 +39,11 @@ public class Exon implements Comparable<Exon> {
 	}
 	
 	public String getMutationDescription () {
-		StringBuilder desc = new StringBuilder(this.chr+":"+this.start+"-"+this.end);
+		StringBuilder desc = new StringBuilder();
 		if(this.mutation != null) {
-			desc.append("(").append(this.mutation.key).append(")");
+			desc.append(this.mutation.key);
+		} else {
+			desc.append(this.chr+":"+this.start+"-"+this.end);
 		}
 		return desc.toString();
 	}
@@ -61,7 +63,7 @@ public class Exon implements Comparable<Exon> {
 	 * @param exons
 	 * @return
 	 */
-	public static ArrayList<Exon> addStartEndEonxs (Collection<Exon> exons) {
+	public static Exon[] toExonGraph (Collection<Exon> exons) {
 		ArrayList<Exon> newExons = new ArrayList<Exon>();
 		
 		Exon startExon = new Exon("", -1, -1);
@@ -79,7 +81,9 @@ public class Exon implements Comparable<Exon> {
 			newExons.get(i).prevExons.add(newExons.get(i-1));
 		}
 		
-		return newExons;
+		Exon[] returnExons = {startExon, endExon};
+		
+		return returnExons;
 	}
 	
 	public static Exon divdeExon (Exon exon, int pos) {

@@ -92,7 +92,8 @@ public class RunTranslation {
         // Do reference fasta
         Reference reference = new Reference(refGTF);
         reference.enrollGenomeSequence(gmL);
-        entries.addAll(reference.getFastaEntry());
+        entries.addAll(reference.getFastaEntry(true));
+        entries.addAll(reference.getFastaEntry(false));
         
         if(refProteinFile != null) {
         	FastaLoader refProteins = new FastaLoader(refProteinFile);

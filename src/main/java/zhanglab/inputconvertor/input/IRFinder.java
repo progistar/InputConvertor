@@ -154,7 +154,7 @@ public class IRFinder {
     			rightSize += (nExon.end - nExon.start + 1);
 			}
 			
-			entries = FastaEntry.enumerateFastaEntry(refGenome, t, nExons, false);
+			entries = FastaEntry.enumerateFastaEntry(refGenome, t, nExons);
 		}
 		return entries;
 	}

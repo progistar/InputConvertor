@@ -69,28 +69,45 @@ public class GenomeLoader {
 		return sequence.substring(start, end);
 	}
 	
-	public void setSequence(String chr, ArrayList<Exon> exons) {
+	public void setSequence(String chr, Exon[] exonGraph) {
 		StringBuilder sequence = genomeMap.get(chr);
 		ArrayList<Mutation> snps = new ArrayList<Mutation>();
 		ArrayList<Mutation> inss = new ArrayList<Mutation>();
 		ArrayList<Mutation> dels = new ArrayList<Mutation>();
-		for(Exon exon : exons) {
-			// start and end exons
-			if(exon.start == -1 || exon.start == Integer.MAX_VALUE) continue;
-			int start = exon.start - 1;
-			int end = exon.end;
-			String refSequence = sequence.subSequence(start,  end).toString();
-			exon.nucleotide = refSequence;
-			if(vars != null) {
-				snps.addAll(vars.getSNPByRange(chr, exon.start, exon.end+1));
-				dels.addAll(vars.getDELByRange(chr, exon.start, exon.end+1));
-				inss.addAll(vars.getINSByRange(chr, exon.start, exon.end+1));
+		Exon startExon = exonGraph[0];
+		Exon endExon = exonGraph[1];
+		Exon nextExon = null;
+		
+		nextExon = startExon;
+		
+		while(nextExon != null) {
+			// end of exon
+			if(nextExon.start == Integer.MAX_VALUE) {
+				nextExon = null;
+			} 
+			// exons in middle
+			else if (nextExon.start != -1) {
+				int start = nextExon.start - 1;
+				int end = nextExon.end;
+				String refSequence = sequence.subSequence(start,  end).toString();
+				nextExon.nucleotide = refSequence;
+				if(vars != null) {
+					snps.addAll(vars.getSNPByRange(chr, nextExon.start, nextExon.end+1));
+					dels.addAll(vars.getDELByRange(chr, nextExon.start, nextExon.end+1));
+					inss.addAll(vars.getINSByRange(chr, nextExon.start, nextExon.end+1));
+				}
+				
+				nextExon = nextExon.nextExons.get(0);
+			}
+			// start exon
+			else {
+				nextExon = nextExon.nextExons.get(0);
 			}
 		}
 		
 		// deletions
 		for(Mutation del :dels) {
-			Exon nextExon = exons.get(0);
+			nextExon = startExon;
 			
 			int delStartPos = del.pos;
 			int delEndPos = del.pos + del.refSeq.length()-1;
@@ -131,7 +148,7 @@ public class GenomeLoader {
 			}
 			
 			if(delEndExon == null) {
-				delEndExon = exons.get(exons.size()-1);
+				delEndExon = endExon;
 			}
 			
 			delStartExon.nextExons.add(delExon);
@@ -142,7 +159,7 @@ public class GenomeLoader {
 		
 		// insertions
 		for(Mutation ins :inss) {
-			Exon nextExon = exons.get(0);
+			nextExon = startExon;
 			int insStartPos = ins.pos;
 			int insEndPos = ins.pos;
 			
@@ -175,7 +192,7 @@ public class GenomeLoader {
 			}
 			
 			if(insEndExon == null) {
-				insEndExon = exons.get(exons.size()-1);
+				insEndExon = endExon;
 			}
 			
 			insStartExon.nextExons.add(insExon);
@@ -186,7 +203,7 @@ public class GenomeLoader {
 		
 		// snps
 		for(Mutation snp :snps) {
-			Exon nextExon = exons.get(0);
+			nextExon = startExon;
 			
 			int snpStartPos = snp.pos;
 			int snpEndPos = snp.pos;
