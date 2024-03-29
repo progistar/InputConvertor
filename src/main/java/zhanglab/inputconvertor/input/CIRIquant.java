@@ -96,7 +96,7 @@ public class CIRIquant {
 			}
 			
 			//
-			entries = FastaEntry.enumerateFastaEntry(refGenome, t, circExons);
+			entries = FastaEntry.enumerateFastaEntry(refGenome, t, circExons, 1);
 		}
 		return entries;
 	}

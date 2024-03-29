@@ -75,7 +75,6 @@ public class GenomeLoader {
 		Exon nextExon = null;
 		
 		nextExon = startExon;
-		
 		while(nextExon != null) {
 			// end of exon
 			if(nextExon.start == Integer.MAX_VALUE) {
@@ -119,11 +118,13 @@ public class GenomeLoader {
 			Exon delStartExon = null;
 			Exon delEndExon = null;
 			while((nextExon.start != Integer.MAX_VALUE)) {
-				if(nextExon.start < delStartPos) {
-					delStartExon = nextExon;
+				if(nextExon.start >= delStartPos && nextExon.start <= delEndPos &&
+						delStartExon == null) {
+					delStartExon = Exon.getWildTypeExon(nextExon.prevExons);
 				}
-				if(nextExon.start > delEndPos && delEndExon == null) {
-					delEndExon = nextExon;
+				if(nextExon.end <= delEndPos && nextExon.end >= delStartPos &&
+						delEndExon == null) {
+					delEndExon = Exon.getWildTypeExon(nextExon.nextExons);
 				}
 				
 				// if the exon has the position (mutation)
@@ -133,13 +134,10 @@ public class GenomeLoader {
 				}
 				if(nextExon.hasPosition(delEndPos)) {
 					nextExon = Exon.divdeExon(nextExon, delEndPos);
+					delEndExon = Exon.getWildTypeExon(nextExon.nextExons);
 				}
 				
 				nextExon = Exon.getWildTypeExon(nextExon.nextExons);
-			}
-			
-			if(delEndExon == null) {
-				delEndExon = endExon;
 			}
 			
 			delStartExon.nextExons.add(delExon);
@@ -196,11 +194,13 @@ public class GenomeLoader {
 			Exon snpEndExon = null;
 			
 			while((nextExon.start != Integer.MAX_VALUE)) {
-				if(nextExon.start < snpStartPos) {
-					snpStartExon = nextExon;
+				if(nextExon.start >= snpStartPos && nextExon.start <= snpEndPos &&
+						snpStartExon == null) {
+					snpStartExon = Exon.getWildTypeExon(nextExon.prevExons);
 				}
-				if(nextExon.start > snpEndPos && snpEndExon == null) {
-					snpEndExon = nextExon;
+				if(nextExon.end <= snpEndPos && nextExon.end >= snpStartPos &&
+						snpEndExon == null) {
+					snpEndExon = Exon.getWildTypeExon(nextExon.nextExons);
 				}
 				
 				// if the exon has the position (mutation)
@@ -210,13 +210,14 @@ public class GenomeLoader {
 				}
 				if(nextExon.hasPosition(snpEndPos)) {
 					nextExon = Exon.divdeExon(nextExon, snpEndPos);
+					snpEndExon = Exon.getWildTypeExon(nextExon.nextExons);
 				}
 				
 				nextExon = Exon.getWildTypeExon(nextExon.nextExons);
 			}
 			
-			
 			// coordinate snpExon by wildExon
+			Exon tmp = snpEndExon;
 			snpStartExon = Exon.getWildTypeExon(snpStartExon.nextExons);
 			snpEndExon = Exon.getWildTypeExon(snpEndExon.prevExons);
 			
@@ -224,25 +225,33 @@ public class GenomeLoader {
 			
 			ArrayList<Exon> mnps = new ArrayList<Exon>();
 			
-			while(nextExon != null) {
+			while(nextExon.start != Integer.MAX_VALUE) {
 
-				// connect delStartExon -> delExon -> delEndExon
-				Exon snpExon = new Exon(chr, snpStartPos, snpEndPos);
-				snpExon.type = snp.type;
-				
-				int shiftStartPos = nextExon.start - snpExon.start;
-				int shiftEndPos = shiftStartPos + nextExon.refNucleotide.length();
-				
-				snpExon.start = nextExon.start; snpExon.end = nextExon.end;
-				snpExon.refNucleotide = nextExon.refNucleotide;
-				snpExon.altNucleotide = snp.altSeq.substring(shiftStartPos, shiftEndPos);
-				mnps.add(snpExon);
-				
-				if(nextExon == snpEndExon) {
-					nextExon = null;
-				} else {
+				try {
+					
+					if(snpStartPos <= nextExon.start && snpEndPos >= nextExon.end) {
+						Exon snpExon = new Exon(chr, snpStartPos, snpEndPos);
+						snpExon.type = snp.type;
+						
+						int shiftStartPos = nextExon.start - snpExon.start;
+						int shiftEndPos = shiftStartPos + nextExon.refNucleotide.length();
+						
+						snpExon.start = nextExon.start; snpExon.end = nextExon.end;
+						snpExon.refNucleotide = nextExon.refNucleotide;
+						snpExon.altNucleotide = snp.altSeq.substring(shiftStartPos, shiftEndPos);
+						mnps.add(snpExon);
+					}
+					
 					nextExon = Exon.getWildTypeExon(nextExon.nextExons);
+				}catch(Exception e) {
+					System.out.println(snp.key);
+					System.out.println(snpStartExon.getMutationDescription());
+					System.out.println(snpEndExon.getMutationDescription());
+					System.out.println(nextExon.getMutationDescription());
+					System.out.println(tmp.getMutationDescription());
+					e.printStackTrace();
 				}
+ 				
 			}
 			
 			ArrayList<Exon> mExons = Exon.mergeAdjacentExons(mnps);

@@ -54,7 +54,7 @@ public class Exon implements Comparable<Exon> {
 			} else if(type == InputConvertorConstants.MNP) {
 				desc.append("[MNP]").append(this.refNucleotide).append(">").append(this.altNucleotide);
 			} else if(type == InputConvertorConstants.DEL) {
-				desc.append("[DEL]").append(this.altNucleotide);
+				desc.append("[DEL]").append(this.refNucleotide);
 			} else if(type == InputConvertorConstants.INS) {
 				desc.append("[INS]").append(this.altNucleotide);
 			}
@@ -162,7 +162,7 @@ public class Exon implements Comparable<Exon> {
 		
 		// only single-consistent type is allowed.
 		assert isUniqueType;
-		
+		assert exons.size() != 0;
 		
 		ArrayList<Exon> adjExons = new ArrayList<Exon>();
 		

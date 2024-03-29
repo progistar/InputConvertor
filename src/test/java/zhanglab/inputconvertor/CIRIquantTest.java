@@ -54,6 +54,8 @@ public class CIRIquantTest {
         
         for(int i=0; i<24; i++) {
         	FastaEntry entry = entries.get(i);
+        	System.out.println(test.expectedTranslations.get(i));
+        	System.out.println(entry.sequence);
         	Assert.assertTrue("Translated sequence was not equal: "+i + test.expectedTranslations.get(i) + "=>" + entry.sequence
         			,test.expectedTranslations.get(i).equalsIgnoreCase(entry.sequence));
         }

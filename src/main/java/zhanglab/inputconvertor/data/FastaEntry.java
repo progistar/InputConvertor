@@ -267,7 +267,7 @@ public class FastaEntry {
 		return sequence.toString();
 	}
 	
-	public static ArrayList<FastaEntry> enumerateFastaEntry (GenomeLoader refGenome, Transcript t, Collection<Exon> exons) {
+	public static ArrayList<FastaEntry> enumerateFastaEntry (GenomeLoader refGenome, Transcript t, Collection<Exon> exons, int times) {
 		Exon[] exonGraph = Exon.toExonGraph(exons);
 		refGenome.setSequence(t.chr, exonGraph);
 		ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
@@ -294,11 +294,15 @@ public class FastaEntry {
 		}
 		refEntry.sequence = seq.toString();
 		refEntry.description = getMutationDescription(exons);
-		
 		ntEntries.add(refEntry);
 		
 		for(FastaEntry fastaEntry : ntEntries) {
 			fastaEntry.transcript = t;
+			
+			for(int i=1; i<times; i++) {
+				fastaEntry.sequence += fastaEntry.sequence;
+				fastaEntry.description += fastaEntry.description;
+			}
 			
 			for(int frame=0; frame<3; frame++) {
 				FastaEntry aaEntry = new FastaEntry();
@@ -320,6 +324,10 @@ public class FastaEntry {
 		}
 		
 		return entries;
+	}
+	
+	public static ArrayList<FastaEntry> enumerateFastaEntry (GenomeLoader refGenome, Transcript t, Collection<Exon> exons) {
+		return enumerateFastaEntry(refGenome, t, exons, 1);
 	}
 	
 	public static ArrayList<FastaEntry> enumerateFastaEntryCDS (GenomeLoader refGenome, Transcript t, Collection<Exon> exons) {
