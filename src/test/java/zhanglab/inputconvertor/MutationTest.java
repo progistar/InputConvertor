@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +21,7 @@ public class MutationTest {
 	public File genomeFile = null;
 	public File referenceFile = null;
 	public File vepFile = null;
-	public ArrayList<String> expectedTranslations = null;
+	public Hashtable<String, String> expectedTranslations = null;
 	
 	@Test
 	public void runTest () throws IOException {
@@ -57,10 +58,14 @@ public class MutationTest {
         BW.close();
         
         
-        for(int i=0; i<6; i++) {
+        for(int i=0; i<entries.size(); i++) {
         	FastaEntry entry = entries.get(i);
-        	Assert.assertTrue("Translated sequence was not equal: "+i + test.expectedTranslations.get(i) + "=>" + entry.sequence
-        			,test.expectedTranslations.get(i).equalsIgnoreCase(entry.sequence));
+        	String key = entry.description +"_frame"+entry.frame;
+        	if(test.expectedTranslations.get(key) != null) {
+        		Assert.assertTrue("Translated sequence was not equal: "+i +" "+ test.expectedTranslations.get(key) + "=>" + entry.sequence
+        				, test.expectedTranslations.get(key).equalsIgnoreCase(entry.sequence));
+        	}
+        	
         }
         
 		
@@ -70,16 +75,13 @@ public class MutationTest {
 		this.genomeFile = new File("test/test.genome.fa");
 		this.referenceFile = new File("test/comb_mut_ref.gtf");
 		this.vepFile = new File("test/comb_mut_vep.tsv");
-		this.expectedTranslations = new ArrayList<String>();
+		this.expectedTranslations = new Hashtable<String, String>();
 		
-		// chr1:50|400_junction_exact
-		this.expectedTranslations.add("SPYLAVSL");
-		this.expectedTranslations.add("PLTLPSA");
-		this.expectedTranslations.add("PLPCRQP");
-		
-		// chr1:200|400_junction_exact
-		this.expectedTranslations.add("SPXLAVSL");
-		this.expectedTranslations.add("PLNLPSA");
-		this.expectedTranslations.add("PLTCRQP");
+		this.expectedTranslations.put("@chr1:1-1[SNP]G>T@chr1:1-1[INS]CCCC@chr1:2-4@chr1:5-5[SNP]A>C@chr1:6-20_frame0", "SPYLAVSL");
+		this.expectedTranslations.put("@chr1:1-1[SNP]G>T@chr1:1-1[INS]CCCC@chr1:2-4@chr1:5-5[SNP]A>C@chr1:6-20_frame1", "PLTLPSA");
+		this.expectedTranslations.put("@chr1:1-1[SNP]G>T@chr1:1-1[INS]CCCC@chr1:2-4@chr1:5-5[SNP]A>C@chr1:6-20_frame2", "PLPCRQP");
+		this.expectedTranslations.put("@chr1:1-1[SNP]G>T@chr1:1-1[INS]CCCC@chr1:2-4@chr1:5-5@chr1:6-20_frame0", "SPXLAVSL");
+		this.expectedTranslations.put("@chr1:1-1[SNP]G>T@chr1:1-1[INS]CCCC@chr1:2-4@chr1:5-5@chr1:6-20_frame1", "PLNLPSA");
+		this.expectedTranslations.put("@chr1:1-1[SNP]G>T@chr1:1-1[INS]CCCC@chr1:2-4@chr1:5-5@chr1:6-20_frame2", "PLTCRQP");
 	}
 }

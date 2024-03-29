@@ -110,9 +110,9 @@ public class FastaEntry {
 				
 				if(isRemoved) {
 					if(path.type == InputConvertorConstants.WILD) {
-						length -= path.nucleotide.length();
+						length -= path.refNucleotide.length();
 					} else {
-						length -= path.mutation.altSeq.length();
+						length -= path.altNucleotide.length();
 					}
 				} else {
 					break;
@@ -125,9 +125,9 @@ public class FastaEntry {
 				}
 				
 				if(newExon.type == InputConvertorConstants.WILD) {
-					length += newExon.nucleotide.length();
+					length += newExon.refNucleotide.length();
 				} else {
-					length += newExon.mutation.altSeq.length();
+					length += newExon.altNucleotide.length();
 				}
 			}
 			
@@ -180,9 +180,9 @@ public class FastaEntry {
 				
 				if(isRemoved) {
 					if(path.type == InputConvertorConstants.WILD) {
-						length -= path.nucleotide.length();
+						length -= path.refNucleotide.length();
 					} else {
-						length -= path.mutation.altSeq.length();
+						length -= path.altNucleotide.length();
 					}
 				} else {
 					break;
@@ -196,9 +196,9 @@ public class FastaEntry {
 				}
 				
 				if(newExon.type == InputConvertorConstants.WILD) {
-					length += newExon.nucleotide.length();
+					length += newExon.refNucleotide.length();
 				} else {
-					length += newExon.mutation.altSeq.length();
+					length += newExon.altNucleotide.length();
 				}
 			}
 			
@@ -243,7 +243,7 @@ public class FastaEntry {
 					
 					FastaEntry entry = new FastaEntry();
 					entry.description = getMutationDescription(leftExon) + getMutationDescription(mutExon) + getMutationDescription(rightExon);
-					entry.sequence = leftSeq+mutExon.mutation.altSeq+rightSeq;
+					entry.sequence = leftSeq+mutExon.altNucleotide+rightSeq;
 					entry.mutationMark = InputConvertorConstants.MUTATION_HEADER_ID;
 					mutEntries.add(entry);
 				}
@@ -258,9 +258,9 @@ public class FastaEntry {
 		
 		for(Exon exon : exons) {
 			if(exon.type == InputConvertorConstants.WILD) {
-				sequence.append(exon.nucleotide);
+				sequence.append(exon.refNucleotide);
 			} else {
-				sequence.append(exon.mutation.altSeq);
+				sequence.append(exon.altNucleotide);
 			}
 		}
 		
@@ -281,8 +281,8 @@ public class FastaEntry {
 		Exon exon = exonGraph[0];
 		
 		while(exon.start != Integer.MAX_VALUE) {
-			if(exon.nucleotide != null) {
-				seq.append(exon.nucleotide);
+			if(exon.refNucleotide != null) {
+				seq.append(exon.refNucleotide);
 			}
 			
 			for(Exon nExon : exon.nextExons) {
@@ -333,8 +333,8 @@ public class FastaEntry {
 		Exon exon = exonGraph[0];
 		
 		while(exon.start != Integer.MAX_VALUE) {
-			if(exon.nucleotide != null) {
-				seq.append(exon.nucleotide);
+			if(exon.refNucleotide != null) {
+				seq.append(exon.refNucleotide);
 			}
 			
 			for(Exon nExon : exon.nextExons) {

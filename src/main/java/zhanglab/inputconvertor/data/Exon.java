@@ -10,8 +10,8 @@ public class Exon implements Comparable<Exon> {
 	public String chr;
 	public int start;
 	public int end;
-	public String nucleotide;
-	public Mutation mutation;
+	public String refNucleotide;
+	public String altNucleotide;
 	public byte type = InputConvertorConstants.WILD;
 	public ArrayList<Exon> nextExons = new ArrayList<Exon>();
 	public ArrayList<Exon> prevExons = new ArrayList<Exon>();
@@ -32,18 +32,33 @@ public class Exon implements Comparable<Exon> {
 		return 0;
 	}
 	
+	/**
+	 * copy all except for next/prev connections
+	 * @return
+	 */
 	public Exon copyExon () {
 		Exon exon = new Exon(chr, start, end);
-		exon.nucleotide = this.nucleotide;
+		exon.refNucleotide = this.refNucleotide;
+		exon.altNucleotide = this.altNucleotide;
+		exon.type = this.type;
 		return exon;
 	}
 	
 	public String getMutationDescription () {
 		StringBuilder desc = new StringBuilder();
-		if(this.mutation != null) {
-			desc.append(this.mutation.key);
-		} else {
-			desc.append(this.chr+":"+this.start+"-"+this.end);
+		desc.append(this.chr+":"+this.start+"-"+this.end);
+		if(type != InputConvertorConstants.WILD) {
+			
+			if(type == InputConvertorConstants.SNP) {
+				desc.append("[SNP]").append(this.refNucleotide).append(">").append(this.altNucleotide);
+			} else if(type == InputConvertorConstants.MNP) {
+				desc.append("[MNP]").append(this.refNucleotide).append(">").append(this.altNucleotide);
+			} else if(type == InputConvertorConstants.DEL) {
+				desc.append("[DEL]").append(this.altNucleotide);
+			} else if(type == InputConvertorConstants.INS) {
+				desc.append("[INS]").append(this.altNucleotide);
+			}
+			
 		}
 		return desc.toString();
 	}
@@ -86,7 +101,16 @@ public class Exon implements Comparable<Exon> {
 		return returnExons;
 	}
 	
+	/**
+	 * Divide exon only for wildtype
+	 * 
+	 * @param exon
+	 * @param pos
+	 * @return
+	 */
 	public static Exon divdeExon (Exon exon, int pos) {
+		assert exon.type == InputConvertorConstants.WILD;
+		
 		ArrayList<Exon> prevs = exon.prevExons;
 		ArrayList<Exon> nexts = exon.nextExons;
 		
@@ -99,10 +123,10 @@ public class Exon implements Comparable<Exon> {
 		}
 		
 		Exon leftExon = new Exon(exon.chr, exon.start, pos);
-		leftExon.nucleotide = exon.nucleotide.substring(0, pos - exon.start + 1);
+		leftExon.refNucleotide = exon.refNucleotide.substring(0, pos - exon.start + 1);
 		
 		Exon rightExon = new Exon(exon.chr, pos+1, exon.end);
-		rightExon.nucleotide = exon.nucleotide.substring(pos - exon.start + 1, exon.end - exon.start + 1);
+		rightExon.refNucleotide = exon.refNucleotide.substring(pos - exon.start + 1, exon.end - exon.start + 1);
 		
 		leftExon.nextExons.add(rightExon);
 		rightExon.prevExons.add(leftExon);
@@ -127,6 +151,47 @@ public class Exon implements Comparable<Exon> {
 		return leftExon;
 	}
 	
+	public static ArrayList<Exon> mergeAdjacentExons (ArrayList<Exon> exons) {
+		// type count
+		boolean isUniqueType = true;
+		for(int i=1; i<exons.size(); i++) {
+			if(exons.get(i-1).type != exons.get(i).type) {
+				isUniqueType = false;
+			}
+		}
+		
+		// only single-consistent type is allowed.
+		assert isUniqueType;
+		
+		
+		ArrayList<Exon> adjExons = new ArrayList<Exon>();
+		
+		Exon firstExon = exons.get(0);
+		Exon mExon = firstExon.copyExon();
+		adjExons.add(mExon);
+		
+		for(int i=1; i<exons.size(); i++) {
+			Exon exon = exons.get(i);
+			// adjacent?
+			if(exon.start == mExon.end+1) {
+				mExon.end = exon.end;
+				mExon.altNucleotide += exon.altNucleotide;
+				mExon.refNucleotide += exon.refNucleotide;
+			} else {
+				mExon = exon.copyExon();
+				adjExons.add(mExon);
+			}
+		}
+		
+		// make a connection
+		for(int i=1; i<adjExons.size(); i++) {
+			adjExons.get(i-1).nextExons.add(adjExons.get(i));
+			adjExons.get(i).prevExons.add(adjExons.get(i-1));
+		}
+		
+		return adjExons;
+	}
+	
 	public static void disconnectTargetExon (Exon exon, Exon tExon) {
 		int pCnt = 0;		int nCnt = 0; 
 		while(exon.prevExons.remove(tExon)) {pCnt++;}
@@ -137,16 +202,16 @@ public class Exon implements Comparable<Exon> {
 		}
 	}
 	
-	public static boolean isConnectedList(Collection<Exon> exons) {
-		boolean isConnected = false;
+	public static Exon getWildTypeExon (Collection<Exon> exons) {
+		Exon wildExon = null;
 		
 		for(Exon exon : exons) {
-			if(exon.start == -1) {
-				isConnected = true;
+			if(exon.type == InputConvertorConstants.WILD) {
+				wildExon = exon;
+				break;
 			}
-			break;
 		}
 		
-		return isConnected;
+		return wildExon;
 	}
 }

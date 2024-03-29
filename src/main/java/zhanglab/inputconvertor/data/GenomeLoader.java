@@ -5,11 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Hashtable;
-import java.util.LinkedList;
-
-import zhanglab.inputconvertor.env.InputConvertorConstants;
 
 public class GenomeLoader {
 
@@ -90,9 +86,11 @@ public class GenomeLoader {
 				int start = nextExon.start - 1;
 				int end = nextExon.end;
 				String refSequence = sequence.subSequence(start,  end).toString();
-				nextExon.nucleotide = refSequence;
+				nextExon.refNucleotide = refSequence;
 				if(vars != null) {
 					snps.addAll(vars.getSNPByRange(chr, nextExon.start, nextExon.end+1));
+					snps.addAll(vars.getMNPByRange(chr, nextExon.start, nextExon.end+1));
+					
 					dels.addAll(vars.getDELByRange(chr, nextExon.start, nextExon.end+1));
 					inss.addAll(vars.getINSByRange(chr, nextExon.start, nextExon.end+1));
 				}
@@ -114,8 +112,9 @@ public class GenomeLoader {
 			
 			// connect delStartExon -> delExon -> delEndExon
 			Exon delExon = new Exon(chr, delStartPos, delEndPos);
-			delExon.mutation = del;
-			delExon.type = InputConvertorConstants.DEL;
+			delExon.type = del.type;
+			delExon.refNucleotide = del.refSeq;
+			delExon.altNucleotide = del.altSeq;
 			
 			Exon delStartExon = null;
 			Exon delEndExon = null;
@@ -136,15 +135,7 @@ public class GenomeLoader {
 					nextExon = Exon.divdeExon(nextExon, delEndPos);
 				}
 				
-				Exon refExon = null;
-				
-				for(Exon nExon : nextExon.nextExons) {
-					if(nExon.mutation == null) {
-						refExon = nExon;
-						break;
-					}
-				}
-				nextExon = refExon;
+				nextExon = Exon.getWildTypeExon(nextExon.nextExons);
 			}
 			
 			if(delEndExon == null) {
@@ -165,8 +156,9 @@ public class GenomeLoader {
 			
 			// connect delStartExon -> delExon -> delEndExon
 			Exon insExon = new Exon(chr, insStartPos, insEndPos);
-			insExon.mutation = ins;
-			insExon.type = InputConvertorConstants.INS;
+			insExon.type = ins.type;
+			insExon.refNucleotide = ins.refSeq;
+			insExon.altNucleotide = ins.altSeq;
 			
 			Exon insStartExon = nextExon;
 			Exon insEndExon = null;
@@ -180,15 +172,7 @@ public class GenomeLoader {
 					insStartExon = nextExon;
 				}
 				
-				Exon refExon = null;
-				
-				for(Exon nExon : nextExon.nextExons) {
-					if(nExon.type == InputConvertorConstants.WILD) {
-						refExon = nExon;
-						break;
-					}
-				}
-				nextExon = refExon;
+				nextExon = Exon.getWildTypeExon(nextExon.nextExons);
 			}
 			
 			if(insEndExon == null) {
@@ -206,43 +190,73 @@ public class GenomeLoader {
 			nextExon = startExon;
 			
 			int snpStartPos = snp.pos;
-			int snpEndPos = snp.pos;
+			int snpEndPos = snp.pos + snp.refSeq.length()-1;
 			
-			// connect delStartExon -> delExon -> delEndExon
-			Exon snpExon = new Exon(chr, snpStartPos, snpEndPos);
-			snpExon.mutation = snp;
-			snpExon.type = InputConvertorConstants.SNP;
+			Exon snpStartExon = null;
+			Exon snpEndExon = null;
 			
 			while((nextExon.start != Integer.MAX_VALUE)) {
-				// if the exon has the position (mutation)
-				if(nextExon.hasPosition(snpStartPos)) {
-					nextExon = Exon.divdeExon(nextExon, snpStartPos);
-					
-					if(nextExon.hasPosition(snpStartPos-1)) {
-						nextExon = Exon.divdeExon(nextExon, snpStartPos-1);
-						nextExon = nextExon.nextExons.get(0);
-					}
-					
-					for(Exon pExon : nextExon.prevExons) {
-						pExon.nextExons.add(snpExon);
-						snpExon.prevExons.add(pExon);
-					}
-					
-					for(Exon nExon : nextExon.nextExons) {
-						nExon.prevExons.add(snpExon);
-						snpExon.nextExons.add(nExon);
-					}
-					
-					// found
-					break;
+				if(nextExon.start < snpStartPos) {
+					snpStartExon = nextExon;
+				}
+				if(nextExon.start > snpEndPos && snpEndExon == null) {
+					snpEndExon = nextExon;
 				}
 				
-				for(Exon nExon : nextExon.nextExons) {
-					if(nExon.type == InputConvertorConstants.WILD) {
-						nextExon = nExon;
-						break;
-					}
+				// if the exon has the position (mutation)
+				if(nextExon.hasPosition(snpStartPos-1)) {
+					nextExon = Exon.divdeExon(nextExon, snpStartPos-1);
+					snpStartExon = nextExon;
 				}
+				if(nextExon.hasPosition(snpEndPos)) {
+					nextExon = Exon.divdeExon(nextExon, snpEndPos);
+				}
+				
+				nextExon = Exon.getWildTypeExon(nextExon.nextExons);
+			}
+			
+			
+			// coordinate snpExon by wildExon
+			snpStartExon = Exon.getWildTypeExon(snpStartExon.nextExons);
+			snpEndExon = Exon.getWildTypeExon(snpEndExon.prevExons);
+			
+			nextExon = snpStartExon;
+			
+			ArrayList<Exon> mnps = new ArrayList<Exon>();
+			
+			while(nextExon != null) {
+
+				// connect delStartExon -> delExon -> delEndExon
+				Exon snpExon = new Exon(chr, snpStartPos, snpEndPos);
+				snpExon.type = snp.type;
+				
+				int shiftStartPos = nextExon.start - snpExon.start;
+				int shiftEndPos = shiftStartPos + nextExon.refNucleotide.length();
+				
+				snpExon.start = nextExon.start; snpExon.end = nextExon.end;
+				snpExon.refNucleotide = nextExon.refNucleotide;
+				snpExon.altNucleotide = snp.altSeq.substring(shiftStartPos, shiftEndPos);
+				mnps.add(snpExon);
+				
+				if(nextExon == snpEndExon) {
+					nextExon = null;
+				} else {
+					nextExon = Exon.getWildTypeExon(nextExon.nextExons);
+				}
+			}
+			
+			ArrayList<Exon> mExons = Exon.mergeAdjacentExons(mnps);
+			Exon firstExon = mExons.get(0);
+			Exon lastExon = mExons.get(mExons.size()-1);
+			
+			for(Exon pExon : snpStartExon.prevExons) {
+				pExon.nextExons.add(firstExon);
+				firstExon.prevExons.add(pExon);
+			}
+			
+			for(Exon nExon : snpEndExon.nextExons) {
+				nExon.prevExons.add(lastExon);
+				lastExon.nextExons.add(nExon);
 			}
 		}
 		

@@ -97,9 +97,10 @@ public class InputConvertorConstants {
 	public static final String VEP_ALT_FIELD_NAME = "Allele";
 	public static final byte				WILD   = 0;
 	public static final byte				SNP   = 1;
-	public static final byte				INS   = 2;
-	public static final byte				DEL   = 3;
-	public static final byte				ALL_MUT   = 4;
+	public static final byte				MNP   = 2;
+	public static final byte				INS   = 3;
+	public static final byte				DEL   = 4;
+	public static final byte				ALL_MUT   = 5;
 	public static final String DELETION_MARK	  = "-";
 	public static final String MUTATION_HEADER_ID = "@VR";
 	

@@ -47,19 +47,27 @@ public class VEPLoader {
 				mark = ">>";
 			}
 			byte type = InputConvertorConstants.WILD;
+			String typeStr = null;
 			if(refLen == altLen) {
-				type = InputConvertorConstants.SNP;
-				refs = "SNP"+refs;
+				if(refLen == 1) {
+					type = InputConvertorConstants.SNP;
+					typeStr = "SNP";
+				}
+				// MNP (DNP , TNP ...)
+				else {
+					type = InputConvertorConstants.MNP;
+					typeStr = "MNP";
+				}
 			} else if(refLen > altLen) {
 				startPos++;
 				type = InputConvertorConstants.DEL;
-				refs = "DEL"+refs;
+				typeStr = "DEL";
 			} else if(refLen < altLen) {
 				type = InputConvertorConstants.INS;
-				refs = "INS"+refs;
+				typeStr = "INS";
 			}
 			
-			String key = chr+":"+startPos+"-"+endPos+refs+mark+alts;
+			String key = chr+":"+startPos+"-"+endPos+"["+typeStr+"]"+refs+mark+alts;
 			if(removeDuplication.get(key) != null) {
 				continue;
 			}
@@ -69,19 +77,15 @@ public class VEPLoader {
 			// VEP can contain di/tri something like that
 			
 			// SNP / DNP / TNP ...
-			if(type == InputConvertorConstants.SNP) {
-				int idx = 0;
-				for(int i=startPos; i<=endPos; i++) {
-					Mutation mutation = new Mutation();
-					String alt = alts.charAt(idx)+"";
-					String ref = refs.charAt(idx)+"";
-					mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = i; mutation.chr = chr;
-					mutation.type = InputConvertorConstants.SNP;
-					mutation.key = key;
-					this.putMutation(chr, mutation);
-					idx++;
-				}
-				totalOfMutations[InputConvertorConstants.SNP]++;
+			if(type == InputConvertorConstants.SNP || type == InputConvertorConstants.MNP) {
+				Mutation mutation = new Mutation();
+				String alt = alts;
+				String ref = refs;
+				mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = startPos; mutation.chr = chr;
+				mutation.type = type;
+				mutation.key = key;
+				this.putMutation(chr, mutation);
+				totalOfMutations[mutation.type]++;
 			} 
 			// Deletion
 			else if(type == InputConvertorConstants.DEL) {
@@ -89,10 +93,10 @@ public class VEPLoader {
 				String alt = "";
 				String ref = refs;
 				mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = startPos; mutation.chr = chr;
-				mutation.type = InputConvertorConstants.DEL;
+				mutation.type = type;
 				mutation.key = key;
 				this.putMutation(chr, mutation);
-				totalOfMutations[InputConvertorConstants.DEL]++;
+				totalOfMutations[mutation.type]++;
 			} 
 			// Insertion
 			else if(type == InputConvertorConstants.INS) {
@@ -100,18 +104,23 @@ public class VEPLoader {
 				String alt = alts;
 				String ref = "";
 				mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = startPos; mutation.chr = chr;
-				mutation.type = InputConvertorConstants.INS;
+				mutation.type = type;
 				mutation.key = key;
 				this.putMutation(chr, mutation);
-				totalOfMutations[InputConvertorConstants.INS]++;
+				totalOfMutations[mutation.type]++;
 			}
 			
 		}
 		
 		BR.close();
 		
-		System.out.println("A total of mutations: "+ (totalOfMutations[InputConvertorConstants.SNP] + totalOfMutations[InputConvertorConstants.INS] + totalOfMutations[InputConvertorConstants.DEL]));
+		System.out.println("A total of mutations: "+ 
+				(totalOfMutations[InputConvertorConstants.SNP] +
+				totalOfMutations[InputConvertorConstants.MNP] +
+				totalOfMutations[InputConvertorConstants.INS] + 
+				totalOfMutations[InputConvertorConstants.DEL]));
 		System.out.println("SNPs: "+totalOfMutations[InputConvertorConstants.SNP]);
+		System.out.println("MNPs: "+totalOfMutations[InputConvertorConstants.MNP]);
 		System.out.println("INSs: "+totalOfMutations[InputConvertorConstants.INS]);
 		System.out.println("DELs: "+totalOfMutations[InputConvertorConstants.DEL]);
 	}
@@ -123,18 +132,28 @@ public class VEPLoader {
 			positionalMap.put(chr, map);
 		}
 		
-		ArrayList<Mutation> mutations = map.get(mutation.pos);
-		if(mutations == null) {
-			mutations = new ArrayList<Mutation>();
-			map.put(mutation.pos, mutations);
+		int startPos = mutation.pos;
+		int endPos = mutation.pos + mutation.refSeq.length() - 1;
+		
+		if(mutation.type == InputConvertorConstants.INS) {
+			endPos = startPos;
 		}
 		
-		mutations.add(mutation);
+		for(int pos = startPos; pos <= endPos; pos++) {
+			ArrayList<Mutation> mutations = map.get(pos);
+			if(mutations == null) {
+				mutations = new ArrayList<Mutation>();
+				map.put(pos, mutations);
+			}
+			mutations.add(mutation);
+		}
 	}
 	
 	
 	private ArrayList<Mutation> getMutationByCondition (String chr, int start, int end, byte typeFlag) {
 		ArrayList<Mutation> mutations = new ArrayList<Mutation>();
+		Hashtable<String, Boolean> isDup = new Hashtable<String, Boolean>();
+		
 		if(positionalMap.get(chr) != null) {
 			SortedMap<Integer, ArrayList<Mutation>> sortedMap = positionalMap.get(chr).subMap(start, end);
 			if(sortedMap != null) {
@@ -145,7 +164,10 @@ public class VEPLoader {
 					} else {
 						for(Mutation mutation :m) {
 							if(mutation.type == flag) {
-								mutations.add(mutation);
+								if(isDup.get(mutation.key) == null) {
+									mutations.add(mutation);
+									isDup.put(mutation.key, true);
+								}
 							}
 						}
 					}
@@ -171,6 +193,9 @@ public class VEPLoader {
 	}
 	public ArrayList<Mutation> getSNPByRange (String chr, int start, int end) {
 		return getMutationByCondition(chr, start, end, InputConvertorConstants.SNP);
+	}
+	public ArrayList<Mutation> getMNPByRange (String chr, int start, int end) {
+		return getMutationByCondition(chr, start, end, InputConvertorConstants.MNP);
 	}
 	public ArrayList<Mutation> getINSByRange (String chr, int start, int end) {
 		return getMutationByCondition(chr, start, end, InputConvertorConstants.INS);
