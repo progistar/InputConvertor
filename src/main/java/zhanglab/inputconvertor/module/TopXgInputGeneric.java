@@ -14,7 +14,6 @@ public abstract class TopXgInputGeneric implements TopXgInput {
 	public String inputFilePath = null;
 	public String outputFilePath = null;
 	public String spectrumFilePath = null;
-	public boolean isAppend = false;
 	
 
 	public void parseOptions (String[] args) {
@@ -43,17 +42,9 @@ public abstract class TopXgInputGeneric implements TopXgInput {
 				.desc("output file path")
 				.build();
 		
-		Option optionAppend = Option.builder("a")
-				.longOpt("append")
-				.required(false)
-				.desc("append to exist file")
-				.build();
-		
-		
 		options.addOption(optionInput)
 		.addOption(optionSpectrumFile)
-		.addOption(optionOutput)
-		.addOption(optionAppend);
+		.addOption(optionOutput);
 		
 		CommandLineParser parser = new DefaultParser();
 	    HelpFormatter helper = new HelpFormatter();
@@ -65,8 +56,6 @@ public abstract class TopXgInputGeneric implements TopXgInput {
 			args[i].equalsIgnoreCase("-s") || args[i].equalsIgnoreCase("--spectrum") ||
 			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output")) {
 	    		tmpArgs.add(args[i++]);
-	    		tmpArgs.add(args[i]);
-	    	} else if (args[i].equalsIgnoreCase("-a") || args[i].equalsIgnoreCase("--append")) {
 	    		tmpArgs.add(args[i]);
 	    	}
 	    }
@@ -90,9 +79,6 @@ public abstract class TopXgInputGeneric implements TopXgInput {
 		    
 		    if(cmd.hasOption("s")) {
 		    	spectrumFilePath = cmd.getOptionValue("s");
-		    }
-		    if(cmd.hasOption("a")) {
-		    	isAppend = true;
 		    }
 		    
 		} catch (ParseException e) {

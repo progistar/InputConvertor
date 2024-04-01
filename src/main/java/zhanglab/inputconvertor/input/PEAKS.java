@@ -34,13 +34,8 @@ public class PEAKS extends TopXgInputGeneric {
         File oFile = new File(outputFilePath);
         
         boolean isExsited = oFile.exists();
-        
-        if(!isAppend && isExsited) {
-        	System.out.println(oFile.getName()+" is already existed. Remove and create new file...");
-        	System.exit(1);
-        }
 		
-        BufferedWriter BW = new BufferedWriter(new FileWriter(oFile, isAppend));
+        BufferedWriter BW = new BufferedWriter(new FileWriter(oFile, isExsited));
         
         String batchHeader = null;
         
@@ -52,7 +47,7 @@ public class PEAKS extends TopXgInputGeneric {
 		line = replaceCSVtoTSV(line);
 		batchHeader = line;
 		// building header ///////////////////////////////////////////
-		if(!isExsited || !isAppend) {
+		if(!isExsited) {
         	BW
 			.append(InputConvertorConstants.IC_TITLE_FIELD_NAME).append("\t")
 			.append(InputConvertorConstants.IC_SCAN_NUM_FIELD_NAME).append("\t")

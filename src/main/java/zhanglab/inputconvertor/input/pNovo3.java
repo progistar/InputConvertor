@@ -70,16 +70,11 @@ public class pNovo3 extends TopXgInputGeneric {
         File oFile = new File(outputFilePath);
         
         boolean isExsited = oFile.exists();
-        
-        if(!isAppend && isExsited) {
-        	System.out.println(oFile.getName()+" is already existed. Remove and create new file...");
-        	System.exit(1);
-        }
-		
-        BufferedWriter BW = new BufferedWriter(new FileWriter(oFile, isAppend));
+
+        BufferedWriter BW = new BufferedWriter(new FileWriter(oFile, isExsited));
         
         // building header ///////////////////////////////////////////
-        if(!isExsited || !isAppend) {
+        if(!isExsited) {
 	        String batchHeader = "";
 	        
 	        batchHeader = batchHeader
