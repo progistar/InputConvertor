@@ -16,7 +16,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import zhanglab.inputconvertor.data.SimpleMGFSelector;
+import zhanglab.inputconvertor.data.SimpleSpectraSelector;
 import zhanglab.inputconvertor.data.Peptide;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.module.TopXgInput;
@@ -96,7 +96,7 @@ public class pNovo3 extends TopXgInputGeneric {
         
         System.out.println("read: "+iFile.getName());
 		BufferedReader BR = new BufferedReader(new FileReader(iFile));
-		SimpleMGFSelector mgf = new SimpleMGFSelector(sFile);
+		SimpleSpectraSelector mgf = new SimpleSpectraSelector(sFile);
 		String line = null;
 		
 		while((line = BR.readLine()) != null) {

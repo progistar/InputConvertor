@@ -61,6 +61,14 @@ public class InputConvertorConstants {
 	public static final int	   AUTORT_Y_IDX		=	1;
 	public static final int	   AUTORT_PRED_Y_IDX	=	2;
 	
+	// ## DeepLC header
+	public static final String DEEPLC_HEADER_PEPTIDE=	"peptide";
+	public static final int	   DEEPLC_PEPTIDE_IDX	=	0;
+	public static final int	   DEEPLC_RT_IDX		=	1;
+	public static final int	   DEEPLC_PRED_IDX	=	3;
+
+	
+	
 	// ## MS2PIP header
 	public static final String MS2PIP_HEADER_SPECID	=	"spec_id";
 	public static final String MS2PIP_HEADER_MODIFICATIONS	=	"modifications";

@@ -1,6 +1,6 @@
 package zhanglab.inputconvertor.data;
 
-public class AutoRTRecord implements Comparable<AutoRTRecord>{
+public class DeepLCRecord implements Comparable<DeepLCRecord>{
 
 	public double score;
 	public String modifiedPeptide;
@@ -10,7 +10,7 @@ public class AutoRTRecord implements Comparable<AutoRTRecord>{
 	public String fullRecord;
 	
 	@Override
-	public int compareTo(AutoRTRecord o) {
+	public int compareTo(DeepLCRecord o) {
 		if(this.idx < o.idx) {
 			return -1;
 		}else if(this.idx > o.idx) {

@@ -10,7 +10,7 @@ import java.io.IOException;
 import org.apache.commons.cli.ParseException;
 
 import zhanglab.inputconvertor.data.Peptide;
-import zhanglab.inputconvertor.data.SimpleMGFSelector;
+import zhanglab.inputconvertor.data.SimpleSpectraSelector;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.module.TopXgInputGeneric;
 
@@ -45,7 +45,7 @@ public class Casanovo extends TopXgInputGeneric {
         String batchHeader = null;
         
         System.out.println("read: "+iFile.getName());
-		SimpleMGFSelector mgf = new SimpleMGFSelector(sFile);
+		SimpleSpectraSelector mgf = new SimpleSpectraSelector(sFile);
 		BufferedReader BR = new BufferedReader(new FileReader(iFile));
 		String line = null;
 		boolean startToRead = false;

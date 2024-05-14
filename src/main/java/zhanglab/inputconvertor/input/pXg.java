@@ -13,7 +13,7 @@ import java.util.Hashtable;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 
-import zhanglab.inputconvertor.data.AutoRTRecord;
+import zhanglab.inputconvertor.data.DeepLCRecord;
 import zhanglab.inputconvertor.data.MS2PIPRecord;
 import zhanglab.inputconvertor.data.NetMHCpanResult;
 import zhanglab.inputconvertor.data.Peptide;

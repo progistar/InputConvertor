@@ -18,7 +18,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import zhanglab.inputconvertor.data.AutoRTRecord;
+import zhanglab.inputconvertor.data.DeepLCRecord;
 import zhanglab.inputconvertor.data.MS2PIPRecord;
 import zhanglab.inputconvertor.data.Peptide;
 import zhanglab.inputconvertor.data.Spectra;
@@ -50,13 +50,13 @@ public class ToFeaturesComet {
 		// read AutoRT output file  //////////////////////////////////////////////////
         BufferedReader BRautoRT = new BufferedReader(new FileReader(autoRTFilePath));
         System.out.println("Read autoRT...: "+autoRTFilePath);
-        ArrayList<AutoRTRecord> autoRTRecords = new ArrayList<AutoRTRecord>();
+        ArrayList<DeepLCRecord> autoRTRecords = new ArrayList<DeepLCRecord>();
         Hashtable<String, Double> icPeptideToDeltaRT = new Hashtable<String, Double>();
         BRautoRT.readLine(); // skip header
         String line = null;
         
         while((line = BRautoRT.readLine()) != null) {
-        	AutoRTRecord autoRTRecord = new AutoRTRecord();
+        	DeepLCRecord autoRTRecord = new DeepLCRecord();
         	autoRTRecords.add(autoRTRecord);
         	
         	String[] fields = line.split("\t");

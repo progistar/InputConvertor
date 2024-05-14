@@ -10,7 +10,7 @@ import java.io.IOException;
 import org.apache.commons.cli.ParseException;
 
 import zhanglab.inputconvertor.data.Peptide;
-import zhanglab.inputconvertor.data.SimpleMGFSelector;
+import zhanglab.inputconvertor.data.SimpleSpectraSelector;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.module.TopXgInputGeneric;
 
@@ -66,7 +66,7 @@ public class PEAKS extends TopXgInputGeneric {
 		CHARGE_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_CHARGE_FIELD_NAME);
 		SCORE_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_SCORE_FIELD_NAME);
         ////////////////////////////////// End of building header ////////////////
-		SimpleMGFSelector mgf = new SimpleMGFSelector(sFile);
+		SimpleSpectraSelector mgf = new SimpleSpectraSelector(sFile);
 		String mgfFileName = sFile.getName().substring(0, sFile.getName().lastIndexOf("."));
 		
 		while((line = BR.readLine()) != null) {

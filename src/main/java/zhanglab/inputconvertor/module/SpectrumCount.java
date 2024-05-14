@@ -7,7 +7,7 @@ import java.util.Hashtable;
 
 import org.apache.commons.cli.CommandLine;
 
-import zhanglab.inputconvertor.data.SimpleMGFSelector;
+import zhanglab.inputconvertor.data.SimpleSpectraSelector;
 
 public class SpectrumCount {
 
@@ -16,7 +16,7 @@ public class SpectrumCount {
         
         File[] files = new File(mgfFileBase).listFiles();
         
-        Hashtable<String, ArrayList<SimpleMGFSelector>> batch = new Hashtable<String, ArrayList<SimpleMGFSelector>>();
+        Hashtable<String, ArrayList<SimpleSpectraSelector>> batch = new Hashtable<String, ArrayList<SimpleSpectraSelector>>();
         for(File file : files) {
         	if(file.getName().startsWith(".")) continue;
         	if(file.getName().endsWith(".mgf")) {
@@ -24,11 +24,11 @@ public class SpectrumCount {
         		String[] fields = file.getName().split("\\_");
         		String key = fields[2]+"_"+fields[3];
         		
-        		SimpleMGFSelector mgf = new SimpleMGFSelector(file);
+        		SimpleSpectraSelector mgf = new SimpleSpectraSelector(file);
         		
-        		ArrayList<SimpleMGFSelector> single = batch.get(key);
+        		ArrayList<SimpleSpectraSelector> single = batch.get(key);
         		if(single == null) {
-        			single = new ArrayList<SimpleMGFSelector>();
+        			single = new ArrayList<SimpleSpectraSelector>();
         			batch.put(key, single);
         		}
         		single.add(mgf);
@@ -38,7 +38,7 @@ public class SpectrumCount {
         System.out.println("ic_identifier\tNo. files\tNo. spectra");
         batch.forEach((b, mgfList)->{
         	int cnt = 0;
-        	for(SimpleMGFSelector mgf : mgfList) {
+        	for(SimpleSpectraSelector mgf : mgfList) {
         		cnt += mgf.titles.size();
         	}
         	

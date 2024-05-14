@@ -18,7 +18,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import zhanglab.inputconvertor.data.AutoRTRecord;
+import zhanglab.inputconvertor.data.DeepLCRecord;
 import zhanglab.inputconvertor.data.Peptide;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
@@ -68,7 +68,7 @@ public class ToAutoRTInput {
 		/////////////////////////////////////////////////////////////////////////
 		
 		
-		ArrayList<AutoRTRecord> records = new ArrayList<AutoRTRecord>();
+		ArrayList<DeepLCRecord> records = new ArrayList<DeepLCRecord>();
 		int discardedPRSMs = 0;
 		while((line = BR.readLine()) != null) {
 			String[] fields = line.split("\t");
@@ -78,7 +78,7 @@ public class ToAutoRTInput {
 			Peptide icPeptide	=	new Peptide(fields[icPeptideIdx], InputConvertorConstants.IC_CONVERTOR);
 			String infPeptide	=	fields[infPeptideIdx];
 			
-			AutoRTRecord record = new AutoRTRecord();
+			DeepLCRecord record = new DeepLCRecord();
 			
 			record.score = score;
 			// sec to min
@@ -117,10 +117,10 @@ public class ToAutoRTInput {
 		}
 		
 		// remove duplicated peptides and remain top-scored RT per peptide.
-		Hashtable<String, AutoRTRecord> hasPeptide = new Hashtable<String, AutoRTRecord>();
+		Hashtable<String, DeepLCRecord> hasPeptide = new Hashtable<String, DeepLCRecord>();
 		for(int i=0; i<records.size(); i++) {
-			AutoRTRecord record = records.get(i);
-			AutoRTRecord hasRecord = hasPeptide.get(record.modifiedPeptide);
+			DeepLCRecord record = records.get(i);
+			DeepLCRecord hasRecord = hasPeptide.get(record.modifiedPeptide);
 			
 			if(hasRecord == null) {
 				hasPeptide.put(record.modifiedPeptide, record);
@@ -141,7 +141,7 @@ public class ToAutoRTInput {
 		System.out.println("A total of peptides to be considered in AutoRT: "+records.size());
 		
 		for(int i=0; i<records.size(); i++) {
-			AutoRTRecord record = records.get(i);
+			DeepLCRecord record = records.get(i);
 			BW.append(record.modifiedPeptide+"\t"+record.rt);
 			BW.newLine();
 		}

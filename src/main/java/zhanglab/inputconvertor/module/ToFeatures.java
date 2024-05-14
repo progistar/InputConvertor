@@ -18,7 +18,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import zhanglab.inputconvertor.data.AutoRTRecord;
+import zhanglab.inputconvertor.data.DeepLCRecord;
 import zhanglab.inputconvertor.data.MS2PIPRecord;
 import zhanglab.inputconvertor.data.Peptide;
 import zhanglab.inputconvertor.data.Spectra;
@@ -51,7 +51,7 @@ public class ToFeatures {
 	public static String outputFilePath = null;
 	public static String spectrumFilePath = null;
 	public static double tol = .0;
-	public static String autoRTFilePath = null;
+	public static String deepLCFilePath = null;
 	public static String predictedFilePath = null;
 	
 	
@@ -68,37 +68,37 @@ public class ToFeatures {
         int specIdIdx		= -1;
         int labelIdx		= -1;
 		
-		// read AutoRT output file  //////////////////////////////////////////////////
-        BufferedReader BRautoRT = new BufferedReader(new FileReader(autoRTFilePath));
-        System.out.println("Read autoRT...: "+autoRTFilePath);
-        ArrayList<AutoRTRecord> autoRTRecords = new ArrayList<AutoRTRecord>();
+		// read deepLC output file  //////////////////////////////////////////////////
+        BufferedReader BRdeepLC = new BufferedReader(new FileReader(deepLCFilePath));
+        System.out.println("Read deepLC...: "+deepLCFilePath);
+        ArrayList<DeepLCRecord> deepLCRecords = new ArrayList<DeepLCRecord>();
         Hashtable<String, Double> icPeptideToDeltaRT = new Hashtable<String, Double>();
-        BRautoRT.readLine(); // skip header
+        BRdeepLC.readLine(); // skip header
         String line = null;
         
-        while((line = BRautoRT.readLine()) != null) {
-        	AutoRTRecord autoRTRecord = new AutoRTRecord();
-        	autoRTRecords.add(autoRTRecord);
+        while((line = BRdeepLC.readLine()) != null) {
+        	DeepLCRecord deepLCRecord = new DeepLCRecord();
+        	deepLCRecords.add(deepLCRecord);
         	
         	String[] fields = line.split("\t");
         	
-        	autoRTRecord.idx = autoRTRecords.size();
-        	autoRTRecord.fullRecord = line;
-        	autoRTRecord.modifiedPeptide = fields[InputConvertorConstants.AUTORT_X_IDX];
-        	autoRTRecord.rt = fields[InputConvertorConstants.AUTORT_Y_IDX];
-        	autoRTRecord.predRT = fields[InputConvertorConstants.AUTORT_PRED_Y_IDX];
+        	deepLCRecord.idx = deepLCRecords.size();
+        	deepLCRecord.fullRecord = line;
+        	deepLCRecord.modifiedPeptide = fields[InputConvertorConstants.DEEPLC_PEPTIDE_IDX];
+        	deepLCRecord.rt = fields[InputConvertorConstants.DEEPLC_RT_IDX];
+        	deepLCRecord.predRT = fields[InputConvertorConstants.DEEPLC_PRED_IDX];
         	
-        	Peptide peptide = new Peptide(autoRTRecord.modifiedPeptide, InputConvertorConstants.AUTORT);
+        	Peptide peptide = new Peptide(deepLCRecord.modifiedPeptide, InputConvertorConstants.PROSIT);
         	
         	// calculate |delta RT|
-        	double deltaRT = Double.parseDouble(autoRTRecord.predRT) - Double.parseDouble(autoRTRecord.rt);
+        	double deltaRT = Double.parseDouble(deepLCRecord.predRT) - Double.parseDouble(deepLCRecord.rt);
         	// deltaRT = Math.abs(deltaRT);
         	icPeptideToDeltaRT.put(peptide.modPeptide, deltaRT);
         }
-        System.out.println("The number of AutoRT peptides: "+autoRTRecords.size());
+        System.out.println("The number of deepLC peptides: "+deepLCRecords.size());
         System.out.println("The number of hashed peptides: "+icPeptideToDeltaRT.size());
-        BRautoRT.close();
-        ///////////////////// ///////////////// End of reading AutoRT output file ////
+        BRdeepLC.close();
+        ///////////////////// ///////////////// End of reading deepLC output file ////
 
 		File inputFile = new File(inputFilePath);
         
@@ -167,6 +167,7 @@ public class ToFeatures {
 			
 			String modifications = MS2PIPRecord.getModifications(peptide);
 			String predictKey = MS2PIPRecord.getMS2PIPKey(peptide.stripPeptide, modifications, charge);
+			
 			
 			Spectrum expSpectrum = spectra.scanIndexer.get(title);
 			Spectrum predictedSpectrum = predictedSpectra.scanIndexer.get(predictKey);
@@ -346,11 +347,11 @@ public class ToFeatures {
 				.desc("spectrum file")
 				.build();
 		
-		Option optionAutoRTFile = Option.builder("a")
-				.longOpt("autort").argName("tsv")
+		Option optionDeepLCFile = Option.builder("d")
+				.longOpt("deeplc").argName("tsv")
 				.hasArg()
 				.required(true)
-				.desc("autoRT output file")
+				.desc("deepLC output file")
 				.build();
 		
 		Option optionPredictedFileP = Option.builder("p")
@@ -369,7 +370,7 @@ public class ToFeatures {
 		
 		options.addOption(optionInput)
 		.addOption(optionSpectrumFile)
-		.addOption(optionAutoRTFile)
+		.addOption(optionDeepLCFile)
 		.addOption(optionPredictedFileP)
 		.addOption(optionTolerance)
 		.addOption(optionOutput);
@@ -382,7 +383,7 @@ public class ToFeatures {
 	    for(int i=0; i<args.length; i++) {
 	    	if(args[i].equalsIgnoreCase("-i") || args[i].equalsIgnoreCase("--input") ||
 			args[i].equalsIgnoreCase("-s") || args[i].equalsIgnoreCase("--spectrum") ||
-			args[i].equalsIgnoreCase("-a") || args[i].equalsIgnoreCase("--autort") ||
+			args[i].equalsIgnoreCase("-d") || args[i].equalsIgnoreCase("--deeplc") ||
 			args[i].equalsIgnoreCase("-p") || args[i].equalsIgnoreCase("--pspectrum") ||
 			args[i].equalsIgnoreCase("-t") || args[i].equalsIgnoreCase("--tolerance") ||
 			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output")) {
@@ -412,8 +413,8 @@ public class ToFeatures {
 		    	spectrumFilePath = cmd.getOptionValue("s");
 		    }
 		    
-		    if(cmd.hasOption("a")) {
-		    	autoRTFilePath = cmd.getOptionValue("a");
+		    if(cmd.hasOption("d")) {
+		    	deepLCFilePath = cmd.getOptionValue("d");
 		    }
 		    
 		    if(cmd.hasOption("p")) {

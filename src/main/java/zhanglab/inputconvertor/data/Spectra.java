@@ -1,12 +1,16 @@
 package zhanglab.inputconvertor.data;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.systemsbiology.jrap.stax.MSXMLParser;
+import org.systemsbiology.jrap.stax.Scan;
 
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
@@ -29,6 +33,18 @@ public class Spectra {
 	 */
 	public Spectra (String fileName, String predictType) {
 		this.predictType = predictType;
+		
+		
+		if(fileName.toLowerCase().endsWith(".mgf")) {
+			MGF(fileName);
+		} else if(
+				fileName.toLowerCase().endsWith(".mzml") || 
+				fileName.toLowerCase().endsWith(".mzxml")) {
+			MzML(fileName);
+		}
+	}
+	
+	private void MGF (String fileName) {
 		try {
 			BufferedReader BR = new BufferedReader(new FileReader(fileName));
 			String line = null;
@@ -104,6 +120,51 @@ public class Spectra {
 			BR.close();
 			isComplete = true;
 		}catch(IOException ioe) {
+			
+		}
+	}
+	
+	private void MzML (String fileName) {
+		try {
+			MSXMLParser parser = new MSXMLParser(fileName);
+			File file = new File(fileName);
+			String titlePrefix = file.getName();
+			titlePrefix = titlePrefix.substring(0, titlePrefix.lastIndexOf("."));
+			int maxScanNum = parser.getMaxScanNumber();
+			
+			for (int i =1; i<=maxScanNum; i++) {
+				Scan scan = parser.rap(i);
+				if( scan == null) continue;
+				double[][] peaks = scan.getMassIntensityList();
+				int scanNum = scan.getHeader().getNum();
+				int msLevel = scan.getHeader().getMsLevel();
+				double retentionTime = scan.getHeader().getDoubleRetentionTime();
+				
+				if(msLevel == 1) {
+					
+				} 
+				// MS/MS
+				else if(msLevel == 2) {
+					int precursorCharge = scan.getHeader().getPrecursorCharge();
+					double precursorMz = scan.getHeader().getPrecursorMz();
+					double precursorInt = scan.getHeader().getPrecursorIntensity();
+					
+					Spectrum spectrum = new Spectrum(scanNum, precursorCharge, msLevel, precursorMz, peaks, retentionTime, i);
+					spectrum.title = titlePrefix+"."+scanNum+"."+scanNum+"."+precursorCharge;
+					spectrum.precursorMz = precursorMz;
+					spectrum.precursorInt = precursorInt;
+					spectra.add(spectrum);
+					
+					// if scanNum is -1, then it is missing value.
+					if(spectrum.title != null) {
+						scanIndexer.put(spectrum.title, spectrum);
+					}
+				}
+			}
+			
+			isComplete = true;
+			
+		} catch (Exception e) {
 			
 		}
 	}
