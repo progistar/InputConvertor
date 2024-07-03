@@ -187,6 +187,8 @@ public class IRFinder {
     				ArrayList<FastaEntry> entries = this.getTranslation(t, nExons, tStart, tEnd);
     				// put gene ID
     				for(FastaEntry entry : entries) {
+    					String geneName = this.refGTF.geneToGeneName.get(g);
+    					entry.geneName = geneName == null ? g : geneName;
     					entry.geneId = g;
     					entry.transcriptIds.add(entry.transcript.tID);
     					entry.tool = InputConvertorConstants.IRFINDER_HEADER_ID;

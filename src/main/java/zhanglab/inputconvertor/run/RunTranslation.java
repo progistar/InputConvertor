@@ -18,7 +18,7 @@ import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.FastaLoader;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
-import zhanglab.inputconvertor.data.VEPLoader;
+import zhanglab.inputconvertor.data.VARLoader;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.input.Arriba;
 import zhanglab.inputconvertor.input.CIRIquant;
@@ -35,7 +35,6 @@ public class RunTranslation {
 	public static File refGTFFile = null; 
 	public static File refProteinFile = null; 
 	public static File outputFile = null;
-	public static File tableFile = null;
 	public static File refGenomeFile = null; 
 	public static File varFile = null; 
 	public static String uniqueId = null;
@@ -82,8 +81,8 @@ public class RunTranslation {
         GenomeLoader gmL = new GenomeLoader(refGenomeFile);
         GTFLoader refGTF = new GTFLoader(refGTFFile);
         if(varFile != null) {
-        	VEPLoader vep = new VEPLoader(varFile);
-        	gmL.enrollVEPLaoder(vep);
+        	VARLoader var = new VARLoader(varFile);
+        	gmL.enrollVEPLaoder(var);
         }
         
         // Do StringTie
@@ -132,22 +131,16 @@ public class RunTranslation {
         System.out.println("A total of entries: "+entries.size());
         
         BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile));
-        BufferedWriter table = new BufferedWriter(new FileWriter(tableFile));
         
-        table.append("EntryId\tGeneId\tTranscriptId\tFrame\tStrand\tExons");
-        table.newLine();
+        // EntryId|GeneId|TranscriptId|GeneName|Frame|Strand|Exons
         for(FastaEntry entry : entries) {
-        	BW.append(">"+entry.toHeader(uniqueId));
+        	BW.append(">"+entry.toMeta(uniqueId));
         	BW.newLine();
         	BW.append(entry.sequence);
         	BW.newLine();
-        	
-        	table.append(entry.toMeta(uniqueId));
-        	table.newLine();
         }
         
         BW.close();
-        table.close();
         
         long endTime = System.currentTimeMillis();
         
@@ -181,25 +174,11 @@ public class RunTranslation {
 				.desc("reference gtf file")
 				.build();
 		
-		Option optionOutput = Option.builder("o")
-				.longOpt("output").argName("fasta")
+		Option optionOutput= Option.builder("o")
+				.longOpt("output").argName("string")
 				.hasArg()
 				.required(true)
-				.desc("output file")
-				.build();
-		
-		Option optionTable = Option.builder("t")
-				.longOpt("table").argName("tsv")
-				.hasArg()
-				.required(true)
-				.desc("output table file")
-				.build();
-		
-		Option optionUniqueId = Option.builder("u")
-				.longOpt("uid").argName("string")
-				.hasArg()
-				.required(true)
-				.desc("unique id for the file")
+				.desc("prefix of output file")
 				.build();
 		
 		Option optionStringTie = Option.builder("s")
@@ -238,10 +217,10 @@ public class RunTranslation {
 				.build();
 		
 		Option optionVEP = Option.builder("v")
-				.longOpt("var").argName("tsv")
+				.longOpt("var").argName("tsv|vcf")
 				.hasArg()
 				.required(false)
-				.desc("VEP TSV file")
+				.desc("VEP or VCF file")
 				.build();
 		
 		
@@ -254,9 +233,7 @@ public class RunTranslation {
 		.addOption(optionCIRIquant)
 		.addOption(optionIRFinder)
 		.addOption(optionVEP)
-		.addOption(optionOutput)
-		.addOption(optionTable)
-		.addOption(optionUniqueId);
+		.addOption(optionOutput);
 		
 		CommandLineParser parser = new DefaultParser();
 	    HelpFormatter helper = new HelpFormatter();
@@ -273,9 +250,7 @@ public class RunTranslation {
 			args[i].equalsIgnoreCase("-c") || args[i].equalsIgnoreCase("--ciriquant") ||
 			args[i].equalsIgnoreCase("-i") || args[i].equalsIgnoreCase("--irfinder") ||
 			args[i].equalsIgnoreCase("-v") || args[i].equalsIgnoreCase("--var") ||
-			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output") ||
-			args[i].equalsIgnoreCase("-t") || args[i].equalsIgnoreCase("--table") ||
-			args[i].equalsIgnoreCase("-u") || args[i].equalsIgnoreCase("--uid")) {
+			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output")) {
 	    		tmpArgs.add(args[i++]);
 	    		tmpArgs.add(args[i]);
 	    	}
@@ -327,16 +302,11 @@ public class RunTranslation {
 		    }
 		    
 		    if(cmd.hasOption("o")) {
+		    	
 		    	outputFile = new File(cmd.getOptionValue("o"));
+		    	uniqueId = outputFile.getName();
 		    }
 		    
-		    if(cmd.hasOption("t")) {
-		    	tableFile = new File(cmd.getOptionValue("t"));
-		    }
-		    
-		    if(cmd.hasOption("u")) {
-		    	uniqueId = cmd.getOptionValue("u");
-		    }
 		    
 		} catch (ParseException e) {
 			System.out.println(e.getMessage());

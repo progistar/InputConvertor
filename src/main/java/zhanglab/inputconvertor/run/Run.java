@@ -15,6 +15,7 @@ import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.input.Casanovo;
 import zhanglab.inputconvertor.input.PEAKS;
 import zhanglab.inputconvertor.input.pNovo3;
+import zhanglab.inputconvertor.module.AnnotatePeptide;
 import zhanglab.inputconvertor.module.CompactDatabase;
 import zhanglab.inputconvertor.module.ConvertCometTopXg;
 import zhanglab.inputconvertor.module.MergeNetMHCpan;
@@ -77,6 +78,9 @@ public class Run {
         }
         else if(module.equalsIgnoreCase("compact_database")) {
         	CompactDatabase.merge(args);
+        }
+        else if(module.equalsIgnoreCase("annotate")) {
+        	AnnotatePeptide.merge(args);
         }
         /*
         else if(mode.equalsIgnoreCase("ms2pip_input")) {

@@ -137,6 +137,8 @@ public class CIRIquant {
     				ArrayList<FastaEntry> entries = this.getTranslation(matchedTranscript, nExons, tStart, tEnd);
     				// put gene ID
     				for(FastaEntry entry : entries) {
+    					String geneName = this.refGTF.geneToGeneName.get(g);
+    					entry.geneName = geneName == null ? g : geneName;
     					entry.geneId = g;
     					entry.transcriptIds.add(entry.transcript.tID);
     					entry.tool = InputConvertorConstants.CIRIQUANT_HEADER_ID;

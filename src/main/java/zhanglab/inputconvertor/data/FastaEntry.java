@@ -16,6 +16,7 @@ public class FastaEntry {
 	public String sequence;
 	public Transcript transcript;
 	public String geneId;
+	public String geneName;
 	public ArrayList<String> transcriptIds = new ArrayList<String>();
 	public int frame = -1;
 	public String description = null;
@@ -32,7 +33,7 @@ public class FastaEntry {
 	
 	public String toMeta (String uniqueId) {
 		if(originHeader != null) {
-			return toHeader(uniqueId)+"\t"+originHeader.replace("|", "\t");
+			return toHeader(uniqueId)+"|"+originHeader;
 		}
 		
 		String transcriptId = "";
@@ -42,7 +43,10 @@ public class FastaEntry {
 			}
 			transcriptId += id;
 		}
-		return toHeader(uniqueId) +"\t" + this.geneId+"\t"+transcriptId+"\t"+this.frame+"\t"+transcript.strand+"\t"+this.description;
+		while(this.description.startsWith("@")) {
+			this.description = this.description.substring(1);
+		}
+		return toHeader(uniqueId) +"|" + this.geneId+"|"+transcriptId+"|"+this.geneName+"|"+this.frame+"|"+transcript.strand+"|"+this.description;
 	}
 	
 	public String getKey () {

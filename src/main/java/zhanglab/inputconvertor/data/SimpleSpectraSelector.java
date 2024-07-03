@@ -19,6 +19,8 @@ public class SimpleSpectraSelector {
 	public ArrayList<String> titles = new ArrayList<String>();
 	// (scanNum, title) pair
 	public Hashtable<Integer, String> scanToTitle = new Hashtable<Integer, String>();
+	// (index, scanNum) pair
+	public Hashtable<Integer, Integer> indexToScan = new Hashtable<Integer, Integer>();
 	
 	public SimpleSpectraSelector (File file) throws IOException {
 		this.fileName = file.getName();
@@ -40,6 +42,7 @@ public class SimpleSpectraSelector {
 		String line = null;
 		
 		String title = null;
+		int idx = 0;
 		while((line = BR.readLine()) != null) {
 			if(line.startsWith("TITLE=")) {
 				title = line.split("\\=")[1].split("\\s")[0];
@@ -52,7 +55,9 @@ public class SimpleSpectraSelector {
 				titles.add(title);
 				
 				int len = title.split("\\.").length;
-				scanToTitle.put(Integer.parseInt(title.split("\\.")[len-2]), title);
+				int scanNum = Integer.parseInt(title.split("\\.")[len-2]);
+				scanToTitle.put(scanNum, title);
+				indexToScan.put(idx++, scanNum);
 			}
 		}
 		

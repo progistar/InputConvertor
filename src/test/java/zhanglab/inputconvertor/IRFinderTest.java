@@ -12,7 +12,7 @@ import junit.framework.Assert;
 import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
-import zhanglab.inputconvertor.data.VEPLoader;
+import zhanglab.inputconvertor.data.VARLoader;
 import zhanglab.inputconvertor.input.IRFinder;
 
 public class IRFinderTest {
@@ -35,9 +35,9 @@ public class IRFinderTest {
 		IRFinder irfinder = new IRFinder(test.irfinderFile);
 		GTFLoader reference = new GTFLoader(test.referenceFile);
 		GenomeLoader gLoader = new GenomeLoader(test.genomeFile);
-		VEPLoader vepLoader = null;
+		VARLoader vepLoader = null;
 		if(test.vepFile != null) {
-			vepLoader = new VEPLoader(test.vepFile);
+			vepLoader = new VARLoader(test.vepFile);
 			//gLoader.enrollVEPLaoder(vepLoader);
 		}
 		

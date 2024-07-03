@@ -12,7 +12,7 @@ import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.Transcript;
-import zhanglab.inputconvertor.data.VEPLoader;
+import zhanglab.inputconvertor.data.VARLoader;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
 public class StringTie {
@@ -20,7 +20,6 @@ public class StringTie {
 	public static final int MAX_FLANK_SIZE = 14;
 	
 	public GTFLoader gtf = null;
-	public GTFLoader refGTF = null;
 	public GenomeLoader refGenome = null;
 	public String logFileName = null;
 	
@@ -129,6 +128,8 @@ public class StringTie {
     			ArrayList<FastaEntry> entries = this.getTranslation(t);
 				// put gene ID
 				for(FastaEntry entry : entries) {
+					String geneName = this.gtf.geneToGeneName.get(g);
+					entry.geneName = geneName == null ? g : geneName;
 					entry.geneId = g;
 					entry.transcriptIds.add(entry.transcript.tID);
 					entry.tool = InputConvertorConstants.STRINGTIE_HEADER_ID;

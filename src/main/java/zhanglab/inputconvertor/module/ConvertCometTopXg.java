@@ -76,6 +76,7 @@ public class ConvertCometTopXg {
 	public static String fastaFilePath;
 	public static Hashtable<String, String> targetClassHash = new Hashtable<String, String>();
 	public static Hashtable<String, String> decoyClassHash = new Hashtable<String, String>();
+	public static String decoyPrefix = "XXX";
 	
 	public static void convertTopXgOutput (String[] args) throws IOException {
 		parseOptions(args);
@@ -193,12 +194,12 @@ public class ConvertCometTopXg {
 			cometTXT.inferredPeptide = peptide.stripPeptide;
 			
 			// label setting
-			if(cometTXT.proteinId.startsWith("XXX")) {
+			if(cometTXT.proteinId.startsWith(decoyPrefix)) {
 				cometTXT.label = "-1";
-				cometTXT.isCanonical = decoyClassHash.get(cometXML.peptide);
+				cometTXT.isCanonical = decoyClassHash.get(cometXML.peptide.replace("I", "L"));
 			} else {
 				cometTXT.label = "1";
-				cometTXT.isCanonical = targetClassHash.get(cometXML.peptide);
+				cometTXT.isCanonical = targetClassHash.get(cometXML.peptide.replace("I", "L"));
 			}
 			if(cometTXT.isCanonical == null) {
 				cometTXT.isCanonical = "true";
@@ -235,7 +236,7 @@ public class ConvertCometTopXg {
 			}
 			
 			if(cometTXT.label.equalsIgnoreCase("-1")) {
-				pinFields[pinProteinIdx] = "XXX_"+gIdx;
+				pinFields[pinProteinIdx] = decoyPrefix+"_"+gIdx;
 			} else{
 				pinFields[pinProteinIdx] = ""+gIdx;
 			}
@@ -278,11 +279,23 @@ public class ConvertCometTopXg {
 			line = line.trim();
 			String[] fields = null;
 			if(line.startsWith("<spectrum_query spectrum=")) {
-				fields = line.split("\\s");
-				for(int i=0; i<fields.length; i++) {
-					if(fields[i].startsWith("spectrumNativeID=")) {
-						title = fields[i].split("\\=")[1].trim().replace("\"", "");
+				// spectrumNatvieID is inconsistent between mzML and mgf.
+				// spectrum is consistent; however, its scan number is not zero padded.
+				fields = line.split("spectrum=");
+				String tmpTitle = fields[1].split("\\s")[0].replace("\"", "");
+				// correct scanNum
+				String[] tmpTitleArray = tmpTitle.split("\\.");
+				String scanNum = tmpTitleArray[tmpTitleArray.length-2];
+				int scanInt = Integer.parseInt(scanNum);
+				tmpTitleArray[tmpTitleArray.length-2] = scanInt+"";
+				tmpTitleArray[tmpTitleArray.length-3] = scanInt+"";
+				
+				title = "";
+				for(int i=0; i<tmpTitleArray.length; i++) {
+					if(i!=0) {
+						title += ".";
 					}
+					title += tmpTitleArray[i];
 				}
 			} else if(line.startsWith("<search_hit hit_rank=")) {
 				
@@ -295,6 +308,8 @@ public class ConvertCometTopXg {
 						xml.title = title;
 						xml.peptide = peptide;
 						
+						// I/L replace
+						peptide = peptide.replace("I", "L");
 						if(isIncluded.get(peptide) == null) {
 							isIncluded.put(peptide, true);
 							peptides.add(peptide);
@@ -313,9 +328,9 @@ public class ConvertCometTopXg {
 		
 		ArrayList<FastaEntry> entries = fastaLoader.entries;
 		for(FastaEntry entry : entries) {
-			StringBuilder proteinSequence = new StringBuilder(entry.sequence);
+			StringBuilder proteinSequence = new StringBuilder(entry.sequence.replace("I", "L"));
 			boolean isTarget = true;
-			if(entry.originHeader.startsWith("XXX")) {
+			if(entry.originHeader.startsWith(decoyPrefix)) {
 				isTarget = false;
 			}
 			
@@ -330,6 +345,7 @@ public class ConvertCometTopXg {
 			for(Emit emit : emits) {
 				String peptide = emit.getKeyword();
 				String thatClass = null;
+				String thisClass = "true";
 				if(isTarget) {
 					thatClass = targetClassHash.get(peptide);
 				} else {
@@ -341,15 +357,15 @@ public class ConvertCometTopXg {
 				}
 				
 				if(thatClass.equalsIgnoreCase("true") || class_.equalsIgnoreCase("true")) {
-					class_ = "true";
+					thisClass = "true";
 				} else {
-					class_ = "false";
+					thisClass = "false";
 				}
 				
 				if(isTarget) {
-					targetClassHash.put(peptide, class_);
+					targetClassHash.put(peptide, thisClass);
 				}else {
-					decoyClassHash.put(peptide, class_);
+					decoyClassHash.put(peptide, thisClass);
 				}
 			}
 		}
@@ -448,7 +464,6 @@ public class ConvertCometTopXg {
 		    if(cmd.hasOption("f")) {
 		    	fastaFilePath = cmd.getOptionValue("f");
 		    }
-		    
 		    
 		} catch (ParseException e) {
 			System.out.println(e.getMessage());

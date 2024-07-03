@@ -11,12 +11,20 @@ import java.util.TreeMap;
 
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
-public class VEPLoader {
+public class VARLoader {
 	
 	public Hashtable<String, TreeMap<Integer, ArrayList<Mutation>>> positionalMap = new Hashtable<String, TreeMap<Integer, ArrayList<Mutation>>>();
 	public boolean isSomatic = false;
 	
-	public VEPLoader (File file) throws IOException {
+	public VARLoader (File file) throws IOException {
+		if(file.getName().toLowerCase().endsWith(".tsv")) {
+			loadVEP(file);
+		} else if(file.getName().toLowerCase().endsWith(".vcf")) {
+			loadVCF(file);
+		}
+	}
+	
+	private void loadVEP (File file) throws IOException {
 		BufferedReader BR = new BufferedReader(new FileReader(file));
 		String line = null;
 		String[] header = BR.readLine().split("\t");
@@ -124,6 +132,131 @@ public class VEPLoader {
 		System.out.println("INSs: "+totalOfMutations[InputConvertorConstants.INS]);
 		System.out.println("DELs: "+totalOfMutations[InputConvertorConstants.DEL]);
 	}
+	
+	private void loadVCF (File file) throws IOException {
+		BufferedReader BR = new BufferedReader(new FileReader(file));
+		String line = null;
+		int[] totalOfMutations = new int[10];
+		Hashtable<String, String> removeDuplication = new Hashtable<String, String>();
+		while((line = BR.readLine()) != null) {
+			// skip meta data
+			if(line.startsWith("#")) {
+				continue;
+			}
+			String[] fields = line.split("\t");
+			String chr = fields[0];
+			int pos = Integer.parseInt(fields[1]);
+			
+			String[] refs = fields[3].split("\\,");;
+			String[] alts = fields[4].split("\\,");
+			
+			String mark = ">";
+			if(isSomatic) {
+				mark = ">>";
+			}
+			
+			for(String ref : refs) {
+				for(String alt : alts) {
+					ref = ref.replace(".", "");
+					alt = alt.replace(".", "");
+					
+					int refLen = ref.length();
+					int altLen = alt.length();
+					
+					int startPos = pos;
+					int endPos = pos;
+					
+					byte type = InputConvertorConstants.WILD;
+					String typeStr = null;
+					if(refLen == altLen) {
+						if(refLen == 1) {
+							type = InputConvertorConstants.SNP;
+							typeStr = "SNP";
+						}
+						// MNP (DNP , TNP ...)
+						else {
+							type = InputConvertorConstants.MNP;
+							typeStr = "MNP";
+							endPos = endPos + altLen - 1;
+						}
+					} else if(refLen > altLen) {
+						type = InputConvertorConstants.DEL;
+						typeStr = "DEL";
+						
+						startPos = startPos + altLen;
+						
+						ref = ref.substring(altLen);
+						alt = "";
+						
+						endPos = startPos + ref.length() - 1;
+						
+					} else if(refLen < altLen) {
+						type = InputConvertorConstants.INS;
+						typeStr = "INS";
+						
+						startPos = refLen - 1;
+						
+						alt = alt.substring(refLen);
+						ref = "";
+						
+						endPos = startPos;
+					}
+					
+					String key = chr+":"+startPos+"-"+endPos+"["+typeStr+"]"+ref+mark+alt;
+					if(removeDuplication.get(key) != null) {
+						continue;
+					}
+					removeDuplication.put(key, "");
+					
+					//**
+					// VEP can contain di/tri something like that
+					
+					// SNP / DNP / TNP ...
+					if(type == InputConvertorConstants.SNP || type == InputConvertorConstants.MNP) {
+						Mutation mutation = new Mutation();
+						mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = startPos; mutation.chr = chr;
+						mutation.type = type;
+						mutation.key = key;
+						this.putMutation(chr, mutation);
+						totalOfMutations[mutation.type]++;
+					} 
+					// Deletion
+					else if(type == InputConvertorConstants.DEL) {
+						Mutation mutation = new Mutation();
+						mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = startPos; mutation.chr = chr;
+						mutation.type = type;
+						mutation.key = key;
+						this.putMutation(chr, mutation);
+						totalOfMutations[mutation.type]++;
+					} 
+					// Insertion
+					else if(type == InputConvertorConstants.INS) {
+						Mutation mutation = new Mutation();
+						mutation.altSeq = alt; mutation.refSeq = ref; mutation.pos = startPos; mutation.chr = chr;
+						mutation.type = type;
+						mutation.key = key;
+						this.putMutation(chr, mutation);
+						totalOfMutations[mutation.type]++;
+					}
+					
+				}
+			}
+			
+		}
+		
+		BR.close();
+		
+		System.out.println("A total of mutations: "+ 
+				(totalOfMutations[InputConvertorConstants.SNP] +
+				totalOfMutations[InputConvertorConstants.MNP] +
+				totalOfMutations[InputConvertorConstants.INS] + 
+				totalOfMutations[InputConvertorConstants.DEL]));
+		System.out.println("SNPs: "+totalOfMutations[InputConvertorConstants.SNP]);
+		System.out.println("MNPs: "+totalOfMutations[InputConvertorConstants.MNP]);
+		System.out.println("INSs: "+totalOfMutations[InputConvertorConstants.INS]);
+		System.out.println("DELs: "+totalOfMutations[InputConvertorConstants.DEL]);
+	}
+	
 	
 	private void putMutation (String chr, Mutation mutation) {
 		TreeMap<Integer, ArrayList<Mutation>> map = positionalMap.get(chr);

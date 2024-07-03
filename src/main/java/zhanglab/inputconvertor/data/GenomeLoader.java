@@ -10,7 +10,7 @@ import java.util.Hashtable;
 public class GenomeLoader {
 
 	private Hashtable<String, StringBuilder> genomeMap = new Hashtable<String, StringBuilder>();
-	private VEPLoader vars = null;
+	private VARLoader vars = null;
 	
 	public void clear() {
 		genomeMap.clear();
@@ -42,9 +42,9 @@ public class GenomeLoader {
 		}
 	}
 	
-	public void enrollVEPLaoder (VEPLoader vep) {
+	public void enrollVEPLaoder (VARLoader vep) {
 		System.out.println("## GenomeLoader ##");
-		System.out.println("Enroll Somatic VEP");
+		System.out.println("Enroll Variant Calls");
 		this.vars = vep;
 	}
 	

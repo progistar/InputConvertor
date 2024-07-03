@@ -97,6 +97,11 @@ public class Casanovo extends TopXgInputGeneric {
 				String spectraRef = fields[SPECTRA_REF_INDEX];
 				int scanIdx = Integer.parseInt(spectraRef.split("\\=")[1]);
 				
+				// index (if casanovo was done with mgf file)
+				if(spectraRef.toLowerCase().contains("index")) {
+					scanIdx = mgf.indexToScan.get(scanIdx);
+				} 
+				
 				String title = mgf.scanToTitle.get(scanIdx);
 				String rt = mgf.titleToRT.get(title);
 				String searchScore = fields[SCORE_INDEX];

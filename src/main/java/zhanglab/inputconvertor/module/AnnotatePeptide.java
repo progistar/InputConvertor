@@ -7,9 +7,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Hashtable;
-import java.util.Iterator;
 
+import org.ahocorasick.trie.Emit;
+import org.ahocorasick.trie.Trie;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -18,118 +20,121 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import zhanglab.inputconvertor.data.Annotation;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
-public class CompactDatabase {
+public class AnnotatePeptide {
 
 	public static ArrayList<String> inputPaths = new ArrayList<String>();
 	public static String outputFilePath;
 	public static String contaminantFilePath;
-	public static String decoyPrefix = "XXX";
-
-	private CompactDatabase () {}
+	public static String fdrTSVFilePath;
+	
+	private AnnotatePeptide () {}
 	
 	public static void merge(String[] args) throws IOException {
 		parseOptions(args);
 		
-		System.out.println("Compact database");
+		System.out.println("Annotate peptides");
 		System.out.println("- list of databases");
 		for(int i=0; i<inputPaths.size(); i++) {
 			System.out.println(inputPaths.get(i));
 		}
 		System.out.println(contaminantFilePath);
-		System.out.println("decoy prefix: "+decoyPrefix);
 		
+		File tsvFile = new File(fdrTSVFilePath);
+		BufferedReader BR = new BufferedReader(new FileReader(tsvFile));
+		String line = null;
+		
+		String header = BR.readLine(); 
+		int infPeptIdx = InputConvertorConstants.getFieldIndex(header.split("\t"), InputConvertorConstants.IC_INFERRED_PEPTIDE_FIELD_NAME);
+		
+		ArrayList<String> records = new ArrayList<String>();
+		ArrayList<String> peptides = new ArrayList<String>();
 		Hashtable<String, Boolean> checkDup = new Hashtable<String, Boolean>();
 		
-		File outputFile = new File(outputFilePath);
-		
-		BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile));
-		
-		long totalSequence = 0;
-		for(String fileName : inputPaths) {
-			File file = new File(fileName);
-			if(file.getName().startsWith(".")) continue;
-			
-			BufferedReader BR = new BufferedReader(new FileReader(file));
-			String line = null;
-			
-			String mark = "";
-			while((line = BR.readLine()) != null) {
-				if(line.startsWith(">")) {
-					mark = line.substring(1).split("\\_")[0];
-				} else {
-					totalSequence++;
-					String sequence = line;
-					boolean isReference = mark.startsWith(InputConvertorConstants.REF_HEADER_ID) ? true : false;
-					if(checkDup.get(sequence) == null || checkDup.get(sequence) == false) {
-						checkDup.put(sequence, isReference);
-					}
-				}
-			}
-			BR.close();
-		}
-		
-		// Contaminant DB
-		// Mark contaminant sequence as a reference so that it can be classified to a reference peptide in TD competition.
-		BufferedReader BR = new BufferedReader(new FileReader(contaminantFilePath));
-		String line = null;
-		StringBuilder str = new StringBuilder();
 		while((line = BR.readLine()) != null) {
-			if(line.startsWith(">")) {
-				if(str.length() != 0) {
-					String sequence = str.toString();
-					if(checkDup.get(sequence) == null) {
-						checkDup.put(sequence, true);
-					}
-					str.setLength(0);
-				}
-			} else {
-				str.append(line);
+			records.add(line);
+			String[] fields = line.split("\t");
+			String peptide = fields[infPeptIdx].replace("I", "L");
+			
+			if(checkDup.get(peptide) == null) {
+				checkDup.put(peptide, true);
+				peptides.add(peptide);
 			}
 		}
 		
 		BR.close();
 		
-		Iterator<String> sequences = (Iterator<String>) checkDup.keys();
-		// target
-		int idx = 1;
-		while(sequences.hasNext()) {
-			String sequence = sequences.next();
-			String mark = InputConvertorConstants.REF_HEADER_ID;
-			
-			if(checkDup.get(sequence) == false) {
-				mark = InputConvertorConstants.NON_REF_HEADER_ID;
-			}
-			
-			BW.append(">"+mark+"_"+idx++);
-			BW.newLine();
-			BW.append(sequence);
-			BW.newLine();
+		// information for annotated peptides
+		Annotation annotation = new Annotation();
+		Trie trie = Trie.builder().addKeywords(peptides).build();
+		
+		
+		for(String fileName : inputPaths) {
+			File file = new File(fileName);
+			if(file.getName().startsWith(".")) continue;
+			match(file, trie, annotation, false);
 		}
 		
-		// decoy
-		sequences = (Iterator<String>) checkDup.keys();
-		idx = 1;
-		StringBuilder sb = new StringBuilder();
-		while(sequences.hasNext()) {
-			String sequence = sequences.next();
-			String mark = InputConvertorConstants.REF_HEADER_ID;
-			
-			if(checkDup.get(sequence) == false) {
-				mark = InputConvertorConstants.NON_REF_HEADER_ID;
-			}
-			
-			BW.append(">"+decoyPrefix+"_"+mark+"_"+idx++);
-			BW.newLine();
-			BW.append(sb.append(sequence).reverse().toString());
-			BW.newLine();
-			sb.setLength(0);
-		}
+		// contaminant
+		File contaminantFile = new File(contaminantFilePath);
+		match(contaminantFile, trie, annotation, true);
+
+		// cal representation
+		annotation.calRepresentAnnotation();
 		
-		System.out.println("Compaction DB: "+totalSequence +" >> "+checkDup.size());
+		File outputFile = new File(outputFilePath);
+		BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile));
+		
+		header += "\tGenomicLoci\tGenomicLociCount\tGeneName\tGeneNameCount\tMutationCount\tCategory";
+		BW.append(header);
+		BW.newLine();
+		for(int i=0; i<records.size(); i++) {
+			String record = records.get(i);
+			String[] fields = record.split("\t");
+			ArrayList<String> modifiedRecordList = annotation.getModifiedRecordList(record, fields[infPeptIdx]);
+			
+			for(String modifiedRecord : modifiedRecordList) {
+				BW.append(modifiedRecord);
+				BW.newLine();
+			}
+		}
 		
 		BW.close();
+	}
+	
+	public static void match(File file, Trie trie, Annotation annotation, boolean isContam) throws IOException {
+
+		BufferedReader BR = new BufferedReader(new FileReader(file));
+		String line = null;
+		String header = null;
+		StringBuilder str = new StringBuilder();
+		while((line = BR.readLine()) != null) {
+			if(line.startsWith(">")) {
+				if(header != null) {
+					String sequence = str.toString();
+					Collection<Emit> emits = trie.parseText(sequence.replace("I", "L"));
+					for(Emit emit : emits) {
+						annotation.putAnnotation(emit, header, sequence, isContam);
+					}
+					str.setLength(0);
+				}
+				
+				header = line;
+			} else {
+				str.append(line);
+			}
+		}
+		BR.close();
+		
+		// last pang
+		String sequence = str.toString();
+		Collection<Emit> emits = trie.parseText(sequence.replace("I", "L"));
+		for(Emit emit : emits) {
+			annotation.putAnnotation(emit, header, sequence, isContam);
+		}
+		str.setLength(0);
 	}
 
 	
@@ -140,6 +145,13 @@ public class CompactDatabase {
 		// Mandatory
 		Option optionInput = Option.builder("i")
 				.longOpt("input").argName("string")
+				.hasArg()
+				.required(true)
+				.desc("TSV file after FDR estimation")
+				.build();
+		
+		Option optionDatabase = Option.builder("f")
+				.longOpt("fasta").argName("fa|fasta")
 				.hasArg()
 				.required(true)
 				.desc("input fasta files to be merged (each file must be separated by comma)")
@@ -162,6 +174,7 @@ public class CompactDatabase {
 		
 		options.addOption(optionInput)
 		.addOption(optionOutput)
+		.addOption(optionDatabase)
 		.addOption(optionContaminant);
 		
 		CommandLineParser parser = new DefaultParser();
@@ -172,7 +185,8 @@ public class CompactDatabase {
 	    for(int i=0; i<args.length; i++) {
 	    	if(args[i].equalsIgnoreCase("-i") || args[i].equalsIgnoreCase("--input") ||
 			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output") ||
-			args[i].equalsIgnoreCase("-c") || args[i].equalsIgnoreCase("--contaminant")) {
+			args[i].equalsIgnoreCase("-c") || args[i].equalsIgnoreCase("--contaminant") ||
+			args[i].equalsIgnoreCase("-f") || args[i].equalsIgnoreCase("--fasta")) {
 	    		tmpArgs.add(args[i++]);
 	    		tmpArgs.add(args[i]);
 	    	}
@@ -193,7 +207,11 @@ public class CompactDatabase {
 		    }
 		    
 		    if(cmd.hasOption("i")) {
-		    	String[] inputs = cmd.getOptionValue("i").split("\\,");
+		    	fdrTSVFilePath = cmd.getOptionValue("i");
+		    }
+		    
+		    if(cmd.hasOption("f")) {
+		    	String[] inputs = cmd.getOptionValue("f").split("\\,");
 		    	for(String input : inputs) {
 		    		inputPaths.add(input);
 		    	}

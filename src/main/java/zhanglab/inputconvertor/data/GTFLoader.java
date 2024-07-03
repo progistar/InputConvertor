@@ -5,12 +5,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Hashtable;
 
 public class GTFLoader {
 	// gene id with version to transcripts
 	public Hashtable<String, ArrayList<Transcript>> geneToTranscripts = new Hashtable<String, ArrayList<Transcript>>();
+	public Hashtable<String, String> geneToGeneName = new Hashtable<String, String>();
 	
 	public void clear() {
 		geneToTranscripts.clear();
@@ -37,9 +37,32 @@ public class GTFLoader {
 					int end = Integer.parseInt(fields[4]);
 					String strand = fields[6];
 					String[] attrs = fields[8].split("\\;");
+					
+					// for gencode GTF
 					String geneId = getTag(attrs, "gene_id");
 					String enstId = getTag(attrs, "transcript_id");
-
+					String geneName = getTag(attrs, "gene_name");
+					
+					// for stringtie GTF
+					String refGeneId = getTag(attrs, "ref_gene_id");
+					String refEnstId = getTag(attrs, "reference_id");
+					String refGeneName = getTag(attrs, "ref_gene_name");
+					
+					if(refGeneId != null) {
+						geneId = refGeneId;
+					}
+					if(refEnstId != null) {
+						enstId = refEnstId;
+					}
+					if(refGeneName != null) {
+						geneName = refGeneName;
+					}
+					
+					// enroll mapping table
+					if(geneId != null && geneName != null) {
+						geneToGeneName.put(geneId, geneName);
+					}
+					
 					Transcript transcript = getTranscript(geneId, enstId);
 					
 					if(feature.equalsIgnoreCase("transcript")) {

@@ -49,6 +49,8 @@ public class Reference {
     				ArrayList<FastaEntry> entries = this.getTranslation(t, isOnlyPC);
     				// put gene ID
     				for(FastaEntry entry : entries) {
+    					String geneName = this.refGTF.geneToGeneName.get(g);
+    					entry.geneName = geneName == null ? g : geneName;
     					entry.geneId = g;
     					entry.transcriptIds.add(entry.transcript.tID);
     					entry.tool = InputConvertorConstants.REF_HEADER_ID;
@@ -58,6 +60,8 @@ public class Reference {
     				ArrayList<FastaEntry> entries = this.getTranslation(t, isOnlyPC);
     				// put gene ID
     				for(FastaEntry entry : entries) {
+    					String geneName = this.refGTF.geneToGeneName.get(g);
+    					entry.geneName = geneName == null ? g : geneName;
     					entry.geneId = g;
     					entry.transcriptIds.add(entry.transcript.tID);
     					entry.tool = InputConvertorConstants.EXON_TRANSLATION_HEADER_ID;

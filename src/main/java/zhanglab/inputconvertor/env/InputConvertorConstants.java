@@ -2,7 +2,7 @@ package zhanglab.inputconvertor.env;
 
 public class InputConvertorConstants {
 
-	public static final String VERSION = "Version: v1.0.0a";
+	public static final String VERSION = "Version: v1.0.1";
 	
 	// ## Generated features from Input Convertor
 	public static final String IC_RT_FIELD_NAME = "ic_observed_rt";
@@ -146,6 +146,18 @@ public class InputConvertorConstants {
 	// ## Reference
 	public static final String REF_HEADER_ID				=	"@RF";
 	public static final String NON_REF_HEADER_ID			=	"@NF";
+	
+	// ## Contaminant
+	public static final String CONT_HEADER_ID				=	"@CT";
+	
+	// ## Database header index
+	public static final int FASTA_ID_IDX					=	0;
+	public static final int ENSG_ID_IDX						=	1;
+	public static final int ENST_ID_IDX						=	2;
+	public static final int GENE_NAME_IDX					=	3;
+	public static final int FRAME_IDX						=	4;
+	public static final int STRAND_IDX						=	5;
+	public static final int LOCATION_IDX					=	6;
 	
 	// ## Translation
 	public static final int MIN_PEPT_LEN					=	7;
