@@ -17,12 +17,7 @@ import zhanglab.inputconvertor.input.PEAKS;
 import zhanglab.inputconvertor.input.PEAKS12;
 import zhanglab.inputconvertor.input.PiPrimeNovo;
 import zhanglab.inputconvertor.input.pNovo3;
-import zhanglab.inputconvertor.module.AnnotatePeptide;
-import zhanglab.inputconvertor.module.CompactDatabase;
-import zhanglab.inputconvertor.module.MergeNetMHCpan;
 import zhanglab.inputconvertor.module.TargetDecoyAnalysis_MS2Rescore;
-import zhanglab.inputconvertor.module.ToModModifier;
-import zhanglab.inputconvertor.module.ToNetMHCpanInput;
 import zhanglab.inputconvertor.module.TopXgInput;
 
 public class Run {
@@ -57,18 +52,7 @@ public class Run {
         	// -i -p -d
         	TargetDecoyAnalysis_MS2Rescore.doFDR(args);
         }
-        else if(module.equalsIgnoreCase("netmhcpan_input")) {
-        	ToNetMHCpanInput.makeNetMHCpanInput(args);
-        }
-        else if(module.equalsIgnoreCase("netmhcpan_merge")) {
-        	MergeNetMHCpan.merge(args);
-        }
-        else if(module.equalsIgnoreCase("compact_database")) {
-        	CompactDatabase.merge(args);
-        }
-        else if(module.equalsIgnoreCase("annotate")) {
-        	AnnotatePeptide.merge(args);
-        }
+        
         long endTime = System.currentTimeMillis();
         
         System.out.println((endTime-startTime)/1000+" sec");

@@ -12,12 +12,9 @@ import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.FastaLoader;
 import zhanglab.inputconvertor.data.GTFLoader;
 import zhanglab.inputconvertor.data.GenomeLoader;
-import zhanglab.inputconvertor.data.Mutation;
 import zhanglab.inputconvertor.data.VARLoader;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.input.Arriba;
-import zhanglab.inputconvertor.input.CIRIquant;
-import zhanglab.inputconvertor.input.IRFinder;
 import zhanglab.inputconvertor.input.Reference;
 import zhanglab.inputconvertor.input.StringTie;
 
@@ -102,22 +99,6 @@ public class ShortRun_TISdata {
         	StringTie stringTie = new StringTie(stringTieFile);
         	stringTie.enrollGenomeSequence(gmL);
         	entries.addAll(stringTie.getFastaEntry(fpkmThreshold));
-        }
-        
-        // Do CIRIquant
-        if(ciriquantFile != null) {
-        	CIRIquant ciriquant = new CIRIquant(ciriquantFile);
-        	ciriquant.enrollGenomeSequence(gmL);
-        	ciriquant.enrollReferenceGTF(refGTF);
-        	entries.addAll(ciriquant.getFastaEntry());
-        }
-        
-        // Do IRFinder
-        if(irfinderFile != null) {
-        	IRFinder irfinder = new IRFinder(irfinderFile);
-        	irfinder.enrollGenomeSequence(gmL);
-        	irfinder.enrollReferenceGTF(refGTF);
-        	entries.addAll(irfinder.getFastaEntry());
         }
         
         // Do Arriba
