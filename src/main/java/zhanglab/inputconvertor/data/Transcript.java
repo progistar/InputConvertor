@@ -11,6 +11,7 @@ public class Transcript {
 	public String start;
 	public String end;
 	public String attrs;
+	public String classCode; // for StringTie
 	public double FPKM = Double.MAX_VALUE;
 	public boolean isProteinCoding = false;
 	

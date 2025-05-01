@@ -2,10 +2,11 @@ package zhanglab.inputconvertor.env;
 
 public class InputConvertorConstants {
 
-	public static final String VERSION = "Version: v1.0.1";
+	public static final String VERSION = "Version: v1.1.0a";
 	
 	// ## Generated features from Input Convertor
 	public static final String IC_RT_FIELD_NAME = "ic_observed_rt";
+	public static final String IC_ION_MOBILITY_FIELD_NAME = "ic_observed_im";  // TODO
 	public static final String IC_TITLE_FIELD_NAME = "ic_title";
 	public static final String IC_SCAN_NUM_FIELD_NAME = "ic_scan_num";
 	public static final String IC_CHARGE_FIELD_NAME = "ic_charge";
@@ -31,11 +32,10 @@ public class InputConvertorConstants {
 	public static final String CASANOVO = "Casanovo";
 	public static final String PNOVO3	= "pNovo3";
 	public static final String PEAKS	= "PEAKS";
+	public static final String PEAKS12	= "PEAKS12";
+	public static final String piPRIME_NOVO = "piPrimeNovo";
 	public static final String PXG		= "pXg";
 	public static final String COMET	= "Comet";
-	public static final String AUTORT	= "AutoRT";
-	public static final String MS2PIP	= "ms2pip";
-	public static final String PROSIT	= "prosit";
 	public static final String IC_CONVERTOR		= "ic_convertor";
 	public static final String ARRIBA	= "Arriba";
 	public static final String EXPERIMENTAL_SPECTRUM = "experimental_spectrum";
@@ -52,28 +52,14 @@ public class InputConvertorConstants {
 	public static final String PEAKS_PEPTIDE_FIELD_NAME = "Peptide";
 	public static final String PEAKS_CHARGE_FIELD_NAME = "z";
 	public static final String PEAKS_SCORE_FIELD_NAME = "ALC (%)";
+	public static final String PEAKS_DEEPNOVO_SCORE_FIELD_NAME = "SCORE (%)";
+	public static final String PEAKS_PRECURSOR_ID_NAME = "Precursor Id";
+	public static final String PEAKS_PEPMASS_NAME = "m/z";
 	
-	
-	// ## AutoRT header
-	public static final String AUTORT_HEADER_X	=	"x";
-	public static final String AUTORT_HEADER_Y	=	"y";
-	public static final int	   AUTORT_X_IDX		=	0;
-	public static final int	   AUTORT_Y_IDX		=	1;
-	public static final int	   AUTORT_PRED_Y_IDX	=	2;
-	
-	// ## DeepLC header
-	public static final String DEEPLC_HEADER_PEPTIDE=	"peptide";
-	public static final int	   DEEPLC_PEPTIDE_IDX	=	0;
-	public static final int	   DEEPLC_RT_IDX		=	1;
-	public static final int	   DEEPLC_PRED_IDX	=	3;
-
-	
-	
-	// ## MS2PIP header
-	public static final String MS2PIP_HEADER_SPECID	=	"spec_id";
-	public static final String MS2PIP_HEADER_MODIFICATIONS	=	"modifications";
-	public static final String MS2PIP_HEADER_PEPTIDE	=	"peptide";
-	public static final String MS2PIP_HEADER_CHARGE	=	"charge";
+	// ## piPrimeNovo header
+	public static final String piPRIME_NOVO_PEPTIDE_FIELD_NAME = "prediction";
+	public static final String piPRIME_NOVO_SPECTRA_REF_FIELD_NAME = "label";
+	public static final String piPRIME_NOVO_SCORE_FIELD_NAME = "score";
 	
 	// ## Comet header
 	public static final String COMET_PEPTIDE_FIELD_NAME	=	"modified_peptide";
@@ -126,10 +112,10 @@ public class InputConvertorConstants {
 	public static final String ARRIBA_TRANSCRIPT2_FIELD_NAME=	"transcript_id2";
 	
 	// ## StringTie
-	public static final String STRINGTIE_HEADER_ID			=	"@ST";
+	public static final String STRINGTIE_HEADER_ID			=	"st";
 	
 	// ## IRFinder
-	public static final String IRFINDER_HEADER_ID			=	"@IR";
+	public static final String IRFINDER_HEADER_ID			=	"ir";
 	public static final String IRFINDER_CHR_FIELD_NAME		=	"Chr";
 	public static final String IRFINDER_START_FIELD_NAME	=	"Start";
 	public static final String IRFINDER_END_FIELD_NAME		=	"End";
@@ -138,17 +124,17 @@ public class InputConvertorConstants {
 	public static final String IRFINDER_WARNINGS_FIELD_NAME	=	"Warnings";
 	
 	// ## CIRIQuant
-	public static final String CIRIQUANT_HEADER_ID			=	"@CR";
+	public static final String CIRIQUANT_HEADER_ID			=	"cr";
 	
 	// ## GTF Threeframe translation
-	public static final String EXON_TRANSLATION_HEADER_ID	=	"@EX";
+	public static final String EXON_TRANSLATION_HEADER_ID	=	"ex";
 	
 	// ## Reference
-	public static final String REF_HEADER_ID				=	"@RF";
-	public static final String NON_REF_HEADER_ID			=	"@NF";
+	public static final String REF_HEADER_ID				=	"rf";
+	public static final String NON_REF_HEADER_ID			=	"nf";
 	
 	// ## Contaminant
-	public static final String CONT_HEADER_ID				=	"@CT";
+	public static final String CONT_HEADER_ID				=	"ct";
 	
 	// ## Database header index
 	public static final int FASTA_ID_IDX					=	0;
@@ -160,7 +146,7 @@ public class InputConvertorConstants {
 	public static final int LOCATION_IDX					=	6;
 	
 	// ## Translation
-	public static final int MIN_PEPT_LEN					=	7;
+	public static final int MIN_PEPT_LEN					=	8;
 	
 	
 	public static int getFieldIndex (String[] fields, String tag) {

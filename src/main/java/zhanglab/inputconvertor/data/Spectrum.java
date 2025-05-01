@@ -3,7 +3,6 @@ package zhanglab.inputconvertor.data;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Hashtable;
 
 import zhanglab.inputconvertor.env.ProteomeConstants;
 
@@ -201,100 +200,4 @@ public class Spectrum {
 		return subPeaks;
 	}
 	
-	private double getSUMInt (ArrayList<Double> peaks) {
-		double sum = 0;
-		for(int i=0; i<peaks.size(); i++) {
-			sum += peaks.get(i);
-		}
-		
-		return sum;
-	}
-	public double[] getAnnotatedPeaks(double tolerance, int precursorCharge, int chargeLimit) {
-		ArrayList<Double> annotatedPeaks = getPeaks(tolerance, precursorCharge, chargeLimit, true);
-		ArrayList<Double> annotatedPeaksWithoutMods = getPeaks(tolerance, precursorCharge, chargeLimit, false);
-		
-		// Of course, it is right to consider modifications.
-		// however, current version of Prosit does not reflect modification mass on each peak (I don't know why. It might be an error).
-		// to cover those errors, I selected peaks having more intensity among two version of annotated peaks.
-		
-		double sumOfWMods = getSUMInt(annotatedPeaks);
-		double sumOfWoMods = getSUMInt(annotatedPeaksWithoutMods);
-		
-		if(sumOfWMods < sumOfWoMods) {
-			annotatedPeaks = annotatedPeaksWithoutMods;
-		}
-		
-		double[] newPeaks = new double[annotatedPeaks.size()];
-		for(int i=0; i<annotatedPeaks.size(); i++) {
-			newPeaks[i] = annotatedPeaks.get(i);
-		}
-		
-		return newPeaks;
-	}
-	
-	private ArrayList<Double> getPeaks (double tolerance, int precursorCharge, int chargeLimit, boolean takingMods) {
-		Hashtable<Double, Boolean> banDuplications = new Hashtable<Double, Boolean>();
-		ArrayList<Double> annotatedPeaks = new ArrayList<Double>();
-
-		// restricted to 1/2 ions.
-		int upTo = precursorCharge-1;
-		if(upTo == 0) {
-			upTo = 1;
-		} else if(upTo > chargeLimit) {
-			upTo = chargeLimit;
-		}
-
-		
-		for(int c=1; c<=upTo; c++) {
-			double[] peaks = peptide.getTheoreticalLadder(ProteomeConstants.Y_ION, c, takingMods);
-			for(int i=0; i<peaks.length; i++) {
-				ArrayList<double[]> subPeaks = this.getSubPeaks(peaks[i]-tolerance, peaks[i]+tolerance);
-				// select closest one
-				double best = tolerance*2;
-				double[] bestPeak = null;
-				for(double[] peak : subPeaks) {
-					if(Math.abs(peak[0]-peaks[i]) < best) {
-						bestPeak = peak;
-						best = Math.abs(peak[0]-peaks[i]);
-					}
-				}
-				
-				// if the peak is identified, then assign intensity.
-				if(bestPeak != null && banDuplications.get(bestPeak[0]) == null) {
-					banDuplications.put(bestPeak[0], true);
-					annotatedPeaks.add(bestPeak[1]);
-				} 
-				// if there is no matched peak, than assign 0.
-				else {
-					annotatedPeaks.add(0.0);
-				}
-			}
-			
-			peaks = peptide.getTheoreticalLadder(ProteomeConstants.B_ION, c, takingMods);
-			for(int i=0; i<peaks.length; i++) {
-				ArrayList<double[]> subPeaks = this.getSubPeaks(peaks[i]-tolerance, peaks[i]+tolerance);
-				// select closest one
-				double best = tolerance*2;
-				double[] bestPeak = null;
-				for(double[] peak : subPeaks) {
-					if(Math.abs(peak[0]-peaks[i]) < best) {
-						bestPeak = peak;
-						best = Math.abs(peak[0]-peaks[i]);
-					}
-				}
-				
-				// if the peak is identified, then assign intensity.
-				if(bestPeak != null && banDuplications.get(bestPeak[0]) == null) {
-					banDuplications.put(bestPeak[0], true);
-					annotatedPeaks.add(bestPeak[1]);
-				} 
-				// if there is no matched peak, than assign 0.
-				else {
-					annotatedPeaks.add(0.0);
-				}
-			}
-		}
-		
-		return annotatedPeaks;
-	}
 }

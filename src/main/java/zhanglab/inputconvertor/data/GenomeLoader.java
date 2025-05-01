@@ -65,13 +65,19 @@ public class GenomeLoader {
 		return sequence.substring(start, end);
 	}
 	
-	public void setSequence(String chr, Exon[] exonGraph) {
+	public boolean setSequence(String chr, Exon[] exonGraph) {
 		StringBuilder sequence = genomeMap.get(chr);
+		
+		if(sequence == null) {
+			System.out.println("Missing "+chr+", skip...");
+			return false;
+		}
+		
 		ArrayList<Mutation> snps = new ArrayList<Mutation>();
 		ArrayList<Mutation> inss = new ArrayList<Mutation>();
 		ArrayList<Mutation> dels = new ArrayList<Mutation>();
 		Exon startExon = exonGraph[0];
-		Exon endExon = exonGraph[1];
+		Exon endExon = exonGraph[exonGraph.length-1];
 		Exon nextExon = null;
 		
 		nextExon = startExon;
@@ -86,6 +92,7 @@ public class GenomeLoader {
 				int end = nextExon.end;
 				String refSequence = sequence.subSequence(start,  end).toString();
 				nextExon.refNucleotide = refSequence;
+				
 				if(vars != null) {
 					snps.addAll(vars.getSNPByRange(chr, nextExon.start, nextExon.end+1));
 					snps.addAll(vars.getMNPByRange(chr, nextExon.start, nextExon.end+1));
@@ -101,7 +108,7 @@ public class GenomeLoader {
 				nextExon = nextExon.nextExons.get(0);
 			}
 		}
-		
+
 		// deletions
 		for(Mutation del :dels) {
 			nextExon = startExon;
@@ -269,6 +276,7 @@ public class GenomeLoader {
 			}
 		}
 		
+		return true;
 		
 	}
 }

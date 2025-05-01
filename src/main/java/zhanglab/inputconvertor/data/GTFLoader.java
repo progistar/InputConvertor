@@ -17,10 +17,12 @@ public class GTFLoader {
 	}
 	
 	public GTFLoader (File file) {
+		System.out.println("Load GTF: "+file.getName());
 		try {
 			BufferedReader BR = new BufferedReader(new FileReader(file));
 			String line = null;
 			
+			Transcript transcript = null;
 			while((line = BR.readLine()) != null) {
 				if(line.startsWith("#")) {
 					continue;
@@ -45,7 +47,10 @@ public class GTFLoader {
 					
 					// for stringtie GTF
 					String refGeneId = getTag(attrs, "ref_gene_id");
-					String refEnstId = getTag(attrs, "reference_id");
+					String refEnstId = getTag(attrs, "reference_id"); // base stringtie output
+					if(refEnstId == null) {
+						refEnstId = getTag(attrs, "cmp_ref"); // gff_comapre output
+					}
 					String refGeneName = getTag(attrs, "ref_gene_name");
 					
 					if(refGeneId != null) {
@@ -58,14 +63,14 @@ public class GTFLoader {
 						geneName = refGeneName;
 					}
 					
-					// enroll mapping table
-					if(geneId != null && geneName != null) {
-						geneToGeneName.put(geneId, geneName);
-					}
-					
-					Transcript transcript = getTranscript(geneId, enstId);
-					
 					if(feature.equalsIgnoreCase("transcript")) {
+						// enroll mapping table
+						if(geneId != null && geneName != null) {
+							geneToGeneName.put(geneId, geneName);
+						}
+						
+						transcript = getTranscript(geneId, enstId);
+						
 						String fpkm = getTag(attrs, "FPKM");
 						double expValue = Double.MAX_VALUE;
 						if(fpkm != null) {
@@ -77,6 +82,13 @@ public class GTFLoader {
 						transcript.end = end+"";
 						transcript.attrs = fields[8];
 						transcript.FPKM = expValue;
+						
+						String classCode = getTag(attrs, "class_code");
+						if(classCode == null) {
+							transcript.classCode = "na";
+						} else {
+							transcript.classCode = classCode;
+						}
 					} else {
 						if(feature.equalsIgnoreCase("exon")) {
 							transcript.exons.add(new Exon(chr, start, end));
@@ -110,7 +122,7 @@ public class GTFLoader {
 					}
 					
 					for(String id : geneIds) {
-						Transcript transcript = getTranscript(id, enstId);
+						transcript = getTranscript(id, enstId);
 						transcript.strand = strand;
 						transcript.chr = chr;
 						transcript.start = start+"";
@@ -125,6 +137,7 @@ public class GTFLoader {
 			
 			geneToTranscripts.forEach((g, ts)->{
 				for(Transcript t : ts) {
+					// System.out.println(t.tID+"\t"+g+"\t"+t.chr);
 					t.setExons();
 				}
 			});
@@ -141,7 +154,6 @@ public class GTFLoader {
 			transcripts = new ArrayList<Transcript>();
 			thisT = new Transcript();
 			thisT.tID = enstId;
-
 			transcripts.add(thisT);
 			this.geneToTranscripts.put(geneId, transcripts);
 		} else {

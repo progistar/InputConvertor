@@ -14,17 +14,15 @@ import org.apache.commons.cli.ParseException;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.input.Casanovo;
 import zhanglab.inputconvertor.input.PEAKS;
+import zhanglab.inputconvertor.input.PEAKS12;
+import zhanglab.inputconvertor.input.PiPrimeNovo;
 import zhanglab.inputconvertor.input.pNovo3;
 import zhanglab.inputconvertor.module.AnnotatePeptide;
 import zhanglab.inputconvertor.module.CompactDatabase;
-import zhanglab.inputconvertor.module.ConvertCometTopXg;
 import zhanglab.inputconvertor.module.MergeNetMHCpan;
-import zhanglab.inputconvertor.module.TargetDecoyAnalysis;
-import zhanglab.inputconvertor.module.ToAutoRTInput;
-import zhanglab.inputconvertor.module.ToFeatures;
-import zhanglab.inputconvertor.module.ToFeaturesComet;
+import zhanglab.inputconvertor.module.TargetDecoyAnalysis_MS2Rescore;
+import zhanglab.inputconvertor.module.ToModModifier;
 import zhanglab.inputconvertor.module.ToNetMHCpanInput;
-import zhanglab.inputconvertor.module.ToPIN;
 import zhanglab.inputconvertor.module.TopXgInput;
 
 public class Run {
@@ -47,25 +45,17 @@ public class Run {
         		topXgInput = new pNovo3();
         	} else if(tool.equalsIgnoreCase(InputConvertorConstants.PEAKS)) {
         		topXgInput = new PEAKS();
+        	} else if(tool.equalsIgnoreCase(InputConvertorConstants.PEAKS12)) {
+        		topXgInput = new PEAKS12();
+        	} else if(tool.equalsIgnoreCase(InputConvertorConstants.piPRIME_NOVO)) {
+        		topXgInput = new PiPrimeNovo();
         	}
         	
         	topXgInput.topXgInputFormat(args);
         }
-        else if(module.equalsIgnoreCase("autort_input")) {
-        	ToAutoRTInput.toAutoRTInputFormat(args, tool);
-        } 
-        else if(module.equalsIgnoreCase("feature_gen_denovo")) {
-        	ToFeatures.toFeatureFormat(args);
-        }
-        else if(module.equalsIgnoreCase("feature_gen_db")) {
-        	ToFeaturesComet.toFeatureFormat(args);
-        }
-        else if(module.equalsIgnoreCase("feature_to_pin")) {
-        	ToPIN.convertToPIN(args);
-        }
-        else if(module.equalsIgnoreCase("fdr")) {
+        else if(module.equalsIgnoreCase("ms2rescore")) {
         	// -i -p -d
-        	TargetDecoyAnalysis.doFDR(args);
+        	TargetDecoyAnalysis_MS2Rescore.doFDR(args);
         }
         else if(module.equalsIgnoreCase("netmhcpan_input")) {
         	ToNetMHCpanInput.makeNetMHCpanInput(args);
@@ -73,71 +63,12 @@ public class Run {
         else if(module.equalsIgnoreCase("netmhcpan_merge")) {
         	MergeNetMHCpan.merge(args);
         }
-        else if(module.equalsIgnoreCase("convert_to_pxg")) {
-        	ConvertCometTopXg.convertTopXgOutput(args);
-        }
         else if(module.equalsIgnoreCase("compact_database")) {
         	CompactDatabase.merge(args);
         }
         else if(module.equalsIgnoreCase("annotate")) {
         	AnnotatePeptide.merge(args);
         }
-        /*
-        else if(mode.equalsIgnoreCase("ms2pip_input")) {
-        	// args: -i -p -C
-        	// -i ./
-        	// -p C3N-01488.T.csnv
-        	// --charge 14
-        	ToMS2PIPInput toMS2PIPInput = null;
-        	if(inputTool.equalsIgnoreCase(InputConvertorConstants.PXG)) {
-        		toMS2PIPInput = new pXg();
-        	} else if(inputTool.equalsIgnoreCase(InputConvertorConstants.COMET)) {
-        		toMS2PIPInput = new Comet();
-        	}
-        	
-        	toMS2PIPInput.toMS2PIPInputFormat(cmd);
-        	
-        }
-        
-        
-        else if(mode.equalsIgnoreCase("fdr")) {
-        	// -i -p -d
-        	new TargetDecoyAnalysis().doFDR(cmd);
-        }
-        
-        else if(mode.equalsIgnoreCase("netmhcpan_input")) {
-        	NetMHCpan toNetMHCpanInput = null;
-        	
-        	toNetMHCpanInput = new pXg();
-        	
-        	toNetMHCpanInput.toNetMHCpanInputFormat(cmd);
-        }
-        
-        else if(mode.equalsIgnoreCase("add_netmhcpan")) {
-        	NetMHCpan toNetMHCpanInput = null;
-        	
-        	toNetMHCpanInput = new pXg();
-        	
-        	toNetMHCpanInput.addNetMHCpanOutput(cmd);
-        }
-        // this is hidden function for me
-        // Do not use general purpose!!!
-        else if(mode.equalsIgnoreCase("spectrum_count")) {
-        	// args: -f
-        	new SpectrumCount(cmd);
-        }
-        
-        else if(mode.equalsIgnoreCase("translate")) {
-        	ToTranslator toTranslator = null;
-        	
-        	toTranslator.doTranslate(cmd);
-        }
-        
-        else if(mode.equalsIgnoreCase("gen_comet_param")) {
-        	
-        	new GenerateCometParams(args);
-        }
-        */
         long endTime = System.currentTimeMillis();
         
         System.out.println((endTime-startTime)/1000+" sec");

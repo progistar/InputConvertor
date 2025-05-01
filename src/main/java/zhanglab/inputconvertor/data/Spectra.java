@@ -73,17 +73,6 @@ public class Spectra {
 					if(matcher.find()) {
 						scanNum = Integer.parseInt(matcher.group().replace(".", ""));
 					}
-					
-					// for prosit, the format will be changed to MS2PIP
-					if(predictType.equalsIgnoreCase(InputConvertorConstants.PROSIT)) {
-						String prositPeptide = title.split("\\|")[0];
-						String prositCharge = title.split("\\|")[1];
-						Peptide peptide = new Peptide(prositPeptide, InputConvertorConstants.PROSIT);
-						String modifications = MS2PIPRecord.getModifications(peptide);
-	    				String predictKey = MS2PIPRecord.getMS2PIPKey(peptide.stripPeptide, modifications, prositCharge);
-	    				title = predictKey;
-					}
-					
 				}else if(line.startsWith("RTIN")) {
 					rt = Double.parseDouble(line.split("\\=")[1]);
 				}else if(line.startsWith("PEPMASS")) {
@@ -120,7 +109,7 @@ public class Spectra {
 			BR.close();
 			isComplete = true;
 		}catch(IOException ioe) {
-			
+			ioe.printStackTrace();
 		}
 	}
 	

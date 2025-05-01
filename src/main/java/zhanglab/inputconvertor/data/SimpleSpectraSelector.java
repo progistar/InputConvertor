@@ -1,14 +1,19 @@
 package zhanglab.inputconvertor.data;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
 import org.systemsbiology.jrap.stax.MSXMLParser;
 import org.systemsbiology.jrap.stax.Scan;
+
+import zhanglab.inputconvertor.env.InputConvertorConstants;
+import zhanglab.inputconvertor.run.Run;
 
 public class SimpleSpectraSelector {
 	
@@ -26,15 +31,20 @@ public class SimpleSpectraSelector {
 		this.fileName = file.getName();
 		
 		if(this.fileName.toLowerCase().endsWith(".mgf")) {
-			SimpleMGFSelector(file);
+			if(Run.tool.equalsIgnoreCase(InputConvertorConstants.PEAKS12)) {
+				simplePEAKS12MGFSelector(file);
+			} else {
+				simpleMGFSelector(file);
+			}
+			
 		} else if(
 				this.fileName.toLowerCase().endsWith(".mzml") || 
 				this.fileName.toLowerCase().endsWith(".mzxml")) {
-			SimpleMzMLSelector(file);
+			simpleMzMLSelector(file);
 		}
 	}
 	
-	public void SimpleMGFSelector (File file) throws IOException {
+	public void simpleMGFSelector (File file) throws IOException {
 		this.fileName = file.getName();
 		
 		BufferedReader BR = new BufferedReader(new FileReader(file));
@@ -66,7 +76,84 @@ public class SimpleSpectraSelector {
 		System.out.println("A total of spectra: "+titleToRT.size());
 	}
 	
-	public void SimpleMzMLSelector (File file) throws IOException {
+	/**
+	 * 
+	 * For mgf files exported by PEAKS12,
+	 * It is difficult to match results to spectrum using title.
+	 * Instead, it is better to use a combination of precursor id and pepmass as a key.
+	 * 
+	 * 
+	 * 
+	 * @param file
+	 * @throws IOException
+	 */
+	public void simplePEAKS12MGFSelector (File file) throws IOException {
+		File outFile = new File(file.getAbsolutePath().replace(".mgf", ".peaks12.mgf"));
+		this.fileName = file.getName();
+		
+		BufferedReader BR = new BufferedReader(new FileReader(file));
+		System.out.println("read: "+this.fileName);
+		String line = null;
+		
+		String precursorid = null;
+		int mass = 0;
+		ArrayList<String> spectrum = new ArrayList<String>();
+		String newTitle = null;
+		BufferedWriter BW = new BufferedWriter(new FileWriter(outFile));
+		while((line = BR.readLine()) != null) {
+			if(line.length() == 0) continue;
+			
+			if(line.startsWith("BEGIN")) {
+				if(spectrum.size() > 0) {
+					// write file
+					// if title? replace
+					for(String record : spectrum) {
+						if(record.startsWith("TITLE=")) {
+							record = "TITLE="+newTitle;
+						}
+						BW.append(record);
+						BW.newLine();
+					}
+				}
+				spectrum.clear();
+			}
+			
+			spectrum.add(line);
+			
+			if(line.startsWith("PRECURSORID=")) {
+				precursorid = line.split("\\=")[1].split("\\s")[0];
+			}
+			else if(line.startsWith("PEPMASS=")) {
+				mass = (int) (1000 * Double.parseDouble(line.split("\\=")[1].split("\\s")[0]));
+			}
+			else if(line.startsWith("RTIN")) {
+				newTitle = precursorid+"+"+mass;
+				String rt = line.split("\\=")[1];
+				titleToRT.put(newTitle, rt);
+				titles.add(newTitle);
+			}
+		}
+		
+		if(spectrum.size() > 0) {
+			// write file
+			// if title? replace
+			for(String record : spectrum) {
+				if(record.startsWith("TITLE=")) {
+					record = "TITLE="+newTitle;
+				}
+				BW.append(record);
+				BW.newLine();
+			}
+		}
+		spectrum.clear();
+		
+		BR.close();
+		BW.close();
+		
+		System.out.println("A total of spectra: "+titleToRT.size());
+	}
+	
+	public void simpleMzMLSelector (File file) throws IOException {
 		this.fileName = file.getName();
 		
 		BufferedReader BR = new BufferedReader(new FileReader(file));

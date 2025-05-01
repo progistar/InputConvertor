@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.function.Translator;
@@ -14,6 +15,7 @@ public class FastaEntry {
 	public int idx = -1;
 	public String tool;
 	public String sequence;
+	public String nucleotide;
 	public Transcript transcript;
 	public String geneId;
 	public String geneName;
@@ -24,11 +26,7 @@ public class FastaEntry {
 	public String mutationMark = null;
 	
 	public String toHeader(String uniqueId) {
-		if(mutationMark != null) {
-			return this.tool+this.mutationMark+this.idx+"_"+uniqueId;
-		}
-		
-		return this.tool+this.idx+"_"+uniqueId;
+		return this.tool+"_"+uniqueId;
 	}
 	
 	public String toMeta (String uniqueId) {
@@ -46,7 +44,61 @@ public class FastaEntry {
 		while(this.description.startsWith("@")) {
 			this.description = this.description.substring(1);
 		}
-		return toHeader(uniqueId) +"|" + this.geneId+"|"+transcriptId+"|"+this.geneName+"|"+this.frame+"|"+transcript.strand+"|"+this.description;
+		
+		if(this.mutationMark == null) {
+			this.mutationMark = "wild";
+		}
+		
+		return toHeader(uniqueId) +"|" + 
+		transcriptId + "#" + 
+		this.frame+ "#"+ 
+		this.mutationMark+"#"+
+		this.idx+ 
+		"|"+this.geneId+" GN="+this.geneName+" FR="+this.frame+" SR="+transcript.strand+" gene_site="+this.description.replace("@"," ");
+	}
+	
+	public String toMetaSimple () {
+		String transcriptId = "";
+		for(String id : transcriptIds) {
+			if(transcriptId.length() != 0) {
+				transcriptId += ",";
+			}
+			transcriptId += id;
+		}
+		while(this.description.startsWith("@")) {
+			this.description = this.description.substring(1);
+		}
+		
+		if(this.mutationMark == null) {
+			this.mutationMark = "wild";
+		}
+		
+		String[] locations = this.description.split("@");
+		String startSite = locations[0].split("\\-")[0];
+		// put the strand info
+		startSite = startSite.replace(":", transcript.strand+":");
+		String endSite = locations[locations.length-1].split("\\-")[1];
+		
+		
+		StringBuilder mutations = new StringBuilder();
+		for(String location : locations) {
+			if(location.contains("[SNP]") ||
+					location.contains("[MNP]") ||
+					location.contains("[INS]") ||
+					location.contains("[DEL]")) {
+				if(mutations.length() > 0) {
+					mutations.append(" ");
+				}
+				mutations.append(location);
+			}
+		}
+		
+		return this.tool +"|" + 
+		transcriptId + "_" + 
+		startSite+ "-" +endSite + "_" +
+		this.frame + "_"+ 
+		this.mutationMark+"#"+ this.idx+ 
+		"|"+this.geneId+" "+this.transcript.classCode+" "+mutations.toString();
 	}
 	
 	public String getKey () {
@@ -257,10 +309,14 @@ public class FastaEntry {
 		return mutEntries;
 	}
 	
-	public static String getSequenceFromExonList (ArrayList<Exon> exons) {
+	
+	
+	public static String getSequenceFromExonList (List<Exon> exons) {
 		StringBuilder sequence = new StringBuilder();
 		
 		for(Exon exon : exons) {
+			if(exon.start == -1 || exon.start == Integer.MAX_VALUE) continue;
+			
 			if(exon.type == InputConvertorConstants.WILD) {
 				sequence.append(exon.refNucleotide);
 			} else {
@@ -273,8 +329,11 @@ public class FastaEntry {
 	
 	public static ArrayList<FastaEntry> enumerateFastaEntry (GenomeLoader refGenome, Transcript t, Collection<Exon> exons, int times) {
 		Exon[] exonGraph = Exon.toExonGraph(exons);
-		refGenome.setSequence(t.chr, exonGraph);
 		ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
+		// if fail to generate sequence
+		if(!refGenome.setSequence(t.chr, exonGraph)) {
+			return entries;
+		}
 		
 		ArrayList<FastaEntry> ntEntries = enumerateCombinatorialMutations(exonGraph);
 		
@@ -311,14 +370,23 @@ public class FastaEntry {
 			for(int frame=0; frame<3; frame++) {
 				FastaEntry aaEntry = new FastaEntry();
 				String peptide = null;
+				String tNucleotide = null;
 				if(t.strand.equalsIgnoreCase("+")) {
-					peptide = Translator.translation(fastaEntry.sequence, frame);
+					String[] seqs = Translator.translation(fastaEntry.sequence, frame);
+					tNucleotide = seqs[0];
+					peptide = seqs[1];
+				} else if(t.strand.equalsIgnoreCase("-")) {
+					String[] seqs = Translator.reverseComplementTranslation(fastaEntry.sequence, frame);
+					tNucleotide = seqs[0];
+					peptide = seqs[1];
 				} else {
-					peptide = Translator.reverseComplementTranslation(fastaEntry.sequence, frame);
+					// skip if there is no strand information
+					continue;
 				}
 				aaEntry.description = fastaEntry.description;
 				aaEntry.frame = frame;
 				aaEntry.sequence = peptide;
+				aaEntry.nucleotide = tNucleotide;
 				aaEntry.transcript = t;
 				aaEntry.mutationMark = fastaEntry.mutationMark;
 				
@@ -336,8 +404,11 @@ public class FastaEntry {
 	
 	public static ArrayList<FastaEntry> enumerateFastaEntryCDS (GenomeLoader refGenome, Transcript t, Collection<Exon> exons) {
 		Exon[] exonGraph = Exon.toExonGraph(exons);
-		refGenome.setSequence(t.chr, exonGraph);
 		ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
+		// if fail to generate sequence
+		if(!refGenome.setSequence(t.chr, exonGraph)) {
+			return entries;
+		}
 		
 		FastaEntry refEntry = new FastaEntry();
 		
@@ -366,10 +437,15 @@ public class FastaEntry {
 		// determine longest frame (to deal with some fragile RNAs)
 		for(int frame=0; frame<3; frame++) {
 			String peptide = null;
+			String tNucleotide = null;
 			if(t.strand.equalsIgnoreCase("+")) {
-				peptide = Translator.translation(refEntry.sequence, frame);
+				String[] seqs = Translator.translation(refEntry.sequence, frame);
+				tNucleotide = seqs[0];
+				peptide = seqs[1];
 			} else {
-				peptide = Translator.reverseComplementTranslation(refEntry.sequence, frame);
+				String[] seqs = Translator.reverseComplementTranslation(refEntry.sequence, frame);
+				tNucleotide = seqs[0];
+				peptide = seqs[1];
 			}
 			
 			String[] xPeptides = peptide.split("X");
@@ -381,23 +457,64 @@ public class FastaEntry {
 			}
 		}
 		
-		FastaEntry aaEntry = new FastaEntry();
-		String peptide = null;
-		if(t.strand.equalsIgnoreCase("+")) {
-			peptide = Translator.translation(refEntry.sequence, longestFrameIdx);
-		} else {
-			peptide = Translator.reverseComplementTranslation(refEntry.sequence, longestFrameIdx);
-		}
-		aaEntry.description = refEntry.description;
-		aaEntry.frame = longestFrameIdx;
-		aaEntry.sequence = peptide;
-		aaEntry.transcript = t;
-		aaEntry.mutationMark = refEntry.mutationMark; // must be null
-		
-		entries.add(aaEntry);
+		// write at most single mutated sequences
+		getSingleMutation(exonGraph[0], 
+				longestFrameIdx, t, 0,
+				new LinkedList<Exon>(), entries);
 		
 		
 		return entries;
+	}
+	
+	private static void getSingleMutation (Exon exon, 
+			int frame, Transcript t, int nCount,
+			LinkedList<Exon> exonList, 
+			ArrayList<FastaEntry> aaEntries) {
+		
+		if(exon.start == Integer.MAX_VALUE) {
+			FastaEntry aaEntry = new FastaEntry();
+			String nucleotide = getSequenceFromExonList(exonList);
+			String peptide = null;
+			String tNucleotide = null;
+			if(t.strand.equalsIgnoreCase("+")) {
+				String[] seqs = Translator.translation(nucleotide, frame);
+				tNucleotide = seqs[0];
+				peptide = seqs[1];
+			} else {
+				String[] seqs = Translator.reverseComplementTranslation(nucleotide, frame);
+				tNucleotide = seqs[0];
+				peptide = seqs[1];
+			}
+			aaEntry.description = getMutationDescription(exonList);
+			aaEntry.frame = frame;
+			aaEntry.sequence = peptide;
+			aaEntry.nucleotide = tNucleotide;
+			aaEntry.transcript = t;
+			aaEntry.mutationMark = nCount > 0 ? 
+					InputConvertorConstants.MUTATION_HEADER_ID : null;
+			aaEntries.add(aaEntry);
+			
+			
+		} else {
+			for(Exon nExon : exon.nextExons) {
+				if(nCount == 1) {
+					// only wild type is acceptable.
+					if(nExon.type == InputConvertorConstants.WILD) {
+						exonList.add(nExon);
+						getSingleMutation(nExon, frame, t, nCount, exonList, aaEntries);
+						exonList.removeLast();
+					}
+				} else {
+					exonList.add(nExon);
+					if(nExon.type == InputConvertorConstants.WILD) {
+						getSingleMutation(nExon, frame, t, nCount, exonList, aaEntries);
+					} else {
+						getSingleMutation(nExon, frame, t, nCount+1, exonList, aaEntries);
+					}
+					exonList.removeLast();
+				}
+			}
+		}
 	}
 
 	private static String getMutationDescription (Exon exon) {

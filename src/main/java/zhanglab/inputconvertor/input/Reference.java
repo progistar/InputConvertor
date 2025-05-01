@@ -21,7 +21,6 @@ public class Reference {
 	}
 	
 	public void enrollGenomeSequence (GenomeLoader refGenome) {
-		System.out.println("## Reference ##");
 		System.out.println("Enroll reference genome");
 		this.refGenome = refGenome;
 	}

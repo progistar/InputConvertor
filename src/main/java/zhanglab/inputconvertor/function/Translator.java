@@ -5,9 +5,11 @@ import zhanglab.inputconvertor.env.InputConvertorConstants;
 
 public class Translator {
 	
-	public static String translation (String nucleotides, int frame) {
+	public static String[] translation (String nucleotides, int frame) {
 		StringBuilder peptides = new StringBuilder();
 		int length = nucleotides.length();
+		
+		StringBuilder translatedNucleotides = new StringBuilder();
 		StringBuilder codon = new StringBuilder();
 		for(int pos=frame; pos<length; pos++) {
 			
@@ -23,13 +25,17 @@ public class Translator {
 				String codonStr = codon.toString();
 				char aa = Codon.nuclToAmino(codonStr.toUpperCase());
 				peptides.append(aa);
+				translatedNucleotides.append(codonStr);
 				codon.setLength(0);
 			}
 		}
-		return peptides.toString();
+		
+		String[] newString = {translatedNucleotides.toString(), peptides.toString()};
+		
+		return newString;
 	}
 	
-	public static String reverseComplementTranslation (String nucleotides, int frame) {
+	public static String[] reverseComplementTranslation (String nucleotides, int frame) {
 		StringBuilder peptides = new StringBuilder();
 		StringBuilder reverseComplementNTs = new StringBuilder(nucleotides);
 		int length = nucleotides.length();
@@ -45,6 +51,7 @@ public class Translator {
 		
 		nucleotides = reverseComplementNTs.reverse().toString();
 		
+		reverseComplementNTs.setLength(0);
 		StringBuilder codon = new StringBuilder();
 		for(int pos=frame; pos<length; pos++) {
 			
@@ -60,10 +67,13 @@ public class Translator {
 				String codonStr = codon.toString();
 				char aa = Codon.nuclToAmino(codonStr.toUpperCase());
 				peptides.append(aa);
+				reverseComplementNTs.append(codonStr);
 				codon.setLength(0);
 			}
 		}
 		
-		return peptides.toString();
+		String[] newString = {reverseComplementNTs.toString(), peptides.toString()};
+		
+		return newString;
 	}
 }

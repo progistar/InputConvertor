@@ -86,7 +86,6 @@ public class Exon implements Comparable<Exon> {
 		newExons.add(startExon);
 		for(Exon exon : exons) {
 			newExons.add(exon.copyExon());
-			
 		}
 		newExons.add(endExon);
 		

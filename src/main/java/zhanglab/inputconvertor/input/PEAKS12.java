@@ -15,9 +15,9 @@ import zhanglab.inputconvertor.data.SimpleSpectraSelector;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.module.TopXgInputGeneric;
 
-public class PEAKS extends TopXgInputGeneric {
+public class PEAKS12 extends TopXgInputGeneric {
 
-	public PEAKS () {}
+	public PEAKS12 () {}
 	
 	///////// PEAKS 11 index ////////////
 	public static int FILE_IDX = -1;
@@ -25,7 +25,8 @@ public class PEAKS extends TopXgInputGeneric {
 	public static int PEPTIDE_IDX = -1;
 	public static int CHARGE_IDX = -1;
 	public static int SCORE_IDX = -1;
-	public static int FEATURE_IDX = -1;
+	public static int PRECURSOR_IDX = -1;
+	public static int MZ_IDX = -1;
 	////////////////////////////////////////////
 	
 	public void topXgInputFormat (String[] args) throws IOException, ParseException {
@@ -67,7 +68,14 @@ public class PEAKS extends TopXgInputGeneric {
 		PEPTIDE_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_PEPTIDE_FIELD_NAME);
 		SCAN_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_SCAN_FIELD_NAME);
 		CHARGE_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_CHARGE_FIELD_NAME);
-		SCORE_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_SCORE_FIELD_NAME);
+		
+		// first check deep novo score
+		SCORE_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_DEEPNOVO_SCORE_FIELD_NAME);
+		if(SCORE_IDX == -1) {
+			SCORE_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_SCORE_FIELD_NAME);
+		}
+		PRECURSOR_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_PRECURSOR_ID_NAME);
+		MZ_IDX = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.PEAKS_PEPMASS_NAME);
         ////////////////////////////////// End of building header ////////////////
 		SimpleSpectraSelector mgf = new SimpleSpectraSelector(sFile);
 		String mgfFileName = sFile.getName().substring(0, sFile.getName().lastIndexOf("."));
@@ -83,7 +91,8 @@ public class PEAKS extends TopXgInputGeneric {
 			// Building record ////////////////////////////////////////
 			// note that if PEAKS runs from .raw files, then the charge state can be altered by PEAKS.
 			String scanNum = fields[SCAN_IDX];
-			String title = mgf.scanToTitle.get(Integer.parseInt(scanNum));
+			int mass = (int) (1000 * Double.parseDouble(fields[MZ_IDX]));
+			String title = fields[PRECURSOR_IDX] + "+" + mass;
 			String charge = fields[CHARGE_IDX];
 			String searchScore = fields[SCORE_IDX];
 			

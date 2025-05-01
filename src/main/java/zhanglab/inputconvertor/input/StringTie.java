@@ -122,7 +122,7 @@ public class StringTie {
     			}
     			
     			if(t.FPKM == Double.MAX_VALUE) {
-    				System.out.println(t.tID);
+    				// System.out.println(t.tID+"\t"+g+"\t"+t.chr);
     			}
     			
     			ArrayList<FastaEntry> entries = this.getTranslation(t);

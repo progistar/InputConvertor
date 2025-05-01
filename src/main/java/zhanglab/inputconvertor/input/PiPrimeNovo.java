@@ -15,17 +15,14 @@ import zhanglab.inputconvertor.data.SimpleSpectraSelector;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.module.TopXgInputGeneric;
 
-public class Casanovo extends TopXgInputGeneric {
-	public Casanovo () {}
+public class PiPrimeNovo extends TopXgInputGeneric {
+	public PiPrimeNovo () {}
 	///////// Casanovo v3.5.0 index ////////////
 	public static int PEPTIDE_INDEX = 1;
-	public static int SPECTRA_REF_INDEX = 14;
-	public static int SCORE_INDEX = 8;
+	public static int SPECTRA_REF_INDEX = 0;
+	public static int SCORE_INDEX = 2;
 	////////////////////////////////////////////
 	/**
-	 * -i file path of .csnv.mztab 
-	 *    or 
-	 *    folder path containing .csnv.mztab files
 	 * 
 	 * 
 	 * @param file.txt
@@ -53,12 +50,8 @@ public class Casanovo extends TopXgInputGeneric {
 		boolean startToRead = false;
 		
 		while((line = BR.readLine()) != null) {
-			// mgf file location
-			if(line.startsWith("MTD") && line.contains("ms_run")) {
-				continue;
-			} 
 			// find header
-			else if(line.startsWith("PSH") || line.startsWith("SpecID")) {
+			if(!startToRead) {
 				
 		        // building header ///////////////////////////////////////////
 				// if the batch header is already written, then pass
@@ -80,9 +73,9 @@ public class Casanovo extends TopXgInputGeneric {
 				startToRead = true;
 				
 				String[] headerSplit = batchHeader.split("\t");
-				SCORE_INDEX = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.CASANOVO_SCORE_FIELD_NAME);
-				PEPTIDE_INDEX = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.CASANOVO_PEPTIDE_FIELD_NAME);
-				SPECTRA_REF_INDEX = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.CASANOVO_SPECTRA_REF_FIELD_NAME);
+				SCORE_INDEX = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.piPRIME_NOVO_SCORE_FIELD_NAME);
+				PEPTIDE_INDEX = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.piPRIME_NOVO_PEPTIDE_FIELD_NAME);
+				SPECTRA_REF_INDEX = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.piPRIME_NOVO_SPECTRA_REF_FIELD_NAME);
 			} 
 			// convert record
 			else if(startToRead) {
@@ -94,7 +87,10 @@ public class Casanovo extends TopXgInputGeneric {
 				}
 				
 				// Building record ////////////////////////////////////////
-				
+				// skip null peptide
+				if(fields[PEPTIDE_INDEX].length() == 0) {
+					continue;
+				}
 				Peptide peptide = new Peptide(fields[PEPTIDE_INDEX], ptmTable);
 				if(!peptide.isPass) {
 					System.out.println("Unknown characters were detected: "+peptide.modPeptide);
@@ -102,19 +98,14 @@ public class Casanovo extends TopXgInputGeneric {
 				}
 				
 				String spectraRef = fields[SPECTRA_REF_INDEX];
-				int scanIdx = Integer.parseInt(spectraRef.split("\\=")[1]);
 				
-				// index (if casanovo was done with mgf file)
-				if(spectraRef.toLowerCase().contains("index")) {
-					scanIdx = mgf.indexToScan.get(scanIdx);
-				} 
-				
+				String[] split = spectraRef.split("\\.");
+				int scanIdx = Integer.parseInt(split[split.length-2]);
+				String charge = split[split.length-1];
 				String title = mgf.scanToTitle.get(scanIdx);
 				String rt = mgf.titleToRT.get(title);
 				String searchScore = fields[SCORE_INDEX];
 				
-				int len = title.split("\\.").length;
-				String charge = title.split("\\.")[len-1];
 				
 				BW
 				.append(title).append("\t")

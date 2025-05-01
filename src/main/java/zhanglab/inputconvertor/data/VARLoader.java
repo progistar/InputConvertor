@@ -145,6 +145,9 @@ public class VARLoader {
 			}
 			String[] fields = line.split("\t");
 			String chr = fields[0];
+			if(!chr.startsWith("chr")) {
+				chr = "chr"+chr;
+			}
 			int pos = Integer.parseInt(fields[1]);
 			
 			String[] refs = fields[3].split("\\,");;
@@ -194,7 +197,7 @@ public class VARLoader {
 						type = InputConvertorConstants.INS;
 						typeStr = "INS";
 						
-						startPos = refLen - 1;
+						startPos = startPos + refLen - 1;
 						
 						alt = alt.substring(refLen);
 						ref = "";
@@ -206,6 +209,7 @@ public class VARLoader {
 					if(removeDuplication.get(key) != null) {
 						continue;
 					}
+					System.out.println(key);
 					removeDuplication.put(key, "");
 					
 					//**

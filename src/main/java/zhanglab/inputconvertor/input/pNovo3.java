@@ -64,6 +64,7 @@ public class pNovo3 extends TopXgInputGeneric {
 	 */
 	public void topXgInputFormat (String[] args) throws IOException, ParseException {
 		parseOptions(args);
+		Hashtable<String, String> ptmTable = loadPTMTable();
         
         File iFile = new File(inputFilePath);
         File sFile = new File(spectrumFilePath);
@@ -113,7 +114,11 @@ public class pNovo3 extends TopXgInputGeneric {
 						// Building record ////////////////////////////////////////
 						fields = line.split("\t");
 						// a is M+oxidation, M+15.995
-						Peptide peptide = new Peptide(fields[PEPTIDE_IDX], InputConvertorConstants.PNOVO3);
+						Peptide peptide = new Peptide(fields[PEPTIDE_IDX], ptmTable);
+						if(!peptide.isPass) {
+							System.out.println("Unknown characters were detected: "+peptide.modPeptide);
+							continue;
+						}
 						// charge feature is different from original MGF. It is supposed to be an error.
 						
 						int len = title.split("\\.").length;

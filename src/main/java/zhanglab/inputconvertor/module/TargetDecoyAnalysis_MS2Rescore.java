@@ -18,7 +18,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import zhanglab.inputconvertor.data.Peptide;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
 class TDRecord implements Comparable<TDRecord>{
@@ -47,43 +46,47 @@ class TDRecord implements Comparable<TDRecord>{
 	}
 }
 
-public class TargetDecoyAnalysis {
+public class TargetDecoyAnalysis_MS2Rescore {
 
 	public static String inputFilePath = null;
 	public static String outputFilePath = null;
-	public static String targetFilePath = null;
-	public static String decoyFilePath = null;
+	public static String ms2RescoreFilePath = null;
+	public static String pinFilePath = null;
 	public static double fdr = -1;
-	public static double minScore = 0;
+	public static boolean isLengthSpecific = false;
+	public static boolean isPrintDecoy = false;
 	
-	private TargetDecoyAnalysis() {};
+	private TargetDecoyAnalysis_MS2Rescore() {};
 	
 	
 	public static void doFDR (String[] args) throws IOException, ParseException {
 		
         parseOptions(args);
         
-        Hashtable<String, String[]> targetPSMs = getHashTableFromPSM(targetFilePath);
-        Hashtable<String, String[]> decoyPSMs = getHashTableFromPSM(decoyFilePath);
+        Hashtable<String, String[]> topRankPSMs = readMS2RescoreTSV(ms2RescoreFilePath);
         
         
         BufferedReader BR = new BufferedReader(new FileReader(inputFilePath));
+        BufferedReader PIN = new BufferedReader(new FileReader(pinFilePath));
         BufferedWriter BW = new BufferedWriter(new FileWriter(outputFilePath));
         String line = null;
         String header = BR.readLine();
+        String[] pinHeader = PIN.readLine().split("\t");
+        
+        int psmIdIdx = InputConvertorConstants.getFieldIndex(pinHeader, "SpecId");
+		int proteinIdIdx = InputConvertorConstants.getFieldIndex(pinHeader, "Proteins");
+		int peptideIdx = InputConvertorConstants.getFieldIndex(pinHeader, "Peptide");
         
         // build header ////////////////////////////////////////////////
         BW.append(header).append("\t")
-        .append("percolator_score");
+        .append("final_score");
         BW.newLine();
         ////////////////////////////////////// End of building header /
         
         String[] headerSplit = header.split("\t");
         int specIdIdx = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.IC_SPEC_ID_FEILD_NAME);
         int labelIdx = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.IC_LABEL_FEILD_NAME);
-        int genomicIdIdx = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.IC_GENOMIC_ID_FEILD_NAME);
         int isCanonicalIdx = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.IC_IS_CANONICAL_FEILD_NAME);
-        int icPeptideIdx = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.IC_PEPTIDE_FIELD_NAME);
         int inferredPeptideIdx = InputConvertorConstants.getFieldIndex(headerSplit, InputConvertorConstants.IC_INFERRED_PEPTIDE_FIELD_NAME);
 
         
@@ -92,45 +95,46 @@ public class TargetDecoyAnalysis {
         
         Hashtable<String, String> duplications = new Hashtable<String, String>();
         while((line = BR.readLine()) != null) {
-        	String[] fields = line.split("\t");
-        	String specId = fields[specIdIdx];
-        	String genomicId = fields[genomicIdIdx];
+        	String pinRecord = PIN.readLine();
+        	
+        	// generate key from pin file
+        	String[] fields = pinRecord.split("\t");
+    		
+    		StringBuilder proteins = new StringBuilder("[");
+    		for(int i=proteinIdIdx; i<fields.length; i++) {
+    			proteins.append("'").append(fields[i]).append("',");
+    		}
+    		proteins.setLength(proteins.length()-1); // remove , at the end of string
+    		proteins.append("]");
+    		
+    		String key = fields[psmIdIdx]+"+"+fields[peptideIdx]+"+"+proteins.toString();
+        	
+    		String[] ms2RescoreRecord = topRankPSMs.get(key);
+    		if(ms2RescoreRecord == null) {
+    			continue;
+    		}
+    		
+    		
+    		
+        	fields = line.split("\t");
         	String isCanonical = fields[isCanonicalIdx];
         	String label = fields[labelIdx];
-        	Peptide peptide = new Peptide(fields[icPeptideIdx], InputConvertorConstants.IC_CONVERTOR);
-        	peptide.icPeptideToILDetermination(fields[inferredPeptideIdx]);
-        	int peptideLength = fields[inferredPeptideIdx].length();
-        	
-        	// key: specId + peptide.modPeptide
-        	// this is because same genomic id and spec id can be occurred when there are modified peptides (site-localization problem).
-        	// Casanovo sometimes distinguishes I/L... 
-        	String key = specId+"_"+peptide.modPeptide;
-        	
-        	String[] psm = targetPSMs.get(key) != null ? targetPSMs.get(key) : decoyPSMs.get(key);
-        	if(psm == null) {
-        		continue;
-        	}
-        	
-        	String genomicIdInPSM = psm[0].replace("XXX_", "");
-        	
-        	if(genomicIdInPSM.equalsIgnoreCase(genomicId)) {
-        		TDRecord record = new TDRecord();
-        		record.record = line;
-        		record.score = Double.parseDouble(psm[1]);
-        		record.label = Integer.parseInt(label);
-        		record.peptideLength = peptideLength;
-        		
-        		if(isCanonical.equalsIgnoreCase("true")) {
-        			cRecords.add(record);
-        		} else {
-        			ncRecords.add(record);
-        		}
-        	}
+        	int peptideLength = fields[inferredPeptideIdx].replace("[+-0123456789.*\\(\\)]", "").length();
+        	TDRecord record = new TDRecord();
+    		record.record = line;
+    		record.score = Double.parseDouble(ms2RescoreRecord[0]);
+    		record.label = Integer.parseInt(label);
+    		record.peptideLength = peptideLength;
+    		
+    		if(isCanonical.equalsIgnoreCase("true")) {
+    			cRecords.add(record);
+    		} else {
+    			ncRecords.add(record);
+    		}
         }
         
         // length-specific FDR control
-        ArrayList<TDRecord> passTargetList = new ArrayList<TDRecord>();
-        boolean isLengthSpecific = false;
+        ArrayList<TDRecord> passList = new ArrayList<TDRecord>();
         if(isLengthSpecific) {
         	for(int len=7; len<=9; len++) {
             	int startLen = len;
@@ -155,11 +159,11 @@ public class TargetDecoyAnalysis {
             	System.out.println("Canonical PSMs with length "+len);
             	System.out.println("Target PSMs: "+getNumOfRecords(lengthSpecificCRecords, 1));
             	System.out.println("Decoy PSMs: "+getNumOfRecords(lengthSpecificCRecords, -1));
-            	passTargetList.addAll(getFDR(lengthSpecificCRecords, fdr));
+            	passList.addAll(getFDR(lengthSpecificCRecords, fdr));
             	System.out.println("Non-canonical PSMs with length "+len);
             	System.out.println("Target PSMs: "+getNumOfRecords(lengthSpecificNCRecords, 1));
             	System.out.println("Decoy PSMs: "+getNumOfRecords(lengthSpecificNCRecords, -1));
-            	passTargetList.addAll(getFDR(lengthSpecificNCRecords, fdr));
+            	passList.addAll(getFDR(lengthSpecificNCRecords, fdr));
             }
         } else {
         	int len7=0; int len8=0; int len9=0;
@@ -177,7 +181,7 @@ public class TargetDecoyAnalysis {
         		}
         	}
         	System.out.println("IDs: "+len7+"|"+len8+"|"+len9);
-        	passTargetList.addAll(pass);
+        	passList.addAll(pass);
         	System.out.println("Non-canonical PSMs");
         	System.out.println("Target PSMs: "+getNumOfRecords(ncRecords, 1));
         	System.out.println("Decoy PSMs: "+getNumOfRecords(ncRecords, -1));
@@ -193,12 +197,12 @@ public class TargetDecoyAnalysis {
         		}
         	}
         	System.out.println("IDs: "+len7+"|"+len8+"|"+len9);
-        	passTargetList.addAll(pass);
+        	passList.addAll(pass);
         }
         
         
-        for(int i=0; i<passTargetList.size(); i++) {
-        	TDRecord record = passTargetList.get(i);
+        for(int i=0; i<passList.size(); i++) {
+        	TDRecord record = passList.get(i);
         	
         	String specId = record.record.split("\t")[specIdIdx];
         	if(duplications.get(specId) == null) {
@@ -212,6 +216,7 @@ public class TargetDecoyAnalysis {
         
         BW.close();
         BR.close();
+        PIN.close();
 	}
 	
 	private static int getNumOfRecords (ArrayList<TDRecord> records, int label) {
@@ -261,38 +266,42 @@ public class TargetDecoyAnalysis {
 			}
 		}
 		
-		ArrayList<TDRecord> passTargetList = new ArrayList<TDRecord>();
+		ArrayList<TDRecord> passList = new ArrayList<TDRecord>();
 		for(int i=0; i<=lastIdx; i++) {
 			TDRecord record = records.get(i);
-			if(record.label > 0) {
-				passTargetList.add(record);
+			if(isPrintDecoy) {
+				passList.add(record);
+			} else if(record.label > 0) {
+				passList.add(record);
 			}
 		}
 		
 		System.out.println("FDR: " + estimatedFDR);
-		System.out.println("IDs: "+passTargetList.size());
+		System.out.println("IDs: "+passList.size());
 		
-		return passTargetList;
+		return passList;
 	}
 	
 	
 	
-	private static Hashtable<String, String[]> getHashTableFromPSM (String fileName) throws IOException {
+	private static Hashtable<String, String[]> readMS2RescoreTSV (String fileName) throws IOException {
 		File file = new File(fileName);
 		Hashtable<String, String[]> table = new Hashtable<String, String[]>();
 		
 		BufferedReader BR = new BufferedReader(new FileReader(file));
 		String line = null;
 		String[] header = BR.readLine().split("\t");
-		int psmIdIdx = InputConvertorConstants.getFieldIndex(header, "PSMId");
+		int psmIdIdx = InputConvertorConstants.getFieldIndex(header, "spectrum_id");
 		int scoreIdx = InputConvertorConstants.getFieldIndex(header, "score");
-		int proteinIdIdx = InputConvertorConstants.getFieldIndex(header, "proteinIds");
-		int peptideIdx = InputConvertorConstants.getFieldIndex(header, "peptide");
+		int proteinIdIdx = InputConvertorConstants.getFieldIndex(header, "protein_list");
+		int peptideIdx = InputConvertorConstants.getFieldIndex(header, "peptidoform");
 		
 		while((line = BR.readLine()) != null) {
 			String[] fields = line.split("\t");
-			String[] record = {fields[proteinIdIdx], fields[scoreIdx]};
-			String key = fields[psmIdIdx]+"_"+fields[peptideIdx];
+			String[] record = {fields[scoreIdx], line};
+			// peptidoform = Peptide/Charge
+			String peptide = fields[peptideIdx].split("\\/")[0];
+			String key = fields[psmIdIdx]+"+"+peptide+"+"+fields[proteinIdIdx];
 			table.put(key, record);
 		}
 		
@@ -313,6 +322,13 @@ public class TargetDecoyAnalysis {
 				.desc("pXg result")
 				.build();
 		
+		Option optionPinFile = Option.builder("p")
+				.longOpt("pin").argName("pin")
+				.hasArg()
+				.required(true)
+				.desc("input pin file for MS2Rescore")
+				.build();
+		
 		Option optionOutput = Option.builder("o")
 				.longOpt("output").argName("tsv")
 				.hasArg()
@@ -320,18 +336,11 @@ public class TargetDecoyAnalysis {
 				.desc("fdr output file")
 				.build();
 		
-		Option optionTargetFile = Option.builder("t")
-				.longOpt("target").argName("psm")
+		Option optionMS2RescoreTSV = Option.builder("t")
+				.longOpt("ms2rescore").argName("tsv")
 				.hasArg()
 				.required(true)
-				.desc("target psm file from Percolator")
-				.build();
-		
-		Option optionDecoyFile = Option.builder("d")
-				.longOpt("decoy").argName("psm")
-				.hasArg()
-				.required(true)
-				.desc("decoy psm file from Percolator")
+				.desc("MS2Rescore result file")
 				.build();
 		
 		Option optionFDR = Option.builder("f")
@@ -341,19 +350,25 @@ public class TargetDecoyAnalysis {
 				.desc("FDR value")
 				.build();
 		
-		Option optionMinScore = Option.builder("s")
-				.longOpt("score").argName("float")
-				.hasArg()
+		Option optionLengthSpecificFDR = Option.builder("l")
+				.longOpt("length_specific")
 				.required(false)
-				.desc("Min percolator score (default: 0)")
+				.desc("Calculate a length-specific FDR")
+				.build();
+		
+		Option optionPrintDecoy = Option.builder("d")
+				.longOpt("print_decoy")
+				.required(false)
+				.desc("Print decoys in the final result")
 				.build();
 		
 		options.addOption(optionInput)
-		.addOption(optionTargetFile)
-		.addOption(optionDecoyFile)
+		.addOption(optionPinFile)
+		.addOption(optionMS2RescoreTSV)
 		.addOption(optionFDR)
 		.addOption(optionOutput)
-		.addOption(optionMinScore);
+		.addOption(optionPrintDecoy)
+		.addOption(optionLengthSpecificFDR);
 		
 		CommandLineParser parser = new DefaultParser();
 	    HelpFormatter helper = new HelpFormatter();
@@ -362,12 +377,14 @@ public class TargetDecoyAnalysis {
 	    ArrayList<String> tmpArgs = new ArrayList<String>();
 	    for(int i=0; i<args.length; i++) {
 	    	if(args[i].equalsIgnoreCase("-i") || args[i].equalsIgnoreCase("--input") ||
-			args[i].equalsIgnoreCase("-t") || args[i].equalsIgnoreCase("--target") ||
-			args[i].equalsIgnoreCase("-d") || args[i].equalsIgnoreCase("--decoy") ||
+			args[i].equalsIgnoreCase("-t") || args[i].equalsIgnoreCase("--ms2rescore") ||
+			args[i].equalsIgnoreCase("-p") || args[i].equalsIgnoreCase("--pin") ||
 			args[i].equalsIgnoreCase("-f") || args[i].equalsIgnoreCase("--fdr") ||
-			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output") ||
-			args[i].equalsIgnoreCase("-s") || args[i].equalsIgnoreCase("--score")) {
+			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output")) {
 	    		tmpArgs.add(args[i++]);
+	    		tmpArgs.add(args[i]);
+	    	} else if(args[i].equalsIgnoreCase("-l") || args[i].equalsIgnoreCase("--length_specific") ||
+	    			args[i].equalsIgnoreCase("-d") || args[i].equalsIgnoreCase("--print_decoy")) {
 	    		tmpArgs.add(args[i]);
 	    	}
 	    }
@@ -389,20 +406,23 @@ public class TargetDecoyAnalysis {
 		    	outputFilePath = cmd.getOptionValue("o");
 		    }
 		    
-		    if(cmd.hasOption("d")) {
-		    	decoyFilePath = cmd.getOptionValue("d");
+		    if(cmd.hasOption("p")) {
+		    	pinFilePath = cmd.getOptionValue("p");
 		    }
 		    
 		    if(cmd.hasOption("t")) {
-		    	targetFilePath = cmd.getOptionValue("t");
+		    	ms2RescoreFilePath = cmd.getOptionValue("t");
 		    }
 		    
 		    if(cmd.hasOption("f")) {
 		    	fdr = Double.parseDouble(cmd.getOptionValue("f"));
 		    }
 		    
-		    if(cmd.hasOption("s")) {
-		    	minScore = Double.parseDouble(cmd.getOptionValue("s"));
+		    if(cmd.hasOption("l")) {
+		    	isLengthSpecific = true;
+		    }
+		    if(cmd.hasOption("d")) {
+		    	isPrintDecoy = true;
 		    }
 		} catch (ParseException e) {
 			System.out.println(e.getMessage());
