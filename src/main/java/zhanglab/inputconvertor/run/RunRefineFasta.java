@@ -35,11 +35,14 @@ public class RunRefineFasta {
 		
 		FastaLoader[] referenceFastas = new FastaLoader[referenceFiles.length];
 		FastaLoader[] nonreferenceFastas = new FastaLoader[nonreferenceFiles.length];
-		FastaLoader[] filterFastas = new FastaLoader[filterFiles.length];
+		FastaLoader[] filterFastas = null;
 		
-		// load filter files
-		for(int i=0; i<filterFastas.length; i++) {
-			filterFastas[i] = new FastaLoader(filterFiles[i]);
+		if(filterFiles != null) {
+			filterFastas = new FastaLoader[filterFiles.length];
+			// load filter files
+			for(int i=0; i<filterFastas.length; i++) {
+				filterFastas[i] = new FastaLoader(filterFiles[i]);
+			}
 		}
 		
 		System.out.println("Filter overlapped peptide sequences between the non-reference and the filter list");
@@ -48,8 +51,10 @@ public class RunRefineFasta {
 			nonreferenceFastas[i] = new FastaLoader(nonreferenceFiles[i]);
 			System.out.println(nonreferenceFiles[i].getName());
 			// remove reference
-			for(int j=0; j<filterFastas.length; j++) {
-				nonreferenceFastas[i].removeSequenceOverlapped(filterFastas[j].entries, 20);
+			if(filterFiles != null) {
+				for(int j=0; j<filterFastas.length; j++) {
+					nonreferenceFastas[i].removeSequenceOverlapped(filterFastas[j].entries, 20);
+				}
 			}
 		}
 		
@@ -76,8 +81,8 @@ public class RunRefineFasta {
 				BW.append(sequence);
 				BW.newLine();
 			}
-			
 		}
+		
 		for(int i=0; i<nonreferenceFastas.length; i++) {
 			ArrayList<FastaEntry> entries = nonreferenceFastas[i].entries;
 			for(FastaEntry entry : entries) {
@@ -120,7 +125,7 @@ public class RunRefineFasta {
 		Option optionFilter = Option.builder("f")
 				.longOpt("filter").argName("fasta")
 				.hasArg()
-				.required(true)
+				.required(false)
 				.desc("a lits of protein sequences to be filtered in non-reference fasta files (separted by comma).")
 				.build();
 		
