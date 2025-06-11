@@ -9,7 +9,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import zhanglab.inputconvertor.data.FastaEntry;
-import zhanglab.inputconvertor.data.Transcript;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
 public class Arriba {
@@ -32,6 +31,8 @@ public class Arriba {
         int peptideIdx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_PEPTIDE_FIELD_NAME);
         int gene1Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_GENE1_FIELD_NAME);
         int gene2Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_GENE2_FIELD_NAME);
+        int geneId1Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_GENEID1_FIELD_NAME);
+        int geneId2Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_GENEID2_FIELD_NAME);
         int breakPoint1Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_BREAK_POINT1_FIELD_NAME);
         int breakPoint2Idx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_BREAK_POINT2_FIELD_NAME);
         int frameIdx = InputConvertorConstants.getFieldIndex(header, InputConvertorConstants.ARRIBA_FRAME_FIELD_NAME);
@@ -60,6 +61,8 @@ public class Arriba {
         	
         	String gene1 = fields[gene1Idx];
         	String gene2 = fields[gene2Idx];
+        	String geneId1 = fields[geneId1Idx];
+        	String geneId2 = fields[geneId2Idx];
         	String bp1 = fields[breakPoint1Idx];
         	String bp2 = fields[breakPoint2Idx];
         	String frame = fields[frameIdx];
@@ -71,13 +74,15 @@ public class Arriba {
         	FastaEntry entry = new FastaEntry();
 			entry.tool = InputConvertorConstants.ARRIBA_HEADER_ID;
 			entry.idx = fastaEntries.size()+1;
-			entry.originHeader = gene1+"+"+gene2+"|"+transcript1+"+"+transcript2+"|"+gene1+"+"+gene2+"|"+frame+"|"+strand1+","+strand2+"|"+bp1+","+bp2;
+			entry.geneName = gene1+"+"+gene2;
+			entry.geneId = geneId1+"+"+geneId2;
+			entry.transcriptId = transcript1+"+"+transcript2;
+			entry.frame = frame;
+			entry.strand = strand1+","+strand2;
+			entry.description = bp1+","+bp2;
+			//entry.originHeader = gene1+"+"+gene2+"|"+transcript1+"+"+transcript2+"|"+gene1+"+"+gene2+"|"+frame+"|"+strand1+","+strand2+"|"+bp1+","+bp2;
 			
 			entry.sequence = fullPeptide;
-			
-			
-			entry.frame = 0;
-			
 			fastaEntries.add(entry);
         	
         }

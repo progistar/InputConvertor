@@ -51,7 +51,8 @@ public class Reference {
     					String geneName = this.refGTF.geneToGeneName.get(g);
     					entry.geneName = geneName == null ? g : geneName;
     					entry.geneId = g;
-    					entry.transcriptIds.add(entry.transcript.tID);
+    					entry.transcriptId = entry.transcript.tID;
+    					entry.strand = entry.transcript.strand;
     					entry.tool = InputConvertorConstants.REF_HEADER_ID;
     				}
     				fastaEntries.addAll(entries);
@@ -62,7 +63,8 @@ public class Reference {
     					String geneName = this.refGTF.geneToGeneName.get(g);
     					entry.geneName = geneName == null ? g : geneName;
     					entry.geneId = g;
-    					entry.transcriptIds.add(entry.transcript.tID);
+    					entry.transcriptId = entry.transcript.tID;
+    					entry.strand = entry.transcript.strand;
     					entry.tool = InputConvertorConstants.EXON_TRANSLATION_HEADER_ID;
     				}
     				fastaEntries.addAll(entries);
@@ -72,7 +74,11 @@ public class Reference {
         	
         });
         
+        for(int i=0; i<fastaEntries.size(); i++) {
+        	fastaEntries.get(i).idx = i+1;
+        }
+        
         // remove duplications
-        return FastaEntry.removeDuplications(fastaEntries);
+        return fastaEntries; //FastaEntry.removeDuplications(fastaEntries);
 	}
 }

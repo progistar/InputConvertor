@@ -50,7 +50,8 @@ public class Run {
         }
         else if(module.equalsIgnoreCase("ms2rescore")) {
         	// -i -p -d
-        	TargetDecoyAnalysis_MS2Rescore.doFDR(args);
+        	TargetDecoyAnalysis_MS2Rescore.doFDR(args, InputConvertorConstants.PSM_LEVEL);
+        	TargetDecoyAnalysis_MS2Rescore.doFDR(args, InputConvertorConstants.PEPTIDE_LEVEL);
         }
         
         long endTime = System.currentTimeMillis();

@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -22,6 +24,7 @@ import zhanglab.inputconvertor.env.InputConvertorConstants;
 
 class TDRecord implements Comparable<TDRecord>{
 	String record;
+	String peptide;
 	double score;
 	int label;
 	int peptideLength;
@@ -56,10 +59,23 @@ public class TargetDecoyAnalysis_MS2Rescore {
 	public static boolean isLengthSpecific = false;
 	public static boolean isPrintDecoy = false;
 	
+	public static String peptideParserRegExr		=	"[A-Z]"; // read sequence matched to the RegExr.
+	public static String ptmParserRegExr			=	"(\\[\\w+:\\d+\\]|\\([+-]?\\d+\\.*\\d+\\)|[+-]?\\d+\\.*\\d+|\\[[+-]?\\d+\\.*\\d+\\])";
+	
 	private TargetDecoyAnalysis_MS2Rescore() {};
 	
 	
-	public static void doFDR (String[] args) throws IOException, ParseException {
+	public static void doFDR (String[] args, byte level) throws IOException, ParseException {
+		String strLevel = "PSM";
+		if(level == InputConvertorConstants.PEPTIDE_LEVEL) {
+			strLevel = "PEPTIDE";
+		}
+		
+		
+		// there are PTM patterns : May 1, 2025
+		Pattern ptmPattern = Pattern.compile(ptmParserRegExr);
+		// set regular expressions
+		Pattern peptideRegExr	= Pattern.compile(peptideParserRegExr);
 		
         parseOptions(args);
         
@@ -68,7 +84,7 @@ public class TargetDecoyAnalysis_MS2Rescore {
         
         BufferedReader BR = new BufferedReader(new FileReader(inputFilePath));
         BufferedReader PIN = new BufferedReader(new FileReader(pinFilePath));
-        BufferedWriter BW = new BufferedWriter(new FileWriter(outputFilePath));
+        BufferedWriter BW = new BufferedWriter(new FileWriter(outputFilePath+"."+strLevel.toLowerCase()));
         String line = null;
         String header = BR.readLine();
         String[] pinHeader = PIN.readLine().split("\t");
@@ -115,12 +131,31 @@ public class TargetDecoyAnalysis_MS2Rescore {
     		}
     		
     		
-    		
         	fields = line.split("\t");
         	String isCanonical = fields[isCanonicalIdx];
         	String label = fields[labelIdx];
-        	int peptideLength = fields[inferredPeptideIdx].replace("[+-0123456789.*\\(\\)]", "").length();
+        	String peptide = fields[inferredPeptideIdx];
+        	
+        	Matcher matcher = ptmPattern.matcher(peptide);
+        	Hashtable<String, Boolean> ptmTable = new Hashtable<String, Boolean>();
+			while(matcher.find()) {
+				ptmTable.put(matcher.group(), true);
+			}
+			
+			// remove unimod and mass relating patterns
+			peptide = peptide.replaceAll(ptmParserRegExr, "");
+			
+			// find peptide strip sequence
+			matcher = peptideRegExr.matcher(peptide);
+			StringBuilder sequence = new StringBuilder();
+			while(matcher.find()) {
+				sequence.append(matcher.group());
+			}
+			
+        	
+        	int peptideLength = sequence.length();
         	TDRecord record = new TDRecord();
+        	record.peptide = fields[inferredPeptideIdx];
     		record.record = line;
     		record.score = Double.parseDouble(ms2RescoreRecord[0]);
     		record.label = Integer.parseInt(label);
@@ -132,6 +167,17 @@ public class TargetDecoyAnalysis_MS2Rescore {
     			ncRecords.add(record);
     		}
         }
+        
+        // sort
+        Collections.sort(cRecords);
+        Collections.sort(ncRecords);
+        
+        if(level == InputConvertorConstants.PEPTIDE_LEVEL) {
+        	cRecords = getPeptideLevel(cRecords);
+        	ncRecords = getPeptideLevel(ncRecords);
+        }
+        
+        
         
         // length-specific FDR control
         ArrayList<TDRecord> passList = new ArrayList<TDRecord>();
@@ -156,20 +202,20 @@ public class TargetDecoyAnalysis_MS2Rescore {
             		}
             	}
             	
-            	System.out.println("Canonical PSMs with length "+len);
-            	System.out.println("Target PSMs: "+getNumOfRecords(lengthSpecificCRecords, 1));
-            	System.out.println("Decoy PSMs: "+getNumOfRecords(lengthSpecificCRecords, -1));
+            	System.out.println("Canonical "+strLevel+"s with length "+len);
+            	System.out.println("Target "+strLevel+"s: "+getNumOfRecords(lengthSpecificCRecords, 1));
+            	System.out.println("Decoy "+strLevel+"s: "+getNumOfRecords(lengthSpecificCRecords, -1));
             	passList.addAll(getFDR(lengthSpecificCRecords, fdr));
-            	System.out.println("Non-canonical PSMs with length "+len);
-            	System.out.println("Target PSMs: "+getNumOfRecords(lengthSpecificNCRecords, 1));
-            	System.out.println("Decoy PSMs: "+getNumOfRecords(lengthSpecificNCRecords, -1));
+            	System.out.println("Non-canonical "+strLevel+"s with length "+len);
+            	System.out.println("Target "+strLevel+"s: "+getNumOfRecords(lengthSpecificNCRecords, 1));
+            	System.out.println("Decoy "+strLevel+"s: "+getNumOfRecords(lengthSpecificNCRecords, -1));
             	passList.addAll(getFDR(lengthSpecificNCRecords, fdr));
             }
         } else {
         	int len7=0; int len8=0; int len9=0;
-        	System.out.println("Canonical PSMs");
-        	System.out.println("Target PSMs: "+getNumOfRecords(cRecords, 1));
-        	System.out.println("Decoy PSMs: "+getNumOfRecords(cRecords, -1));
+        	System.out.println("Canonical "+strLevel+"s");
+        	System.out.println("Target "+strLevel+"s: "+getNumOfRecords(cRecords, 1));
+        	System.out.println("Decoy "+strLevel+"s: "+getNumOfRecords(cRecords, -1));
         	ArrayList<TDRecord> pass = getFDR(cRecords, fdr);
         	for(int i=0; i<pass.size(); i++) {
         		if(pass.get(i).label > 0 && pass.get(i).peptideLength == 7) {
@@ -182,9 +228,9 @@ public class TargetDecoyAnalysis_MS2Rescore {
         	}
         	System.out.println("IDs: "+len7+"|"+len8+"|"+len9);
         	passList.addAll(pass);
-        	System.out.println("Non-canonical PSMs");
-        	System.out.println("Target PSMs: "+getNumOfRecords(ncRecords, 1));
-        	System.out.println("Decoy PSMs: "+getNumOfRecords(ncRecords, -1));
+        	System.out.println("Non-canonical "+strLevel+"s");
+        	System.out.println("Target "+strLevel+"s: "+getNumOfRecords(ncRecords, 1));
+        	System.out.println("Decoy "+strLevel+"s: "+getNumOfRecords(ncRecords, -1));
         	pass = getFDR(ncRecords, fdr);
         	len7=0; len8=0; len9=0;
         	for(int i=0; i<pass.size(); i++) {
@@ -239,8 +285,6 @@ public class TargetDecoyAnalysis_MS2Rescore {
 	}
 	
 	private static ArrayList<TDRecord> getFDR (ArrayList<TDRecord> records, double fdr) {
-		Collections.sort(records);
-		
 		double tCount = 0;
 		double dCount = 0;
 		double estimatedFDR = 0;
@@ -282,6 +326,20 @@ public class TargetDecoyAnalysis_MS2Rescore {
 		return passList;
 	}
 	
+	private static ArrayList<TDRecord> getPeptideLevel (ArrayList<TDRecord> records) {
+		ArrayList<TDRecord> peptRecords = new ArrayList<TDRecord>();
+		
+		Hashtable<String, String> check = new Hashtable<String, String>();
+		
+		for(TDRecord record : records) {
+			if(check.get(record.peptide) == null) {
+				peptRecords.add(record);
+				check.put(record.peptide, "");
+			}
+		}
+		
+		return peptRecords;
+	}
 	
 	
 	private static Hashtable<String, String[]> readMS2RescoreTSV (String fileName) throws IOException {

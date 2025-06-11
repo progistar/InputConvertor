@@ -2,11 +2,10 @@ package zhanglab.inputconvertor.env;
 
 public class InputConvertorConstants {
 
-	public static final String VERSION = "Version: v1.1.0a";
+	public static final String VERSION = "Version: v1.1.1";
 	
 	// ## Generated features from Input Convertor
 	public static final String IC_RT_FIELD_NAME = "ic_observed_rt";
-	public static final String IC_ION_MOBILITY_FIELD_NAME = "ic_observed_im";  // TODO
 	public static final String IC_TITLE_FIELD_NAME = "ic_title";
 	public static final String IC_SCAN_NUM_FIELD_NAME = "ic_scan_num";
 	public static final String IC_CHARGE_FIELD_NAME = "ic_charge";
@@ -25,7 +24,7 @@ public class InputConvertorConstants {
 	public static final String IC_GENOMIC_ID_FEILD_NAME = "GenomicID";
 	public static final String IC_GENE_NAME_FEILD_NAME = "GeneName";
 	public static final String IC_LABEL_FEILD_NAME = "Label";
-	public static final String IC_IS_CANONICAL_FEILD_NAME = "IsCanonical";
+	public static final String IC_IS_CANONICAL_FEILD_NAME = "IsReference";
 	
 	
 	// ## Tool sets
@@ -104,12 +103,20 @@ public class InputConvertorConstants {
 	public static final String ARRIBA_GENE2_FIELD_NAME		=	"gene2";
 	public static final String ARRIBA_BREAK_POINT1_FIELD_NAME		=	"breakpoint1";
 	public static final String ARRIBA_BREAK_POINT2_FIELD_NAME		=	"breakpoint2";
-	public static final String ARRIBA_HEADER_ID				=	"@FG";
+	public static final String ARRIBA_HEADER_ID				=	"fg";
 	public static final String ARRIBA_FRAME_FIELD_NAME		=	"reading_frame";
 	public static final String ARRIBA_STRAND1_FIELD_NAME	=	"strand1(gene/fusion)";
 	public static final String ARRIBA_STRAND2_FIELD_NAME	=	"strand2(gene/fusion)";
 	public static final String ARRIBA_TRANSCRIPT1_FIELD_NAME=	"transcript_id1";
 	public static final String ARRIBA_TRANSCRIPT2_FIELD_NAME=	"transcript_id2";
+	public static final String ARRIBA_GENEID1_FIELD_NAME=	"gene_id1";
+	public static final String ARRIBA_GENEID2_FIELD_NAME=	"gene_id2";
+
+	// ## Unmapped reads
+	public static final String UNMAPPED_HEADER_ID			=	"um";
+	
+	// ## MANTA
+	public static final String MANTA_HEADER_ID				=	"sv";
 	
 	// ## StringTie
 	public static final String STRINGTIE_HEADER_ID			=	"st";
@@ -147,6 +154,17 @@ public class InputConvertorConstants {
 	
 	// ## Translation
 	public static final int MIN_PEPT_LEN					=	8;
+	
+	// ##FDR
+	public static final byte PSM_LEVEL = 0;
+	public static final byte PEPTIDE_LEVEL = 1;
+	
+	
+	public static final String RF_STRANDED = "RF";
+	public static final String FR_STRANDED = "FR";
+	public static final String F_STRANDED = "F";
+	public static final String R_STRANDED = "R";
+	public static final String NON_STRANDED = "NON";
 	
 	
 	public static int getFieldIndex (String[] fields, String tag) {

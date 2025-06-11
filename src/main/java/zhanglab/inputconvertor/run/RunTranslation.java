@@ -21,6 +21,7 @@ import zhanglab.inputconvertor.data.GenomeLoader;
 import zhanglab.inputconvertor.data.VARLoader;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.input.Arriba;
+import zhanglab.inputconvertor.input.MANTA;
 import zhanglab.inputconvertor.input.Reference;
 import zhanglab.inputconvertor.input.StringTie;
 
@@ -35,15 +36,18 @@ public class RunTranslation {
 	public static File outputFile = null;
 	public static File refGenomeFile = null; 
 	public static File varFile = null; 
+	public static File MANTAFile = null;
 	public static String uniqueId = null;
     public static double fpkmThreshold = 1.00;
-	
+    
+	// ## Translation of mutated sequences
+	public static int maxFlankLength	=	15;
 	
 	public static void main(String[] args) throws IOException, ParseException {
+		System.out.println(InputConvertorConstants.VERSION);
 		parseOptions(args);
 		
 		long startTime = System.currentTimeMillis();
-		System.out.println(InputConvertorConstants.VERSION);
 		
         
         // requirements
@@ -63,6 +67,9 @@ public class RunTranslation {
         if(varFile != null) {
         	System.out.println("Variant calls from: " + varFile.getName());
         }
+        if(MANTAFile != null) {
+        	System.out.println("Structural variations from : " + MANTAFile.getName());
+        }
         if(refGTFFile != null) {
         	System.out.println("Reference transcriptome model: " + refGTFFile.getName());
         }
@@ -77,7 +84,7 @@ public class RunTranslation {
         
         // load GML
         GenomeLoader gmL = new GenomeLoader(refGenomeFile);
-        GTFLoader refGTF = new GTFLoader(refGTFFile);
+        
         if(varFile != null) {
         	VARLoader var = new VARLoader(varFile);
         	gmL.enrollVEPLaoder(var);
@@ -85,12 +92,15 @@ public class RunTranslation {
         
         // Do StringTie
         ArrayList<FastaEntry> entries = new ArrayList<FastaEntry>();
-
-        // Do reference fasta
-        Reference reference = new Reference(refGTF);
-        reference.enrollGenomeSequence(gmL);
-        entries.addAll(reference.getFastaEntry(true));
-        entries.addAll(reference.getFastaEntry(false));
+        
+        
+        if(refGTFFile != null) {
+        	GTFLoader refGTF = new GTFLoader(refGTFFile);
+        	Reference reference = new Reference(refGTF);
+        	reference.enrollGenomeSequence(gmL);
+        	entries.addAll(reference.getFastaEntry(true));
+        	entries.addAll(reference.getFastaEntry(false));
+        }
         
         if(refProteinFile != null) {
         	FastaLoader refProteins = new FastaLoader(refProteinFile);
@@ -107,6 +117,12 @@ public class RunTranslation {
         if(arribaFile != null) {
         	Arriba arriba = new Arriba(arribaFile);
             entries.addAll(arriba.getFastaEntry());
+        }
+        
+        // Do MANTA
+        if(arribaFile != null) {
+        	MANTA manta = new MANTA(MANTAFile);
+            entries.addAll(manta.getFastaEntry());
         }
         
         
@@ -152,7 +168,7 @@ public class RunTranslation {
 		Option optionGTF = Option.builder("r")
 				.longOpt("gene_model").argName("gtf")
 				.hasArg()
-				.required(true)
+				.required(false)
 				.desc("reference gtf file")
 				.build();
 		
@@ -205,6 +221,13 @@ public class RunTranslation {
 				.desc("VEP or VCF file")
 				.build();
 		
+		Option optionMANTA = Option.builder("m")
+				.longOpt("manta").argName("vcf")
+				.hasArg()
+				.required(false)
+				.desc("VCF file from MANTA")
+				.build();
+		
 		
 		options.addOption(optionGenome)
 		.addOption(optionProtein)
@@ -215,7 +238,8 @@ public class RunTranslation {
 		.addOption(optionCIRIquant)
 		.addOption(optionIRFinder)
 		.addOption(optionVEP)
-		.addOption(optionOutput);
+		.addOption(optionOutput)
+		.addOption(optionMANTA);
 		
 		CommandLineParser parser = new DefaultParser();
 	    HelpFormatter helper = new HelpFormatter();
@@ -232,6 +256,7 @@ public class RunTranslation {
 			args[i].equalsIgnoreCase("-c") || args[i].equalsIgnoreCase("--ciriquant") ||
 			args[i].equalsIgnoreCase("-i") || args[i].equalsIgnoreCase("--irfinder") ||
 			args[i].equalsIgnoreCase("-v") || args[i].equalsIgnoreCase("--var") ||
+			args[i].equalsIgnoreCase("-m") || args[i].equalsIgnoreCase("--manta") ||
 			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output")) {
 	    		tmpArgs.add(args[i++]);
 	    		tmpArgs.add(args[i]);
@@ -283,10 +308,13 @@ public class RunTranslation {
 		    	refProteinFile = new File(cmd.getOptionValue("p"));
 		    }
 		    
+		    if(cmd.hasOption("m")) {
+		    	MANTAFile = new File(cmd.getOptionValue("m"));
+		    }
+		    
 		    if(cmd.hasOption("o")) {
-		    	
 		    	outputFile = new File(cmd.getOptionValue("o"));
-		    	uniqueId = outputFile.getName();
+		    	//uniqueId = outputFile.getName();
 		    }
 		    
 		    

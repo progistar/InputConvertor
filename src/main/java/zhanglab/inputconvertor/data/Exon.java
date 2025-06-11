@@ -37,10 +37,28 @@ public class Exon implements Comparable<Exon> {
 	 * @return
 	 */
 	public Exon copyExon () {
-		Exon exon = new Exon(chr, start, end);
+		Exon exon = new Exon(this.chr, this.start, this.end);
 		exon.refNucleotide = this.refNucleotide;
 		exon.altNucleotide = this.altNucleotide;
 		exon.type = this.type;
+		
+		return exon;
+	}
+	
+	public Exon copyExon (int start, int end) {
+		
+		if(this.type != InputConvertorConstants.WILD) {
+			return copyExon();
+		}
+		
+		Exon exon = new Exon(this.chr, start, end);
+		if(this.type == InputConvertorConstants.WILD) {
+			exon.refNucleotide = this.refNucleotide.substring(start - this.start, end - this.start + 1);
+		} else {
+			exon.altNucleotide = this.altNucleotide.substring(start - this.start, end - this.start + 1);
+		}
+		exon.type = this.type;
+		
 		return exon;
 	}
 	

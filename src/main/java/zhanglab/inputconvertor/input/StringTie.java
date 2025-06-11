@@ -131,7 +131,8 @@ public class StringTie {
 					String geneName = this.gtf.geneToGeneName.get(g);
 					entry.geneName = geneName == null ? g : geneName;
 					entry.geneId = g;
-					entry.transcriptIds.add(entry.transcript.tID);
+					entry.transcriptId = entry.transcript.tID;
+					entry.strand = entry.transcript.strand;
 					entry.tool = InputConvertorConstants.STRINGTIE_HEADER_ID;
 				}
 				fastaEntries.addAll(entries);
@@ -139,7 +140,11 @@ public class StringTie {
         	
         });
         
+        for(int i=0; i<fastaEntries.size(); i++) {
+        	fastaEntries.get(i).idx = i+1;
+        }
+        
         // remove duplications
-        return FastaEntry.removeDuplications(fastaEntries);
+        return fastaEntries; //FastaEntry.removeDuplications(fastaEntries);
 	}
 }

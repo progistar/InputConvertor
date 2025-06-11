@@ -47,20 +47,19 @@ public class FastaLoader {
 		BR.close();
 	}
 	
-	public void removeSequenceOverlappedToThisFasta (ArrayList<FastaEntry> thatEntries) {
+	public void removeSequenceOverlapped (ArrayList<FastaEntry> thatEntries, int partition) {
 		ArrayList<String> sequences = new ArrayList<String>();
 		Hashtable<String, String> removeList = new Hashtable<String, String>();
 		// partition
-		int partSize = 20;
-		int junkSize = thatEntries.size() / partSize;
-		for(int i=0; i<partSize; i++) {
+		int junkSize = entries.size() / partition;
+		for(int i=0; i<partition; i++) {
 			int start = i * junkSize;
 			int end = (i+1) * junkSize;
-			if(i == partSize -1) {
-				end = thatEntries.size();
+			if(i == partition -1) {
+				end = entries.size();
 			}
 			for(int j=start; j<end; j++) {
-				String[] peptides = thatEntries.get(j).sequence.split("X");
+				String[] peptides = entries.get(j).sequence.replace("I", "L").split("X");
 				for(String peptide : peptides) {
 					if(removeList.get(peptide) == null) {
 						sequences.add(peptide);
@@ -72,8 +71,8 @@ public class FastaLoader {
 			
 			System.out.println("Done to build keyword-trie");
 			
-			for(FastaEntry refEntry : this.entries) {
-				Collection<Emit> matches = trie.parseText(refEntry.sequence);
+			for(FastaEntry refEntry : thatEntries) {
+				Collection<Emit> matches = trie.parseText(refEntry.sequence.replace("I", "L"));
 				for(Emit match : matches) {
 					String overlap = match.getKeyword();
 					removeList.put(overlap, "");
@@ -85,10 +84,14 @@ public class FastaLoader {
 		
 		
 		ArrayList<FastaEntry> passEntries = new ArrayList<FastaEntry>();
-		for(FastaEntry entry : thatEntries) {
-			String[] peptides = entry.sequence.split("X");
+		for(FastaEntry entry : entries) {
+			String[] peptides = entry.sequence.replace("I", "L").split("X");
 			boolean isPass = false;
 			for(String peptide : peptides) {
+				if(peptide.length() == 0) {
+					continue;
+				}
+				
 				if(removeList.get(peptide) == null) {
 					isPass = true;
 					break;
@@ -99,8 +102,8 @@ public class FastaLoader {
 			}
 		}
 		
-		System.out.println("A total of "+(thatEntries.size() - passEntries.size())+" were removed from the original entries");
+		System.out.println("A total of "+(this.entries.size() - passEntries.size())+" were removed from the original entries");
 		System.out.println("Remain: "+passEntries.size());
-		thatEntries = passEntries;
+		this.entries = passEntries;
 	}
 }

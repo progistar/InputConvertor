@@ -9,6 +9,7 @@ import java.util.List;
 
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.function.Translator;
+import zhanglab.inputconvertor.run.RunTranslation;
 
 public class FastaEntry {
 
@@ -17,29 +18,25 @@ public class FastaEntry {
 	public String sequence;
 	public String nucleotide;
 	public Transcript transcript;
+	public String transcriptId;
 	public String geneId;
 	public String geneName;
-	public ArrayList<String> transcriptIds = new ArrayList<String>();
-	public int frame = -1;
+	public String strand;
+	public String frame = ".";
 	public String description = null;
 	public String originHeader = null;
 	public String mutationMark = null;
 	
 	public String toHeader(String uniqueId) {
+		if(uniqueId == null) {
+			return this.tool;
+		}
 		return this.tool+"_"+uniqueId;
 	}
 	
 	public String toMeta (String uniqueId) {
 		if(originHeader != null) {
 			return toHeader(uniqueId)+"|"+originHeader;
-		}
-		
-		String transcriptId = "";
-		for(String id : transcriptIds) {
-			if(transcriptId.length() != 0) {
-				transcriptId += ",";
-			}
-			transcriptId += id;
 		}
 		while(this.description.startsWith("@")) {
 			this.description = this.description.substring(1);
@@ -50,21 +47,12 @@ public class FastaEntry {
 		}
 		
 		return toHeader(uniqueId) +"|" + 
-		transcriptId + "#" + 
-		this.frame+ "#"+ 
-		this.mutationMark+"#"+
+		this.transcriptId + "#" +
 		this.idx+ 
-		"|"+this.geneId+" GN="+this.geneName+" FR="+this.frame+" SR="+transcript.strand+" gene_site="+this.description.replace("@"," ");
+		"|"+this.geneId+" GN="+this.geneName+" FR="+this.frame+" SR="+this.strand+" gene_site="+this.description.replace("@"," ");
 	}
 	
 	public String toMetaSimple () {
-		String transcriptId = "";
-		for(String id : transcriptIds) {
-			if(transcriptId.length() != 0) {
-				transcriptId += ",";
-			}
-			transcriptId += id;
-		}
 		while(this.description.startsWith("@")) {
 			this.description = this.description.substring(1);
 		}
@@ -136,8 +124,7 @@ public class FastaEntry {
 	}
 	
 	private static ArrayList<ArrayList<Exon>> rightEntries (Exon exon) {
-		int MAX_FLANK_AA_SIZE = 14;
-		int limit = MAX_FLANK_AA_SIZE * 3 + 2;
+		int limit = RunTranslation.maxFlankLength * 3;
 		
 		ArrayList<ArrayList<Exon>> mutEntries = new ArrayList<ArrayList<Exon>>();
 		
@@ -152,7 +139,11 @@ public class FastaEntry {
 			while(!paths.isEmpty()) {
 				Exon path = paths.peekLast();
 				boolean isRemoved = false;
-				if(newExon.type == InputConvertorConstants.INS) {
+				
+				if(length >= limit) {
+					paths.pollLast();
+					isRemoved = true;
+				} else if(newExon.type == InputConvertorConstants.INS) {
 					if(path.start > newExon.start) {
 						paths.pollLast();
 						isRemoved = true;
@@ -191,8 +182,13 @@ public class FastaEntry {
 			if(length >= limit || newExon.start == Integer.MAX_VALUE) {
 				ArrayList<Exon> mExons = new ArrayList<Exon>();
 				Iterator<Exon> sExons = (Iterator<Exon>) paths.iterator();
+				int size = paths.size();
 				while(sExons.hasNext()) {
-					mExons.add(sExons.next());
+					Exon e = sExons.next();
+					if(--size == 0 && newExon.start != Integer.MAX_VALUE) {
+						e = e.copyExon(e.start, e.end - (length - limit));
+					}
+					mExons.add(e);
 				}
 				mutEntries.add(mExons);
 			} else {
@@ -206,8 +202,7 @@ public class FastaEntry {
 	}
 	
 	private static ArrayList<ArrayList<Exon>> leftEntries (Exon exon) {
-		int MAX_FLANK_AA_SIZE = 14;
-		int limit = MAX_FLANK_AA_SIZE * 3 + 2;
+		int limit = RunTranslation.maxFlankLength * 3;
 		
 		ArrayList<ArrayList<Exon>> mutEntries = new ArrayList<ArrayList<Exon>>();
 		
@@ -222,7 +217,10 @@ public class FastaEntry {
 			while(!paths.isEmpty()) {
 				Exon path = paths.peekFirst();
 				boolean isRemoved = false;
-				if(newExon.type == InputConvertorConstants.INS) {
+				if(length >= limit) {
+					paths.pollFirst();
+					isRemoved = true;
+				} else if(newExon.type == InputConvertorConstants.INS) {
 					if(path.end < newExon.end) {
 						paths.pollFirst();
 						isRemoved = true;
@@ -262,8 +260,15 @@ public class FastaEntry {
 			if(length >= limit || newExon.start == -1) {
 				ArrayList<Exon> mExons = new ArrayList<Exon>();
 				Iterator<Exon> sExons = (Iterator<Exon>) paths.iterator();
+				boolean isLeftMost = true;
 				while(sExons.hasNext()) {
-					mExons.add(sExons.next());
+					Exon e = sExons.next();
+					if(isLeftMost && newExon.start != -1) {
+						e = e.copyExon(e.start + (length - limit), e.end);
+						
+						isLeftMost = false;
+					}
+					mExons.add(e);
 				}
 				mutEntries.add(mExons);
 			} else {
@@ -384,7 +389,7 @@ public class FastaEntry {
 					continue;
 				}
 				aaEntry.description = fastaEntry.description;
-				aaEntry.frame = frame;
+				aaEntry.frame = frame+"";
 				aaEntry.sequence = peptide;
 				aaEntry.nucleotide = tNucleotide;
 				aaEntry.transcript = t;
@@ -486,7 +491,7 @@ public class FastaEntry {
 				peptide = seqs[1];
 			}
 			aaEntry.description = getMutationDescription(exonList);
-			aaEntry.frame = frame;
+			aaEntry.frame = frame+"";
 			aaEntry.sequence = peptide;
 			aaEntry.nucleotide = tNucleotide;
 			aaEntry.transcript = t;
@@ -534,7 +539,7 @@ public class FastaEntry {
 		
 		return desc.toString();
 	}
-	
+	/*
 	public static ArrayList<FastaEntry> removeDuplications (ArrayList<FastaEntry> entries) {
  		// it is possible to appear duplicated peptides because of several reference transcripts. 
  		Hashtable<String, FastaEntry> removeDuplication = new Hashtable<String, FastaEntry>();
@@ -543,7 +548,10 @@ public class FastaEntry {
          for(FastaEntry entry : entries) {
         	 FastaEntry firstEntry = removeDuplication.get(entry.getKey());
          	if(firstEntry != null) {
-         		for(String tID1 : entry.transcriptIds) {
+         		for(int i=0; i<entry.transcriptIds.size(); i++) {
+         			String tID1 = entry.transcriptIds.get(i);
+         			String tStrand1 = entry.strands.get(i);
+         			
          			boolean isIncluded = false;
          			for(String tID2 : firstEntry.transcriptIds) {
          				if(tID1.equalsIgnoreCase(tID2)) {
@@ -552,6 +560,7 @@ public class FastaEntry {
          			}
          			if(!isIncluded) {
          				firstEntry.transcriptIds.add(tID1);
+         				firstEntry.strands.add(tStrand1);
          			}
          		}
          		continue;
@@ -564,4 +573,5 @@ public class FastaEntry {
          
          return uniqueFastaEntries;
 	}
+	*/
 }
