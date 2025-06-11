@@ -20,7 +20,7 @@ import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.FastaLoader;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
-public class RunFilterFasta {
+public class RunRefineFasta {
 	public static File[] referenceFiles = null;
 	public static File[] filterFiles = null;
 	public static File[] nonreferenceFiles = null;
