@@ -9,7 +9,7 @@ import java.util.List;
 
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 import zhanglab.inputconvertor.function.Translator;
-import zhanglab.inputconvertor.run.RunTranslation;
+import zhanglab.inputconvertor.run.MakeNeoDB;
 
 public class FastaEntry {
 
@@ -124,7 +124,7 @@ public class FastaEntry {
 	}
 	
 	private static ArrayList<ArrayList<Exon>> rightEntries (Exon exon) {
-		int limit = RunTranslation.maxFlankLength * 3;
+		int limit = MakeNeoDB.maxFlankLength * 3;
 		
 		ArrayList<ArrayList<Exon>> mutEntries = new ArrayList<ArrayList<Exon>>();
 		
@@ -202,7 +202,7 @@ public class FastaEntry {
 	}
 	
 	private static ArrayList<ArrayList<Exon>> leftEntries (Exon exon) {
-		int limit = RunTranslation.maxFlankLength * 3;
+		int limit = MakeNeoDB.maxFlankLength * 3;
 		
 		ArrayList<ArrayList<Exon>> mutEntries = new ArrayList<ArrayList<Exon>>();
 		

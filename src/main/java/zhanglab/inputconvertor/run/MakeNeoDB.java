@@ -25,7 +25,7 @@ import zhanglab.inputconvertor.input.MANTA;
 import zhanglab.inputconvertor.input.Reference;
 import zhanglab.inputconvertor.input.StringTie;
 
-public class RunTranslation {
+public class MakeNeoDB {
  	
 	public static File stringTieFile = null; 
 	public static File arribaFile = null; 
@@ -90,7 +90,7 @@ public class RunTranslation {
         	GTFLoader refGTF = new GTFLoader(refGTFFile);
         	Reference reference = new Reference(refGTF);
         	reference.enrollGenomeSequence(gmL);
-        	entries.addAll(reference.getFastaEntry(true));
+        	//entries.addAll(reference.getFastaEntry(true));
         	entries.addAll(reference.getFastaEntry(false));
         }
         
