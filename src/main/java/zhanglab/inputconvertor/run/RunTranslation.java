@@ -29,8 +29,6 @@ public class RunTranslation {
  	
 	public static File stringTieFile = null; 
 	public static File arribaFile = null; 
-	public static File ciriquantFile= null; 
-	public static File irfinderFile = null;
 	public static File refGTFFile = null; 
 	public static File refProteinFile = null; 
 	public static File outputFile = null;
@@ -57,12 +55,6 @@ public class RunTranslation {
         }
         if(arribaFile != null) {
         	System.out.println("Fusion genes from Arriba: " + arribaFile.getName());
-        }
-        if(ciriquantFile != null) {
-        	System.out.println("CircRNAs from CIRIquant: " + ciriquantFile.getName());
-        }
-        if(irfinderFile != null) {
-        	System.out.println("Reteined-introns from IRFinder: " + irfinderFile.getName());
         }
         if(varFile != null) {
         	System.out.println("Variant calls from: " + varFile.getName());
@@ -120,7 +112,7 @@ public class RunTranslation {
         }
         
         // Do MANTA
-        if(arribaFile != null) {
+        if(MANTAFile != null) {
         	MANTA manta = new MANTA(MANTAFile);
             entries.addAll(manta.getFastaEntry());
         }
@@ -200,20 +192,6 @@ public class RunTranslation {
 				.desc("Arriba TSV file")
 				.build();
 		
-		Option optionCIRIquant = Option.builder("c")
-				.longOpt("ciriquant").argName("gtf")
-				.hasArg()
-				.required(false)
-				.desc("CIRIquant GTF file")
-				.build();
-		
-		Option optionIRFinder = Option.builder("i")
-				.longOpt("irfinder").argName("tsv")
-				.hasArg()
-				.required(false)
-				.desc("IRFinder TSV file")
-				.build();
-		
 		Option optionVEP = Option.builder("v")
 				.longOpt("var").argName("tsv|vcf")
 				.hasArg()
@@ -235,8 +213,6 @@ public class RunTranslation {
 		.addOption(optionStringTie)
 		.addOption(optionFPKM)
 		.addOption(optionArriba)
-		.addOption(optionCIRIquant)
-		.addOption(optionIRFinder)
 		.addOption(optionVEP)
 		.addOption(optionOutput)
 		.addOption(optionMANTA);
@@ -253,8 +229,6 @@ public class RunTranslation {
 			args[i].equalsIgnoreCase("-s") || args[i].equalsIgnoreCase("--stringtie") ||
 			args[i].equalsIgnoreCase("-f") || args[i].equalsIgnoreCase("--fpkm") ||
 			args[i].equalsIgnoreCase("-a") || args[i].equalsIgnoreCase("--arriba") ||
-			args[i].equalsIgnoreCase("-c") || args[i].equalsIgnoreCase("--ciriquant") ||
-			args[i].equalsIgnoreCase("-i") || args[i].equalsIgnoreCase("--irfinder") ||
 			args[i].equalsIgnoreCase("-v") || args[i].equalsIgnoreCase("--var") ||
 			args[i].equalsIgnoreCase("-m") || args[i].equalsIgnoreCase("--manta") ||
 			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output")) {
@@ -296,10 +270,6 @@ public class RunTranslation {
 		    	arribaFile = new File(cmd.getOptionValue("a"));
 		    }
 		    
-		    if(cmd.hasOption("c")) {
-		    	ciriquantFile = new File(cmd.getOptionValue("c"));
-		    }
-		    
 		    if(cmd.hasOption("v")) {
 		    	varFile = new File(cmd.getOptionValue("v"));
 		    }
@@ -314,7 +284,6 @@ public class RunTranslation {
 		    
 		    if(cmd.hasOption("o")) {
 		    	outputFile = new File(cmd.getOptionValue("o"));
-		    	//uniqueId = outputFile.getName();
 		    }
 		    
 		    
