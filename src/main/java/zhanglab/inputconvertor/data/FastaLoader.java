@@ -10,6 +10,7 @@ import java.util.Hashtable;
 
 import org.ahocorasick.trie.Emit;
 import org.ahocorasick.trie.Trie;
+import org.apache.commons.lang3.StringUtils;
 
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
@@ -58,8 +59,10 @@ public class FastaLoader {
 			if(i == partition -1) {
 				end = entries.size();
 			}
+			
+			
 			for(int j=start; j<end; j++) {
-				String[] peptides = entries.get(j).sequence.replace("I", "L").split("X");
+				String[] peptides = StringUtils.split(entries.get(j).sequence.replace("I", "L"), AminoAcid.STOP_CODON_CHAR);
 				for(String peptide : peptides) {
 					if(removeList.get(peptide) == null) {
 						sequences.add(peptide);
@@ -85,10 +88,10 @@ public class FastaLoader {
 		
 		ArrayList<FastaEntry> passEntries = new ArrayList<FastaEntry>();
 		for(FastaEntry entry : entries) {
-			String[] peptides = entry.sequence.replace("I", "L").split("X");
+			String[] peptides = StringUtils.split(entry.sequence.replace("I", "L"), AminoAcid.STOP_CODON_CHAR);
 			boolean isPass = false;
 			for(String peptide : peptides) {
-				if(peptide.length() == 0) {
+				if(peptide.length() < InputConvertorConstants.MIN_PEPT_LEN) {
 					continue;
 				}
 				

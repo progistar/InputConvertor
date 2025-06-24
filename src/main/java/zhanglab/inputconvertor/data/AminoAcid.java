@@ -34,10 +34,12 @@ public class AminoAcid {
 		};
 	
 	
-	private char aminoAcid = 'X';
+	private char aminoAcid = STOP_CODON_CHAR;
 	private double mass = .0;
 	private String fullName = null;
 	private ChemicalForm chemicalForm = null;
+	public static final String STOP_CODON = "*";
+	public static final char STOP_CODON_CHAR = '*';
 	
 	public AminoAcid (char aminoAcid, double mass, String fullName, ChemicalForm chemicalForm) {
 		this.aminoAcid = aminoAcid;

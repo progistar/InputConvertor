@@ -25,6 +25,7 @@ public class RefineNeoDB {
 	public static File[] filterFiles = null;
 	public static File[] nonreferenceFiles = null;
 	public static File outputFile = null;
+	public static String decoyPrefix = null;
 	public static final Pattern PE_PATTERN = Pattern.compile("(PE=[0-9]+)");
 	
 	public static void main(String[] args) throws IOException, ParseException {
@@ -101,8 +102,58 @@ public class RefineNeoDB {
 				BW.append(sequence);
 				BW.newLine();
 			}
-			
 		}
+		
+		if(decoyPrefix != null) {
+			for(int i=0; i<referenceFastas.length; i++) {
+				referenceFastas[i] = new FastaLoader(referenceFiles[i]);
+				
+				ArrayList<FastaEntry> entries = referenceFastas[i].entries;
+				for(FastaEntry entry : entries) {
+					String header = entry.originHeader;
+					String sequence = entry.sequence;
+					
+					Matcher matcher = PE_PATTERN.matcher(header);
+					if(matcher.find()) {
+						header = header.replace(matcher.group(), "PE=1");
+					} else {
+						header += " PE=1";
+					}
+					
+					StringBuilder revSequence = new StringBuilder(sequence.substring(1)).reverse();
+					
+					BW.append(">"+decoyPrefix).append(header);
+					BW.newLine();
+					BW.append(sequence.charAt(0));
+					BW.append(revSequence.toString());
+					BW.newLine();
+				}
+			}
+			
+			for(int i=0; i<nonreferenceFastas.length; i++) {
+				ArrayList<FastaEntry> entries = nonreferenceFastas[i].entries;
+				for(FastaEntry entry : entries) {
+					String header = entry.originHeader;
+					String sequence = entry.sequence;
+					
+					Matcher matcher = PE_PATTERN.matcher(header);
+					if(matcher.find()) {
+						header = header.replace(matcher.group(), "PE=2");
+					} else {
+						header += " PE=2";
+					}
+					
+					StringBuilder revSequence = new StringBuilder(sequence.substring(1)).reverse();
+					
+					BW.append(">"+decoyPrefix).append(header);
+					BW.newLine();
+					BW.append(sequence.charAt(0));
+					BW.append(revSequence.toString());
+					BW.newLine();
+				}
+			}
+		}
+		
 		BW.close();
         long endTime = System.currentTimeMillis();
         
@@ -136,6 +187,13 @@ public class RefineNeoDB {
 				.desc("a lits of protein sequences to be filtered in non-reference fasta files (separted by comma). These records will be annotated as PE=2.")
 				.build();
 		
+		Option optionDecoy = Option.builder("d")
+				.longOpt("decoy").argName("string")
+				.hasArg()
+				.required(false)
+				.desc("Specify decoy prefix. Decoy sequences are generated only if the value is specified. For example, you can set rev_ for FragPipe.")
+				.build();
+		
 		Option optionOutput = Option.builder("o")
 				.longOpt("output").argName("fasta")
 				.hasArg()
@@ -148,6 +206,7 @@ public class RefineNeoDB {
 		options.addOption(optionReference)
 		.addOption(optionNonreference)
 		.addOption(optionOutput)
+		.addOption(optionDecoy)
 		.addOption(optionFilter);
 		
 		CommandLineParser parser = new DefaultParser();
@@ -159,6 +218,7 @@ public class RefineNeoDB {
 	    	if(args[i].equalsIgnoreCase("-r") || args[i].equalsIgnoreCase("--reference") ||
 			args[i].equalsIgnoreCase("-f") || args[i].equalsIgnoreCase("--filter") ||
 			args[i].equalsIgnoreCase("-n") || args[i].equalsIgnoreCase("--non-reference") ||
+			args[i].equalsIgnoreCase("-d") || args[i].equalsIgnoreCase("--decoy") ||
 			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output")) {
 	    		tmpArgs.add(args[i++]);
 	    		tmpArgs.add(args[i]);
@@ -208,6 +268,14 @@ public class RefineNeoDB {
 		    		System.out.println("  "+filterFiles[i].getName());
 		    	}
 		    }
+		    
+		    if(cmd.hasOption("d")) {
+		    	System.out.println("Decoy prefix");
+		    	decoyPrefix = cmd.getOptionValue("d");
+		    	System.out.println("  "+decoyPrefix);
+		    }
+		    
+		    
 		    
 		    if(cmd.hasOption("o")) {
 		    	outputFile = new File(cmd.getOptionValue("o"));

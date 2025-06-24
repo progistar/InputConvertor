@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Hashtable;
 
 import org.apache.commons.cli.CommandLine;
@@ -28,12 +30,18 @@ public class RunTranslationBAM {
 
 	public static File bamFile = null;
 	public static File outputFile = null;
+	public static File logFile = null;
 	public static int maxMer = 25;
-	
+	public static double rphm = 10;
+	public static int atMost = 100000;
 	
 	public static void main(String[] args) throws IOException {
 		parseOptions(args);
 		
+		System.out.println("RPHM threshold: "+rphm);
+		System.out.println("Minimum peptide length: "+InputConvertorConstants.MIN_PEPT_LEN);
+		System.out.println("Maximum peptide length: "+maxMer);
+		System.out.println("Maximum number of entries: "+atMost);
 		System.out.println("## Unmapped translation ##");
 		System.out.println("Load "+bamFile.getName());
 		writeFastaEntry();
@@ -41,23 +49,25 @@ public class RunTranslationBAM {
 	
 	public static void writeFastaEntry () throws IOException {
 		ArrayList<FastaEntry> fastaEntries = new ArrayList<FastaEntry>();
-		
+		BufferedWriter log = new BufferedWriter(new FileWriter(logFile));
 		String strandedness = "NON";
 		
 		int R1F = 0;
 		int R1R = 0;
 		int R2F = 0;
 		int R2R = 0;
+		int totalReads = 0;
 		
 		try (SamReader samReader = SamReaderFactory.makeDefault().open(bamFile)) {
 			SAMRecordIterator iterator = samReader.iterator();
-			int size = 1000000;
-			while((size--) > 0 && iterator.hasNext()) {
+			while(iterator.hasNext()) {
 				SAMRecord samRecord = iterator.next();
 				
 				boolean isPass = false;
 				if(samRecord.isSecondaryAlignment()) {
             		isPass = true;
+            	} else {
+            		totalReads ++;
             	}
 				
 				Object xsTag = samRecord.getAttribute("XS");
@@ -122,30 +132,53 @@ public class RunTranslationBAM {
 			} else {
 				System.out.println(strandedness);
 			}
+			
+			
+			System.out.println("## Total primary reads: "+totalReads);
+			
+			log.append("## Total primary reads: "+totalReads);
+			log.newLine();
+			log.append("## 1F:1R:2F:2R="+R1F+":"+R1R+":"+R2F+":"+R2R);
+			log.newLine();
+			log.append("## "+strandedness);
+			log.newLine();
+			
 		} catch(Exception e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
 		
+		int totalUmap = 0;
 		try (SamReader samReader = SamReaderFactory.makeDefault().open(bamFile)) {
 			SAMRecordIterator iterator = samReader.queryUnmapped();
-			int totalUmap = 0;
 			while (iterator.hasNext()) {
 				iterator.next();
 				totalUmap++;
 			}
-			System.out.println("Total unmapped reads: "+totalUmap);
+			System.out.println("Total unmapped reads: "+totalUmap +" (" + 100.0*(totalUmap+0.0)/(totalReads)+"%)");
 			iterator.close();
+			
+			log.append("## Total unmapped reads: "+totalUmap +" (" + 100.0*(totalUmap+0.0)/(totalReads)+"%)");
+			log.newLine();
 		}
 		
 		try (SamReader samReader = SamReaderFactory.makeDefault().open(bamFile)) {
 			SAMRecordIterator iterator = samReader.queryUnmapped();
 			Hashtable<String, Integer> readMap = new Hashtable<String, Integer>();
 			
+			double percent = 0;
+			double cnt = 0;
+			
 			while (iterator.hasNext()) {
 	            SAMRecord samRecord = iterator.next();
 	            int flags = samRecord.getFlags();
 	            ArrayList<Character> strands = Mode.getStrandedness(flags, strandedness);
+	            
+	            cnt++;
+	            if(Math.abs(cnt/totalUmap - percent) < 0.00001) {
+	            	System.out.println((int)(100*percent)+"%");
+	            	percent+=0.01;
+	            }
 	            
 	            for(Character strand : strands) {
 	            	String sequence = null;
@@ -188,28 +221,39 @@ public class RunTranslationBAM {
 			
 			iterator.close();
 			
-			int[] readCounts = new int[101];
+			int[] readCounts = new int[1001];
+			double[] readToRPHM = new double[1001];
+			readCounts[0] = totalReads;
 			readMap.forEach((pept, reads)->{
 				int idx = Math.min(reads, readCounts.length-1);
 				readCounts[idx]++;
-				if(reads >= 10) {
+				double thisRPHM = Math.pow(10, 8)*(idx+0.0)/(readCounts[0]);
+				readToRPHM[idx] = thisRPHM;
+				if(thisRPHM > rphm) {
 					FastaEntry entry = new FastaEntry();
 					entry.tool = InputConvertorConstants.UNMAPPED_HEADER_ID;
 					entry.idx = fastaEntries.size()+1;
 					entry.sequence = pept;
 					entry.strand = ".";
 					entry.frame = ".";
-					entry.transcriptId = ".";
-					entry.geneId = ".";
+					entry.transcriptId = "Unmapped";
+					entry.geneId = "" + (Math.pow(10, 8)*(reads+0.0)/(readCounts[0]));
 					entry.geneName = ".";
-					entry.description = "Unmapped";
+					entry.description = ".";
 					fastaEntries.add(entry);
 				}
 			});
 			
-			System.out.println("Length\tCount");
+			log.append("## Total enumerated peptides: "+readMap.size());
+			log.newLine();
+			log.append("## Peptides with RPHM > "+rphm+": "+fastaEntries.size()+" ("+100.0*(fastaEntries.size()+0.0)/(readMap.size())+"%)");
+			log.newLine();
+			
+			log.append("Read\tRPHM\tCount");
+			log.newLine();
 			for(int i=1; i<readCounts.length; i++) {
-				System.out.println(i+"\t"+readCounts[i]);
+				log.append(i+"\t"+readToRPHM[i]+"\t"+readCounts[i]);
+				log.newLine();
 			}
 			
 		} catch(Exception e) {
@@ -217,18 +261,35 @@ public class RunTranslationBAM {
 			System.exit(1);
 		}
 		
+		// sort by geneId (=RPHM)
+		Collections.sort(fastaEntries, new Comparator<FastaEntry>() {
+			@Override
+			public int compare(FastaEntry o1, FastaEntry o2) {
+				double rphm1 = Double.parseDouble(o1.geneId);
+				double rphm2 = Double.parseDouble(o2.geneId);
+						
+				if(rphm1 > rphm2) {
+					return -1;
+				} else if(rphm1 < rphm2) {
+					return 1;
+				}
+						
+				return 0;
+			}
+		});
 		
-		 BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile));
+		
+		BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile));
 	        
-	        // EntryId|GeneId|TranscriptId|GeneName|Frame|Strand|Exons
-	        for(FastaEntry entry : fastaEntries) {
-	        	BW.append(">"+entry.toMeta(null));
-	        	BW.newLine();
-	        	BW.append(entry.sequence);
-	        	BW.newLine();
-	        }
-	        
-	        BW.close();
+        for(FastaEntry entry : fastaEntries) {
+        	BW.append(">"+entry.toMeta(null));
+        	BW.newLine();
+        	BW.append(entry.sequence);
+        	BW.newLine();
+        }
+        
+        BW.close();
+        log.close();
 	}
 	
 	
@@ -245,6 +306,20 @@ public class RunTranslationBAM {
 				.desc("bam file path")
 				.build();
 		
+		Option optionRPHM = Option.builder("r")
+				.longOpt("rphm").argName("float")
+				.hasArg()
+				.required(false)
+				.desc("RPHM threshold to print (Default is 10).")
+				.build();
+		
+		Option optionAtMost = Option.builder("n")
+				.longOpt("num").argName("natural number")
+				.hasArg()
+				.required(false)
+				.desc("maximum number of entires to print (Default is 100,000).")
+				.build();
+		
 		Option optionOutput= Option.builder("o")
 				.longOpt("output").argName("string")
 				.hasArg()
@@ -255,6 +330,8 @@ public class RunTranslationBAM {
 		
 		
 		options.addOption(optionBam)
+		.addOption(optionRPHM)
+		.addOption(optionAtMost)
 		.addOption(optionOutput);
 		
 		CommandLineParser parser = new DefaultParser();
@@ -264,7 +341,9 @@ public class RunTranslationBAM {
 	    ArrayList<String> tmpArgs = new ArrayList<String>();
 	    for(int i=0; i<args.length; i++) {
 	    	if(args[i].equalsIgnoreCase("-b") || args[i].equalsIgnoreCase("--bam") ||
-			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output")) {
+			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output") ||
+			args[i].equalsIgnoreCase("-n") || args[i].equalsIgnoreCase("--num") ||
+			args[i].equalsIgnoreCase("-r") || args[i].equalsIgnoreCase("--rphm")) {
 	    		tmpArgs.add(args[i++]);
 	    		tmpArgs.add(args[i]);
 	    	}
@@ -284,8 +363,14 @@ public class RunTranslationBAM {
 		    }
 		    if(cmd.hasOption("o")) {
 		    	outputFile = new File(cmd.getOptionValue("o"));
+		    	logFile = new File(cmd.getOptionValue("o")+".log");
 		    }
-		    
+		    if(cmd.hasOption("r")) {
+		    	rphm = Double.parseDouble(cmd.getOptionValue("r"));
+		    }
+		    if(cmd.hasOption("n")) {
+		    	atMost = Integer.parseInt(cmd.getOptionValue("n"));
+		    }
 		    
 		} catch (ParseException e) {
 			System.out.println(e.getMessage());

@@ -45,7 +45,7 @@ public class Codon {
 		
 		for(int ntPos = 0; ntPos<nucleoIndexes; ntPos++){
 			for(int ntPos_ = 0; ntPos_<nucleoIndexes; ntPos_++){
-				Arrays.fill(NuclToAminoArray[ntPos][ntPos_], 'X');
+				Arrays.fill(NuclToAminoArray[ntPos][ntPos_], AminoAcid.STOP_CODON_CHAR);
 			}
 		}
 		
@@ -68,7 +68,7 @@ public class Codon {
 	
 	public static Character nuclToAmino (String nucleotides){
 		if(!setOkay) mapping();
-		if(nucleotides.length() != 3) return 'X';
+		if(nucleotides.length() != 3) return AminoAcid.STOP_CODON_CHAR;
 		return NuclToAminoArray[nucleotides.charAt(0) & 7][nucleotides.charAt(1) & 7][nucleotides.charAt(2) & 7];
 	}
 }
