@@ -25,7 +25,7 @@ import zhanglab.inputconvertor.input.MANTA;
 import zhanglab.inputconvertor.input.Reference;
 import zhanglab.inputconvertor.input.StringTie;
 
-public class MakeNeoDB {
+public class RunMakeNeoDB {
  	
 	public static File stringTieFile = null; 
 	public static File arribaFile = null; 

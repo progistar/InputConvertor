@@ -13,6 +13,7 @@ import org.ahocorasick.trie.Trie;
 import org.apache.commons.lang3.StringUtils;
 
 import zhanglab.inputconvertor.env.InputConvertorConstants;
+import zhanglab.inputconvertor.run.RunRefineNeoDB;
 
 public class FastaLoader {
 
@@ -87,26 +88,48 @@ public class FastaLoader {
 		
 		
 		ArrayList<FastaEntry> passEntries = new ArrayList<FastaEntry>();
+		Hashtable<String, Boolean> compressEntires = new Hashtable<String, Boolean>();
+		String[] headerMark = {"neodb"};
 		for(FastaEntry entry : entries) {
-			String[] peptides = StringUtils.split(entry.sequence.replace("I", "L"), AminoAcid.STOP_CODON_CHAR);
+			headerMark[0] = entry.originHeader.split("\\|")[0];
+			
+			String[] peptides = StringUtils.split(entry.sequence, AminoAcid.STOP_CODON_CHAR);
 			boolean isPass = false;
 			for(String peptide : peptides) {
 				if(peptide.length() < InputConvertorConstants.MIN_PEPT_LEN) {
 					continue;
 				}
 				
-				if(removeList.get(peptide) == null) {
+				if(removeList.get(peptide.replace("I", "L")) == null) {
 					isPass = true;
-					break;
+					if(RunRefineNeoDB.isCompress) {
+						compressEntires.put(peptide, true);
+					}
 				}
 			}
-			if(isPass) {
+			
+			if(!RunRefineNeoDB.isCompress && isPass) {
 				passEntries.add(entry);
 			}
 		}
 		
-		System.out.println("A total of "+(this.entries.size() - passEntries.size())+" were removed from the original entries");
-		System.out.println("Remain: "+passEntries.size());
+		// if compress mode is on
+		if(RunRefineNeoDB.isCompress) {
+			int[] count = new int[1];
+			compressEntires.forEach((peptide, nil)->{
+				FastaEntry entry = new FastaEntry();
+				entry.originHeader = headerMark[0]+"|"+headerMark[0]+"#"+(++count[0]);
+				entry.sequence = peptide;
+				passEntries.add(entry);
+			});
+		}
+		
+		if(RunRefineNeoDB.isCompress) {
+			System.out.println("Compress: "+passEntries.size()); 
+		} else {
+			System.out.println("A total of "+(this.entries.size() - passEntries.size())+" were removed from the original entries");
+			System.out.println("Remain: "+passEntries.size());
+		}
 		this.entries = passEntries;
 	}
 }

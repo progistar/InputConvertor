@@ -20,7 +20,7 @@ import zhanglab.inputconvertor.input.pNovo3;
 import zhanglab.inputconvertor.module.TargetDecoyAnalysis_MS2Rescore;
 import zhanglab.inputconvertor.module.TopXgInput;
 
-public class Run {
+public class RunInputConvertor {
 
 	public static String module = null;
 	public static String tool = null;

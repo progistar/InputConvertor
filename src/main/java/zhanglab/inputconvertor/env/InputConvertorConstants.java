@@ -35,6 +35,7 @@ public class InputConvertorConstants {
 	public static final String piPRIME_NOVO = "piPrimeNovo";
 	public static final String PXG		= "pXg";
 	public static final String COMET	= "Comet";
+	public static final String FRAGPIPE	= "FragPipe";
 	public static final String IC_CONVERTOR		= "ic_convertor";
 	public static final String ARRIBA	= "Arriba";
 	public static final String EXPERIMENTAL_SPECTRUM = "experimental_spectrum";

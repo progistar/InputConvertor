@@ -20,12 +20,13 @@ import zhanglab.inputconvertor.data.FastaEntry;
 import zhanglab.inputconvertor.data.FastaLoader;
 import zhanglab.inputconvertor.env.InputConvertorConstants;
 
-public class RefineNeoDB {
+public class RunRefineNeoDB {
 	public static File[] referenceFiles = null;
 	public static File[] filterFiles = null;
 	public static File[] nonreferenceFiles = null;
 	public static File outputFile = null;
 	public static String decoyPrefix = null;
+	public static boolean isCompress = false;
 	public static final Pattern PE_PATTERN = Pattern.compile("(PE=[0-9]+)");
 	
 	public static void main(String[] args) throws IOException, ParseException {
@@ -35,7 +36,7 @@ public class RefineNeoDB {
 		long startTime = System.currentTimeMillis();
 		
 		FastaLoader[] referenceFastas = new FastaLoader[referenceFiles.length];
-		FastaLoader[] nonreferenceFastas = new FastaLoader[nonreferenceFiles.length];
+		FastaLoader[] nonreferenceFastas = null;
 		FastaLoader[] filterFastas = null;
 		
 		if(filterFiles != null) {
@@ -46,15 +47,19 @@ public class RefineNeoDB {
 			}
 		}
 		
-		System.out.println("Filter overlapped peptide sequences between the non-reference and the filter list");
-		// load non-reference files
-		for(int i=0; i<nonreferenceFastas.length; i++) {
-			nonreferenceFastas[i] = new FastaLoader(nonreferenceFiles[i]);
-			System.out.println(nonreferenceFiles[i].getName());
-			// remove reference
-			if(filterFiles != null) {
-				for(int j=0; j<filterFastas.length; j++) {
-					nonreferenceFastas[i].removeSequenceOverlapped(filterFastas[j].entries, 20);
+		if(nonreferenceFiles != null) {
+			nonreferenceFastas = new FastaLoader[nonreferenceFiles.length];
+			
+			System.out.println("Filter overlapped peptide sequences between the non-reference and the filter list");
+			// load non-reference files
+			for(int i=0; i<nonreferenceFastas.length; i++) {
+				nonreferenceFastas[i] = new FastaLoader(nonreferenceFiles[i]);
+				System.out.println(nonreferenceFiles[i].getName());
+				// remove reference
+				if(filterFiles != null) {
+					for(int j=0; j<filterFastas.length; j++) {
+						nonreferenceFastas[i].removeSequenceOverlapped(filterFastas[j].entries, 20);
+					}
 				}
 			}
 		}
@@ -84,26 +89,28 @@ public class RefineNeoDB {
 			}
 		}
 		
-		for(int i=0; i<nonreferenceFastas.length; i++) {
-			ArrayList<FastaEntry> entries = nonreferenceFastas[i].entries;
-			for(FastaEntry entry : entries) {
-				String header = entry.originHeader;
-				String sequence = entry.sequence;
-				
-				Matcher matcher = PE_PATTERN.matcher(header);
-				if(matcher.find()) {
-					header = header.replace(matcher.group(), "PE=2");
-				} else {
-					header += " PE=2";
+		if(nonreferenceFiles != null) {
+			for(int i=0; i<nonreferenceFastas.length; i++) {
+				ArrayList<FastaEntry> entries = nonreferenceFastas[i].entries;
+				for(FastaEntry entry : entries) {
+					String header = entry.originHeader;
+					String sequence = entry.sequence;
+					
+					Matcher matcher = PE_PATTERN.matcher(header);
+					if(matcher.find()) {
+						header = header.replace(matcher.group(), "PE=2");
+					} else {
+						header += " PE=2";
+					}
+					
+					BW.append(">").append(header);
+					BW.newLine();
+					BW.append(sequence);
+					BW.newLine();
 				}
-				
-				BW.append(">").append(header);
-				BW.newLine();
-				BW.append(sequence);
-				BW.newLine();
 			}
+			
 		}
-		
 		if(decoyPrefix != null) {
 			for(int i=0; i<referenceFastas.length; i++) {
 				referenceFastas[i] = new FastaLoader(referenceFiles[i]);
@@ -130,26 +137,28 @@ public class RefineNeoDB {
 				}
 			}
 			
-			for(int i=0; i<nonreferenceFastas.length; i++) {
-				ArrayList<FastaEntry> entries = nonreferenceFastas[i].entries;
-				for(FastaEntry entry : entries) {
-					String header = entry.originHeader;
-					String sequence = entry.sequence;
-					
-					Matcher matcher = PE_PATTERN.matcher(header);
-					if(matcher.find()) {
-						header = header.replace(matcher.group(), "PE=2");
-					} else {
-						header += " PE=2";
+			if(nonreferenceFiles != null) {
+				for(int i=0; i<nonreferenceFastas.length; i++) {
+					ArrayList<FastaEntry> entries = nonreferenceFastas[i].entries;
+					for(FastaEntry entry : entries) {
+						String header = entry.originHeader;
+						String sequence = entry.sequence;
+						
+						Matcher matcher = PE_PATTERN.matcher(header);
+						if(matcher.find()) {
+							header = header.replace(matcher.group(), "PE=2");
+						} else {
+							header += " PE=2";
+						}
+						
+						StringBuilder revSequence = new StringBuilder(sequence.substring(1)).reverse();
+						
+						BW.append(">"+decoyPrefix).append(header);
+						BW.newLine();
+						BW.append(sequence.charAt(0));
+						BW.append(revSequence.toString());
+						BW.newLine();
 					}
-					
-					StringBuilder revSequence = new StringBuilder(sequence.substring(1)).reverse();
-					
-					BW.append(">"+decoyPrefix).append(header);
-					BW.newLine();
-					BW.append(sequence.charAt(0));
-					BW.append(revSequence.toString());
-					BW.newLine();
 				}
 			}
 		}
@@ -183,7 +192,7 @@ public class RefineNeoDB {
 		Option optionNonreference = Option.builder("n")
 				.longOpt("non-reference").argName("fasta")
 				.hasArg()
-				.required(true)
+				.required(false)
 				.desc("a lits of protein sequences to be filtered in non-reference fasta files (separted by comma). These records will be annotated as PE=2.")
 				.build();
 		
@@ -192,6 +201,12 @@ public class RefineNeoDB {
 				.hasArg()
 				.required(false)
 				.desc("Specify decoy prefix. Decoy sequences are generated only if the value is specified. For example, you can set rev_ for FragPipe.")
+				.build();
+		
+		Option optinCompress = Option.builder("c")
+				.longOpt("compress")
+				.required(false)
+				.desc("Compress the non-reference proteins.")
 				.build();
 		
 		Option optionOutput = Option.builder("o")
@@ -207,6 +222,7 @@ public class RefineNeoDB {
 		.addOption(optionNonreference)
 		.addOption(optionOutput)
 		.addOption(optionDecoy)
+		.addOption(optinCompress)
 		.addOption(optionFilter);
 		
 		CommandLineParser parser = new DefaultParser();
@@ -221,6 +237,8 @@ public class RefineNeoDB {
 			args[i].equalsIgnoreCase("-d") || args[i].equalsIgnoreCase("--decoy") ||
 			args[i].equalsIgnoreCase("-o") || args[i].equalsIgnoreCase("--output")) {
 	    		tmpArgs.add(args[i++]);
+	    		tmpArgs.add(args[i]);
+	    	} else if(args[i].equalsIgnoreCase("-c") || args[i].equalsIgnoreCase("--compress")) {
 	    		tmpArgs.add(args[i]);
 	    	}
 	    }
@@ -276,6 +294,10 @@ public class RefineNeoDB {
 		    }
 		    
 		    
+		    if(cmd.hasOption("c")) {
+		    	System.out.println("Compressed NeoDB");
+		    	isCompress = true;
+		    }
 		    
 		    if(cmd.hasOption("o")) {
 		    	outputFile = new File(cmd.getOptionValue("o"));

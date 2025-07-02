@@ -13,7 +13,7 @@ import org.systemsbiology.jrap.stax.MSXMLParser;
 import org.systemsbiology.jrap.stax.Scan;
 
 import zhanglab.inputconvertor.env.InputConvertorConstants;
-import zhanglab.inputconvertor.run.Run;
+import zhanglab.inputconvertor.run.RunInputConvertor;
 
 public class SimpleSpectraSelector {
 	
@@ -31,7 +31,7 @@ public class SimpleSpectraSelector {
 		this.fileName = file.getName();
 		
 		if(this.fileName.toLowerCase().endsWith(".mgf")) {
-			if(Run.tool.equalsIgnoreCase(InputConvertorConstants.PEAKS12)) {
+			if(RunInputConvertor.tool.equalsIgnoreCase(InputConvertorConstants.PEAKS12)) {
 				simplePEAKS12MGFSelector(file);
 			} else {
 				simpleMGFSelector(file);
