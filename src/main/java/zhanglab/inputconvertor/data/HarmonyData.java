@@ -123,10 +123,10 @@ public class HarmonyData {
 		
 		str.append(this.pipeline).append("\t")
 		.append(this.spectrum).append("\t")
-		.append(this.sequence).append("\t")
+		.append(this.matchedPeptide).append("\t")
 		.append(this.modification).append("\t")
 		.append(this.charge).append("\t")
-		.append(this.sequence.length()).append("\t")
+		.append(this.matchedPeptide.length()).append("\t")
 		.append(this.score).append("\t")
 		.append(this.confidence).append("\t")
 		
