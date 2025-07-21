@@ -90,7 +90,6 @@ public class RunMakeNeoDB {
         	GTFLoader refGTF = new GTFLoader(refGTFFile);
         	Reference reference = new Reference(refGTF);
         	reference.enrollGenomeSequence(gmL);
-        	//entries.addAll(reference.getFastaEntry(true));
         	entries.addAll(reference.getFastaEntry(false));
         }
         
